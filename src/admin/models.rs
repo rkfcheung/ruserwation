@@ -3,6 +3,7 @@ use argon2::{
     Argon2,
 };
 use chrono::NaiveDateTime;
+use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -32,5 +33,13 @@ impl Admin {
             root: id == 1,
             last_login_time: None,
         }
+    }
+
+    pub fn generate_random_password(n: usize) -> String {
+        rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(n)
+            .map(char::from)
+            .collect()
     }
 }

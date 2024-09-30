@@ -1,12 +1,13 @@
+mod admin;
 mod restaurant;
 
+use admin::models::Admin;
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Argon2,
 };
 use rand::{distributions::Alphanumeric, Rng};
 use restaurant::models::Restaurant;
-use ruserwation::admin::models::Admin;
 use std::str::from_utf8;
 
 fn main() {
