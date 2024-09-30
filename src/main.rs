@@ -1,13 +1,13 @@
-mod app;
+mod restaurant;
 
 use argon2::{
     password_hash::{PasswordHash, PasswordVerifier},
     Argon2,
 };
 use rand::{distributions::Alphanumeric, Rng};
+use restaurant::models::Restaurant;
+use ruserwation::admin::models::Admin;
 use std::str::from_utf8;
-
-use crate::app::models::{Admin, Restaurant};
 
 fn main() {
     let rand_pwd: String = rand::thread_rng()
