@@ -1,3 +1,4 @@
+use chrono::Utc;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use warp_sessions::Session;
@@ -24,15 +25,16 @@ impl InMemoryAdminRepo {
         }
     }
 
-    pub fn create_session(&self, username: &str) -> String {
-        let admins = self.admins.lock().unwrap();
+    pub fn create_session(&mut self, username: &str) -> String {
+        let mut admins = self.admins.lock().unwrap();
 
-        if admins.contains_key(username) {
+        if let Some(mut admin) = admins.get_mut(username) {
             let mut session = Session::new();
-            session
-                .insert("user", admins.get(username))
-                .expect("serializable");
+            session.insert_raw("user", username.to_string());
             let session_id = session.id().to_owned();
+
+            admin.last_login_time = Some(Utc::now().naive_utc());
+            self.save(admin.clone());
 
             let mut sessions = self.sessions.lock().unwrap();
             sessions.insert(session_id.clone(), session);
