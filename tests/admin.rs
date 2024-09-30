@@ -1,27 +1,113 @@
 #[cfg(test)]
 mod tests {
 
-    use argon2::{
-        password_hash::{PasswordHash, PasswordVerifier},
-        Argon2,
-    };
     use ruserwation::admin::models::Admin;
-    use std::str::from_utf8;
+    use std::env;
 
+    // Test the Admin::new method
     #[test]
-    fn should_verify_random_password() {
-        let rand_pwd: String = Admin::generate_random_password(16);
-        assert!(rand_pwd.len() == 16);
+    fn test_admin_new() {
+        let username = "admin".to_string();
+        let password = "password123".to_string();
+        let email = "admin@localhost".to_string();
 
-        let admin = Admin::new(
-            1,
-            "admin".to_string(),
-            rand_pwd.clone(),
-            "admin@localhost".to_string(),
-        );
-        let parsed_hash = PasswordHash::new(from_utf8(&admin.password).unwrap()).unwrap();
-        assert!(Argon2::default()
-            .verify_password(rand_pwd.as_bytes(), &parsed_hash)
-            .is_ok());
+        let admin = Admin::new(1, username.clone(), password.clone(), email.clone());
+
+        assert_eq!(admin.id, 1);
+        assert_eq!(admin.username, username);
+        assert_eq!(admin.email, email);
+        assert!(admin.root); // Since id is 1, root should be true
+        assert!(admin.last_login_time.is_none());
+
+        // Should verify the random password
+        assert!(admin.verify_password(&password));
+    }
+
+    // Test the random password generation
+    #[test]
+    fn test_generate_random_password() {
+        let length = 16;
+        let password = Admin::generate_random_password(length);
+        assert_eq!(password.len(), length);
+
+        let length = 8;
+        let password = Admin::generate_random_password(length);
+        assert_eq!(password.len(), length);
+    }
+
+    // Test for edge cases in random password generation
+    #[test]
+    fn test_generate_random_password_zero_length() {
+        let password = Admin::generate_random_password(0);
+        assert_eq!(password.len(), 8);
+    }
+
+    // Test the random password generation with a default password length
+    #[test]
+    fn test_generate_password_with_env_length() {
+        env::set_var("RW_ADMIN_PWD_LEN", "10");
+
+        let pwd_len = env::var("RW_ADMIN_PWD_LEN")
+            .unwrap()
+            .parse::<usize>()
+            .unwrap();
+        let random_password = Admin::generate_random_password(pwd_len);
+
+        assert_eq!(random_password.len(), 10);
+
+        // Clean up environment variables after the test
+        env::remove_var("RW_ADMIN_PWD_LEN");
+    }
+
+    // Test the init method with environment variables
+    #[test]
+    fn test_admin_init_with_env_vars() {
+        // Set environment variables for testing
+        env::set_var("RW_ADMIN_USERNAME", "env_admin");
+        env::set_var("RW_ADMIN_EMAIL", "env_admin@localhost");
+        env::set_var("RW_ADMIN_PASSWORD", "env_password123");
+
+        let admin = Admin::init();
+
+        assert_eq!(admin.username, "env_admin");
+        assert_eq!(admin.email, "env_admin@localhost");
+        assert_eq!(admin.root, true); // Should be root because id is 1
+
+        // Clean up environment variables after the test
+        env::remove_var("RW_ADMIN_USERNAME");
+        env::remove_var("RW_ADMIN_EMAIL");
+        env::remove_var("RW_ADMIN_PASSWORD");
+    }
+
+    // Test the init method when password is not set (random password generation)
+    #[test]
+    fn test_admin_init_with_random_password() {
+        // Ensure no password is set in the environment
+        env::remove_var("RW_ADMIN_USERNAME");
+        env::remove_var("RW_ADMIN_EMAIL");
+        env::remove_var("RW_ADMIN_PASSWORD");
+
+        // Test admin initialisation with default/random password
+        let admin = Admin::init();
+
+        assert_eq!(admin.username, "admin");
+        assert_eq!(admin.email, "admin@localhost");
+        assert_eq!(admin.root, true); // Should be root because id is 1
+        assert!(admin.password.len() > 0); // Random password is set
+    }
+
+    // Test the password verification with valid and invalid passwords
+    #[test]
+    fn test_verify_password() {
+        let username = "admin".to_string();
+        let password = "password123".to_string();
+        let email = "admin@localhost".to_string();
+        let admin = Admin::new(1, username.clone(), password.clone(), email.clone());
+
+        // Verify with the correct password
+        assert!(admin.verify_password(&password));
+
+        // Verify with an incorrect password
+        assert!(!admin.verify_password("wrongpassword"));
     }
 }
