@@ -3,7 +3,7 @@ mod tests {
     use chrono::Utc;
     use ruserwation::admin::{
         models::Admin,
-        repo::{AdminRepo, InMemoryAdminRepo},
+        repo::{AdminRepo, EnableSession, InMemoryAdminRepo},
     };
 
     #[test]

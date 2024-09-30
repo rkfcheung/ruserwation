@@ -11,6 +11,14 @@ pub trait AdminRepo {
     fn verify(&self, username: &str, password: &str) -> bool; // Verify username and password
 }
 
+pub trait EnableSession {
+    fn create_session(&self, username: &str) -> String;
+
+    fn destroy_session(&self, session_id: &str);
+
+    fn get_session(&self, session_id: &str) -> Option<Session>;
+}
+
 pub struct Sessions {
     context: Arc<Mutex<HashMap<String, Session>>>, // Session ID to Session mapping
 }
@@ -60,8 +68,10 @@ impl InMemoryAdminRepo {
             sessions: Sessions::new(),
         }
     }
+}
 
-    pub fn create_session(&self, username: &str) -> String {
+impl EnableSession for InMemoryAdminRepo {
+    fn create_session(&self, username: &str) -> String {
         let admins = self.admins.lock().unwrap();
 
         if admins.contains_key(username) {
@@ -71,11 +81,11 @@ impl InMemoryAdminRepo {
         }
     }
 
-    pub fn destroy_session(&self, session_id: &str) {
+    fn destroy_session(&self, session_id: &str) {
         self.sessions.destroy(session_id);
     }
 
-    pub fn get_session(&self, session_id: &str) -> Option<Session> {
+    fn get_session(&self, session_id: &str) -> Option<Session> {
         self.sessions.get(session_id)
     }
 }
