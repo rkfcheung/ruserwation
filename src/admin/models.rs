@@ -5,6 +5,7 @@ use argon2::{
     Argon2,
 };
 use chrono::NaiveDateTime;
+use log::{debug, warn};
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 
@@ -45,18 +46,18 @@ impl Admin {
             Ok(val) => match val.parse::<usize>() {
                 Ok(parsed_len) => parsed_len,
                 Err(_) => {
-                    println!("Invalid RW_ADMIN_PWD_LEN, using default value of 16.");
+                    debug!("Invalid RW_ADMIN_PWD_LEN, using default value of 16.");
                     16
                 }
             },
             Err(_) => {
-                println!("RW_ADMIN_PWD_LEN not set, using default value of 16.");
+                debug!("RW_ADMIN_PWD_LEN not set, using default value of 16.");
                 16
             }
         };
         let password = if admin_password.is_empty() {
             let random_password = Self::generate_random_password(admin_pwd_len);
-            println!(
+            warn!(
                 "Admin password not set. Generated random password: {}",
                 random_password
             );
