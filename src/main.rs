@@ -9,7 +9,12 @@ use warp::Filter;
 
 #[tokio::main]
 async fn main() {
-    dotenv::dotenv().ok();
+    let environment = env::var("APP_ENV").unwrap_or_default();
+    match environment.as_str() {
+        "prod" => dotenv::from_filename(".env.prod").ok(),
+        _ => dotenv::dotenv().ok(),
+    };
+
     env_logger::init();
 
     let rest_name = env::var("RW_REST_NAME").unwrap_or("<Name>".to_string());
