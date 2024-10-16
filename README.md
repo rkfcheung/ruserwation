@@ -1,2 +1,3 @@
 # ruserwation
-Restaurant reservation web app using Rust, Warp, Maud, and SQLite
+
+Restaurant reservation web app using Rust, Warp, Maud, and SQLite.

@@ -12,6 +12,7 @@ pub trait AdminRepo {
 }
 
 pub trait EnableSession {
+    // TODO: Change to return Result<String, Error>
     fn create_session(&self, username: &str) -> String;
 
     fn destroy_session(&self, session_id: &str);
@@ -35,10 +36,9 @@ impl Sessions {
         let mut session = Session::new();
         session.insert_raw("user", username.to_string());
 
-        let session_id = session.id().to_owned();
-
         // Lock the sessions HashMap and insert the new session
         let mut sessions = self.context.lock().unwrap();
+        let session_id = session.id().to_owned();
         sessions.insert(session_id.clone(), session);
 
         // Return the session ID
@@ -73,7 +73,6 @@ impl InMemoryAdminRepo {
 impl EnableSession for InMemoryAdminRepo {
     fn create_session(&self, username: &str) -> String {
         let admins = self.admins.lock().unwrap();
-
         if admins.contains_key(username) {
             self.sessions.create(username)
         } else {
