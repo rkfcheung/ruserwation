@@ -33,10 +33,10 @@ async fn main() {
     };
     info!("{:?}", restaurant);
 
-    let static_files = warp::path("static").and(warp::fs::dir("./static"));
+    let static_route = warp::fs::dir("./static");
     let index_route = index_route(restaurant);
 
-    let routes = warp::get().and(static_files.or(index_route));
+    let routes = warp::get().and(static_route.or(index_route));
 
     warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
 }
