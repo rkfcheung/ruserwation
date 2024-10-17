@@ -11,10 +11,11 @@ pub fn index_route(
 }
 
 fn render_index(restaurant: Restaurant) -> Markup {
+    let app_env = env::var("APP_ENV").unwrap_or_default();
     let poster = env::var("RW_POSTER").unwrap_or_else(|_| "poster.webp".to_string());
     let rest_details = format!("{}, {}", restaurant.name, restaurant.location);
 
-    let (apple_touch_icon, favicon) = if env::var("APP_ENV").unwrap_or_default() == "prod" {
+    let (apple_touch_icon, favicon) = if app_env == "prod" {
         ("apple-touch-icon_prod.png", "favicon_prod.ico")
     } else {
         ("apple-touch-icon.webp", "favicon.ico")
@@ -34,7 +35,7 @@ fn render_index(restaurant: Restaurant) -> Markup {
                 link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous";
             }
 
-            body {
+            body class="bg-black text-white" {
                 div class="container" {
                     div class="row" {
                         div class="col-md-12 text-center" {

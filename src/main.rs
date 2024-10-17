@@ -9,8 +9,8 @@ use warp::Filter;
 
 #[tokio::main]
 async fn main() {
-    let environment = env::var("APP_ENV").unwrap_or_default();
-    match environment.as_str() {
+    let app_env = env::var("APP_ENV").unwrap_or_default();
+    match app_env.as_str() {
         "prod" => dotenv::from_filename(".env.prod").ok(),
         _ => dotenv::dotenv().ok(),
     };
