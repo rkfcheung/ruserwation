@@ -91,7 +91,7 @@ export APP_ENV=prod
 
 ![ruserwation](static/poster.webp)
 
-## Usuage Ngnix Commands
+## Useful Nginx Commands
 
 ```shell
 # Check Nginx status
@@ -99,6 +99,9 @@ systemctl status nginx.service
 
 # Restart Nginx service
 sudo systemctl restart nginx
+
+# Check Nginx access log
+sudo tail -f /var/log/nginx/access.log
 
 # Check Nginx error log
 sudo tail -f /var/log/nginx/error.log
