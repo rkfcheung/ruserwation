@@ -40,6 +40,7 @@ cargo build --release
 
 # Install Nginx (Optional)
 sudo apt install nginx
+sudo usermod -aG www-data ${AWS_EC2_USER}
 sudo chown -R www-data:www-data /app/ruserwation/static
 
 sudo vi /etc/nginx/sites-available/default
