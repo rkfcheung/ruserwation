@@ -14,6 +14,12 @@ fn render_index(restaurant: Restaurant) -> Markup {
     let poster = env::var("RW_POSTER").unwrap_or_else(|_| "poster.webp".to_string());
     let rest_details = format!("{}, {}", restaurant.name, restaurant.location);
 
+    let (apple_touch_icon, favicon) = if env::var("APP_ENV").unwrap_or_default() == "prod" {
+        ("apple-touch-icon_prod.png", "favicon_prod.ico")
+    } else {
+        ("apple-touch-icon.webp", "favicon.ico")
+    };
+
     html! {
         (DOCTYPE)
         html {
@@ -23,7 +29,8 @@ fn render_index(restaurant: Restaurant) -> Markup {
                 meta name="viewport" content="width=device-width, initial-scale=1";
                 meta name="keywords" content=(rest_details);
 
-                link rel="icon" href="/static/favicon.ico" type="image/x-icon";
+                link rel="apple-touch-icon" href=((format!("/static/images/{}", apple_touch_icon)));
+                link rel="icon" href=((format!("/static/{}", favicon))) type="image/x-icon";
                 link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous";
             }
 

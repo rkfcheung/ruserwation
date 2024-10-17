@@ -78,8 +78,8 @@ sudo certbot --nginx
 cd ruserwation
 
 scp -i ${AWS_KEY_FILE} .env.prod ${AWS_EC2_USER}@${AWS_EC2_UBUNTU}:/app/ruserwation
-
-scp -i ${AWS_KEY_FILE} static/poster_prod.jpeg ${AWS_EC2_USER}@${AWS_EC2_UBUNTU}:/app/ruserwation/static
+scp -i ${AWS_KEY_FILE} static/*_prod.* ${AWS_EC2_USER}@${AWS_EC2_UBUNTU}:/app/ruserwation/static
+scp -i ${AWS_KEY_FILE} static/images/*_prod.* ${AWS_EC2_USER}@${AWS_EC2_UBUNTU}:/app/ruserwation/static/images
 ```
 
 ```shell
