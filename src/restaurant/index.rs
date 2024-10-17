@@ -30,7 +30,7 @@ fn render_index(restaurant: Restaurant) -> Markup {
                 div class="container" {
                     div class="row" {
                         div class="col-md-12 text-center" {
-                            img src=(format!("/images/{}", poster)) alt=(rest_details) class="img-fluid" {}
+                            img src=(format!("/static/images/{}", poster)) alt=(rest_details) class="img-fluid" {}
                         }
                     }
                 }
