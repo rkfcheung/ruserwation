@@ -20,9 +20,10 @@ fn render_index(restaurant: Restaurant) -> Markup {
             head {
                 title { "Welcome to " (restaurant.name) }
 
+                meta name="viewport" content="width=device-width, initial-scale=1";
                 meta name="keywords" content=(rest_details);
 
-                link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css";
+                link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous";
             }
 
             body {
