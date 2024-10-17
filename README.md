@@ -17,7 +17,7 @@ Restaurant reservation web app using Rust, Warp, Maud, and SQLite.
 # Connect to AWS EC2
 chmod 600 ${AWS_KEY_FILE}
 
-alias aws-ssh='ssh -i ${AWS_KEY_FILE} ${AWS_EC2_UBUNTU}'
+alias aws-ssh='ssh -i ${AWS_KEY_FILE} ${AWS_EC2_USER}@${AWS_EC2_UBUNTU}'
 ```
 
 ```shell
@@ -74,6 +74,18 @@ sudo certbot --nginx
 ### Running the App
 
 ```shell
+# Local
+cd ruserwation
+
+scp -i ${AWS_KEY_FILE} .env.prod ${AWS_EC2_USER}@${AWS_EC2_UBUNTU}:/app/ruserwation
+
+scp -i ${AWS_KEY_FILE} static/poster_prod.jpeg ${AWS_EC2_USER}@${AWS_EC2_UBUNTU}:/app/ruserwation/static
+```
+
+```shell
+# AWS EC2
+export APP_ENV=prod
+
 /app/ruserwation/target/release/ruserwation
 ```
 
