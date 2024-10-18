@@ -104,7 +104,7 @@ export APP_ENV=prod
 /app/ruserwation/target/release/ruserwation
 ```
 
-![ruserwation](static/poster.webp)
+![ruserwation](static/images/poster.webp)
 
 ## Useful Nginx Commands
 
