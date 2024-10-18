@@ -1,6 +1,7 @@
 use maud::{html, Markup, DOCTYPE};
-use std::env;
 use warp::Filter;
+
+use crate::utils::env_util::{var_as_str, var_as_str_or};
 
 use super::models::Restaurant;
 
@@ -11,8 +12,8 @@ pub fn index_route(
 }
 
 fn render_index(restaurant: Restaurant) -> Markup {
-    let app_env = env::var("APP_ENV").unwrap_or_default();
-    let poster = env::var("RW_POSTER").unwrap_or_else(|_| "poster.webp".to_string());
+    let app_env = var_as_str("APP_ENV");
+    let poster = var_as_str_or("RW_POSTER", "poster.webp".to_string());
     let rest_details = format!("{}, {}", restaurant.name, restaurant.location);
 
     let (apple_touch_icon, favicon) = if app_env == "prod" {

@@ -9,6 +9,8 @@ use log::{debug, warn};
 use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 
+use crate::utils::env_util::{var_as_str, var_as_str_or};
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Admin {
     pub id: u32,
@@ -39,13 +41,13 @@ impl Admin {
     }
 
     pub fn init() -> Self {
-        let admin_email = env::var("RW_ADMIN_EMAIL").unwrap_or("admin@localhost".to_string());
-        let admin_password = env::var("RW_ADMIN_PASSWORD").unwrap_or_default();
-        let admin_username = env::var("RW_ADMIN_USERNAME").unwrap_or("admin".to_string());
+        let admin_email = var_as_str_or("RW_ADMIN_EMAIL", "admin@localhost".to_string());
+        let admin_password = var_as_str("RW_ADMIN_PASSWORD");
+        let admin_username = var_as_str_or("RW_ADMIN_USERNAME", "admin".to_string());
 
         let password = if admin_password.len() < 4 {
             let admin_pwd_len = match env::var("RW_ADMIN_PWD_LEN") {
-                Ok(val) => match val.parse::<usize>() {
+                Ok(value) => match value.parse::<usize>() {
                     Ok(parsed_len) => parsed_len,
                     Err(_) => {
                         debug!("Invalid RW_ADMIN_PWD_LEN, using default value of 16.");
