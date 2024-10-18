@@ -2,6 +2,20 @@
 
 Restaurant reservation web app using Rust, Warp, Maud, and SQLite.
 
+## Objective
+
+Currently, I'm a Spring Boot developer, but I miss the days when I built monolithic websites using LAMP (Linux, Apache, MySQL, PHP). Starting from scratch - installing Linux (though I preferred FreeBSD), setting up Apache, configuring MySQL, and finally running PHP - felt rewarding. When I saw `phpinfo()` display, it was a moment of triumph!
+
+Nowadays, frameworks like Spring provide abstracted data access layers, such as Spring JPA and Spring JDBC, where I don't need to worry about direct connections. Back then, it was all raw - you had to write SQL directly and handle connections manually.
+
+My goal with this project is to build something from scratch, with minimal reliance on frameworks, using Rust for both the front and back end. While it might be more efficient to use React for the frontend (and I know how to build React UIs), I want to fully immerse myself in Rust. Unlike Spring's `@RestController`, with Warp, I need to write my own routes from scratch. It takes more time, but it's fun!
+
+This project allows me to do things my way, in my own style, without needing PR approvals or restrictions. I can choose my testing frameworks and enjoy the autonomy!
+
+I can't guarantee a bug-free product, but I'll do my best to make it production-ready. That's my goal, and I hope I can stay consistent in achieving it.
+
+In Rust, I trust!
+
 ## Project Status
 
 | Module      | Status  |
