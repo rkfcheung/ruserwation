@@ -1,5 +1,5 @@
 use maud::{html, Markup};
-use warp::Filter;
+use warp::{Filter, Rejection, Reply};
 
 use crate::utils::{
     env_util::{var_as_bool_or, var_as_str_or},
@@ -10,7 +10,7 @@ use super::models::Restaurant;
 
 pub fn index_route(
     restaurant: Restaurant,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path::end().map(move || warp::reply::html(render_index(restaurant.clone()).into_string()))
 }
 
