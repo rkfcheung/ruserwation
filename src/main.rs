@@ -22,13 +22,7 @@ async fn main() {
     let rest_max_capacity = var_as_int_or("RW_REST_MAX_CAPACITY", 64) as u32;
     let rest_location = var_as_str_or("RW_REST_LOCATION", "<Location>".to_string());
 
-    let restaurant = Restaurant {
-        id: 1,
-        name: rest_name,
-        max_capacity: rest_max_capacity,
-        location: rest_location,
-        active: true,
-    };
+    let restaurant = Restaurant::new(1, &rest_name, rest_max_capacity, &rest_location);
     info!("{:?}", restaurant);
 
     let static_route = warp::path("static").and(warp::fs::dir("./static"));

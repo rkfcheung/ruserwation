@@ -8,3 +8,15 @@ pub struct Restaurant {
     pub location: String,
     pub active: bool,
 }
+
+impl Restaurant {
+    pub fn new(id: u32, name: &str, max_capacity: u32, location: &str) -> Self {
+        Restaurant {
+            id,
+            name: name.to_string(),
+            max_capacity,
+            location: location.to_string(),
+            active: true,
+        }
+    }
+}
