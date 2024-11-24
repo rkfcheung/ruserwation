@@ -30,7 +30,7 @@ impl Admin {
             .expect("Failed to hash password")
             .to_string();
 
-        Admin {
+        Self {
             id,
             username,
             password: password_hash.into_bytes(),
@@ -70,7 +70,7 @@ impl Admin {
             admin_password
         };
 
-        Admin::new(1, admin_username, password.clone(), admin_email)
+        Self::new(1, admin_username, password.clone(), admin_email)
     }
 
     pub fn generate_random_password(n: usize) -> String {

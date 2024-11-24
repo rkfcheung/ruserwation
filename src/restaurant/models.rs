@@ -11,7 +11,7 @@ pub struct Restaurant {
 
 impl Restaurant {
     pub fn new(id: u32, name: &str, max_capacity: u32, location: &str) -> Self {
-        Restaurant {
+        Self {
             id,
             name: name.to_string(),
             max_capacity,
