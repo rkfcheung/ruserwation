@@ -1,3 +1,4 @@
+use log::warn;
 use sqlx::{query, query_as, SqlitePool};
 
 use super::{models::Admin, repo::AdminRepo};
@@ -15,26 +16,27 @@ impl SqliteAdminRepo {
     async fn insert(&mut self, admin: &mut Admin) -> u32 {
         let result = query(
             r#"
-            INSERT INTO Admin (username, password, email, root, last_login_time)sq
-            VALUES (?, ?, ?, ?, ?);
+            INSERT INTO Admin (username, password, email, root)
+            VALUES (?, ?, ?, ?);
             "#,
         )
         .bind(&admin.username)
         .bind(&admin.password)
         .bind(&admin.email)
         .bind(admin.root)
-        .bind(admin.last_login_time)
         .execute(&self.pool)
         .await;
 
         match result {
             Ok(r) => {
-                let id = r.last_insert_rowid() as u32;
-                admin.id = id;
+                admin.id = r.last_insert_rowid() as u32;
 
-                id
+                admin.id
             } // Return the inserted ID
-            _ => 0, // Return 0 if there's an error
+            _ => {
+                warn!("Failed to insert into Admin: {:?}", admin);
+                0
+            } // Return 0 if there's an error
         }
     }
 
@@ -42,14 +44,12 @@ impl SqliteAdminRepo {
         let result = query(
             r#"
             UPDATE Admin
-                SET username = ?, 
-                    password = ?, 
+                SET password = ?, 
                     email = ?, 
                     last_login_time = ?
             WHERE id = ?;
             "#,
         )
-        .bind(&admin.username)
         .bind(&admin.password)
         .bind(&admin.email)
         .bind(admin.last_login_time)
@@ -59,7 +59,10 @@ impl SqliteAdminRepo {
 
         match result {
             Ok(_) => admin.id,
-            _ => 0,
+            _ => {
+                warn!("Failed to update into Admin: {:?}", admin);
+                0
+            }
         }
     }
 }
@@ -106,7 +109,14 @@ impl AdminRepo for SqliteAdminRepo {
     // Save an Admin and return its ID
     async fn save(&mut self, admin: &mut Admin) -> u32 {
         if admin.id == 0 {
-            return self.insert(admin).await;
+            let result = self.find_by_username(&admin.username).await;
+            return match result {
+                Some(found) => {
+                    admin.id = found.id;
+                    self.update(admin).await
+                }
+                _ => self.insert(admin).await,
+            };
         }
 
         let found = self.find_by_id(admin.id).await;
