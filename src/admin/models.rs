@@ -1,15 +1,12 @@
-use std::{env, str::from_utf8};
+use std::str::from_utf8;
 
-use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
-    Argon2, PasswordHash, PasswordVerifier,
-};
+use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use chrono::NaiveDateTime;
-use log::{debug, warn};
-use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 
 use crate::utils::env_util::{var_as_str, var_as_str_or};
+
+use super::helper::{hash_password, validate_email, validate_username};
 
 #[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct Admin {
@@ -24,17 +21,14 @@ pub struct Admin {
 
 impl Admin {
     pub fn new(id: u32, username: String, password: String, email: String) -> Self {
-        let argon2 = Argon2::default();
-        let salt = SaltString::generate(&mut OsRng);
-        let password_hash = argon2
-            .hash_password(password.as_bytes(), &salt)
-            .expect("Failed to hash password")
-            .to_string();
+        let username = validate_username(&username);
+        let password = hash_password(&password);
+        let email = validate_email(&email);
 
         Self {
             id,
             username,
-            password: password_hash.into_bytes(),
+            password,
             email,
             root: id == 1,
             last_login_time: None,
@@ -42,50 +36,11 @@ impl Admin {
     }
 
     pub fn init() -> Self {
-        let admin_email = var_as_str_or("RW_ADMIN_EMAIL", "admin@localhost".to_string());
-        let admin_password = var_as_str("RW_ADMIN_PASSWORD");
-        let admin_username = var_as_str_or("RW_ADMIN_USERNAME", "admin".to_string());
+        let email = var_as_str_or("RW_ADMIN_EMAIL", "admin@localhost".to_string());
+        let password = var_as_str("RW_ADMIN_PASSWORD");
+        let username = var_as_str_or("RW_ADMIN_USERNAME", "admin".to_string());
 
-        let username = if admin_username.is_empty() {
-            "admin".to_string()
-        } else {
-            admin_username
-        };
-
-        let password = if admin_password.len() < 4 {
-            let admin_pwd_len = match env::var("RW_ADMIN_PWD_LEN") {
-                Ok(value) => match value.parse::<usize>() {
-                    Ok(parsed_len) => parsed_len,
-                    Err(_) => {
-                        debug!("Invalid RW_ADMIN_PWD_LEN, using default value of 16.");
-                        16
-                    }
-                },
-                Err(_) => {
-                    debug!("RW_ADMIN_PWD_LEN not set, using default value of 16.");
-                    16
-                }
-            };
-
-            let random_password = Self::generate_random_password(admin_pwd_len);
-            warn!(
-                "Admin password not set. Generated random password: {}",
-                random_password
-            );
-            random_password
-        } else {
-            admin_password
-        };
-
-        Self::new(1, username, password, admin_email)
-    }
-
-    pub fn generate_random_password(n: usize) -> String {
-        rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(n.max(8))
-            .map(char::from)
-            .collect()
+        Self::new(1, username, password, email)
     }
 
     pub fn verify_password(&self, password: &str) -> bool {

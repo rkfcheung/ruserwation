@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
 
-    use ruserwation::admin::models::Admin;
+    use ruserwation::admin::{helper, models::Admin};
     use std::env;
 
     // Test the Admin::new method
@@ -27,18 +27,18 @@ mod tests {
     #[test]
     fn test_generate_random_password() {
         let length = 16;
-        let password = Admin::generate_random_password(length);
+        let password = helper::generate_random_password(length);
         assert_eq!(password.len(), length);
 
         let length = 8;
-        let password = Admin::generate_random_password(length);
+        let password = helper::generate_random_password(length);
         assert_eq!(password.len(), length);
     }
 
     // Test for edge cases in random password generation
     #[test]
     fn test_generate_random_password_zero_length() {
-        let password = Admin::generate_random_password(0);
+        let password = helper::generate_random_password(0);
         assert_eq!(password.len(), 8);
     }
 
@@ -51,7 +51,7 @@ mod tests {
             .unwrap()
             .parse::<usize>()
             .unwrap();
-        let random_password = Admin::generate_random_password(pwd_len);
+        let random_password = helper::generate_random_password(pwd_len);
 
         assert_eq!(random_password.len(), 10);
 

@@ -1,5 +1,9 @@
 use std::env;
 
+pub fn truncate_string(input: &str, max_len: usize) -> String {
+    input.chars().take(max_len).collect()
+}
+
 pub fn var_as_bool_or(key: &str, default: bool) -> bool {
     env::var(key).map(|v| v == "true").unwrap_or(default)
 }
