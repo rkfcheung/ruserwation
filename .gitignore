@@ -26,3 +26,6 @@ launch.json
 # Production
 .env.prod
 *_prod.*
+
+# Local Tests
+local-test.*

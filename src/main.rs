@@ -7,7 +7,7 @@ mod utils;
 use dotenv;
 use log::info;
 use restaurant::{index::index_route, models::Restaurant};
-use setup::init::{init, SetupError};
+use setup::startup::{init, SetupError};
 use utils::env_util::{var_as_int_or, var_as_str, var_as_str_or};
 use warp::Filter;
 

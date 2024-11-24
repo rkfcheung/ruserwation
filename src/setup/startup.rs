@@ -1,6 +1,9 @@
-use log::info;
+use log::{error, info};
 
-use crate::db;
+use crate::{
+    admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
+    db,
+};
 
 #[derive(Debug)]
 pub enum SetupError {
@@ -37,6 +40,35 @@ pub async fn init() -> Result<(), SetupError> {
     db::sqlite::migrate_db(&pool)
         .await
         .map_err(SetupError::from)?;
+
+    let mut admin_repo = SqliteAdminRepo::new(pool);
+    init_admin(&mut admin_repo).await?;
+
+    Ok(())
+}
+
+async fn init_admin(admin_repo: &mut SqliteAdminRepo) -> Result<(), SetupError> {
+    let root_user = admin_repo.find_by_id(1).await;
+    match root_user {
+        Some(admin) => info!(
+            "Last login for {}: {:?}",
+            admin.username, admin.last_login_time
+        ),
+        None => {
+            info!("Initialising Admin ...");
+            let mut admin = Admin::init();
+            admin.id = 0;
+            let id = admin_repo.save(&mut admin).await;
+            if id > 0 {
+                info!("Admin is created.");
+            } else {
+                let err = "Failed to create Admin";
+                error!("{}: {:?}", err, admin);
+
+                return Err(SetupError::OtherError(err.to_string()));
+            }
+        }
+    }
 
     Ok(())
 }

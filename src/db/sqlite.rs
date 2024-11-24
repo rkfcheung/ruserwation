@@ -1,8 +1,8 @@
 use log::info;
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite, SqlitePool};
 use utils::env_util::{var_as_int_or, var_as_str_or};
 
-use crate::{setup::init::SetupError, utils};
+use crate::{setup::startup::SetupError, utils};
 
 type StdError = dyn std::error::Error;
 
@@ -23,6 +23,11 @@ pub async fn init_db() -> Result<SqlitePool, Box<StdError>> {
     let max_conn = var_as_int_or("RW_SQLITE_MAX_CONN", 8) as u32; // Adjust the connection limit as needed
     let conn_url = var_as_str_or("RW_SQLITE_URL", "sqlite::memory:".to_string());
     info!("Connecting to {} ...", conn_url);
+
+    if conn_url != "sqlite::memory:" && !Sqlite::database_exists(&conn_url).await.unwrap_or(false) {
+        info!("Creating database {} ...", conn_url);
+        Sqlite::create_database(&conn_url).await?;
+    }
 
     // Create the database connection pool
     let pool = SqlitePoolOptions::new()
