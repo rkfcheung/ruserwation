@@ -18,6 +18,7 @@ pub struct Admin {
     pub password: Vec<u8>,
     pub email: String,
     pub root: bool,
+    #[sqlx(default)]
     pub last_login_time: Option<NaiveDateTime>,
 }
 

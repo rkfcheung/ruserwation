@@ -1,14 +1,14 @@
 use std::collections::HashMap;
+use std::future::Future;
 use std::sync::{Arc, Mutex};
 use warp_sessions::Session;
 
 use super::models::Admin;
 
 pub trait AdminRepo {
-    fn new() -> Self; // Initialise the repository
-    fn find_by_username(&self, username: &str) -> Option<Admin>; // Find an Admin by username
-    fn save(&mut self, admin: Admin) -> u32; // Save an Admin and return its ID
-    fn verify(&self, username: &str, password: &str) -> bool; // Verify username and password
+    fn find_by_username(&self, username: &str) -> impl Future<Output = Option<Admin>> + Send; // Find an Admin by username
+    fn save(&mut self, admin: Admin) -> impl Future<Output = u32> + Send; // Save an Admin and return its ID
+    fn verify(&self, username: &str, password: &str) -> impl Future<Output = bool> + Send; // Verify username and password
 }
 
 pub trait EnableSession {
@@ -26,7 +26,7 @@ pub struct Sessions {
 
 impl Sessions {
     pub fn new() -> Self {
-        Sessions {
+        Self {
             context: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -63,7 +63,7 @@ pub struct InMemoryAdminRepo {
 
 impl InMemoryAdminRepo {
     pub fn new() -> Self {
-        InMemoryAdminRepo {
+        Self {
             admins: Arc::new(Mutex::new(HashMap::new())),
             sessions: Sessions::new(),
         }
@@ -90,22 +90,18 @@ impl EnableSession for InMemoryAdminRepo {
 }
 
 impl AdminRepo for InMemoryAdminRepo {
-    fn new() -> Self {
-        Self::new()
-    }
-
-    fn find_by_username(&self, username: &str) -> Option<Admin> {
+    async fn find_by_username(&self, username: &str) -> Option<Admin> {
         let admins = self.admins.lock().unwrap();
         admins.get(username).cloned()
     }
 
-    fn save(&mut self, admin: Admin) -> u32 {
+    async fn save(&mut self, admin: Admin) -> u32 {
         let mut admins = self.admins.lock().unwrap();
         admins.insert(admin.username.clone(), admin.clone());
         admin.id
     }
 
-    fn verify(&self, username: &str, password: &str) -> bool {
+    async fn verify(&self, username: &str, password: &str) -> bool {
         let admins = self.admins.lock().unwrap();
         if let Some(admin) = admins.get(username) {
             admin.verify_password(password)
