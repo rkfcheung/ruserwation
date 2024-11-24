@@ -18,12 +18,13 @@ In Rust, I trust!
 
 ## Project Status
 
-| Module      | Status  |
-| ----------- | ------- |
-| Admin       | Pending |
-| Customer    | Backlog |
-| Reservation | Backlog |
-| Restaurant  | Pending |
+| Module      | Status                         |
+| ----------- | ------------------------------ |
+| Admin       | Backlog :waxing_crescent_moon: |
+| Customer    | Backlog :new_moon:             |
+| Database    | Pending :first_quarter_moon:   |
+| Reservation | Backlog :new_moon:             |
+| Restaurant  | Backlog :new_moon:             |
 
 ## Deployment to AWS EC2 - Ubuntu
 
