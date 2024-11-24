@@ -41,23 +41,26 @@ mod tests {
         env::set_var("RW_SQLITE_URL", "sqlite::memory:");
 
         let pool = init_db().await.expect("Failed to initialize the database");
-        let result = migrate_db(&pool)
+        migrate_db(&pool)
             .await
             .expect("Failed to migrate the databse");
-        println!("{:?}", result);
 
-        let table_exists: (i32,) = sqlx::query_as(
-            r#"
-            SELECT COUNT(*) 
-            FROM sqlite_master 
-            WHERE type='table' AND name='Admin';
-            "#,
-        )
-        .fetch_one(&pool)
-        .await
-        .expect("Failed to query sqlite_master");
+        let tables = ["Admin", "Customer", "Reservation", "Restaurant"];
+        for table in tables.iter() {
+            let test_sql = &format!(
+                r#"
+                SELECT COUNT(*) 
+                FROM sqlite_master 
+                WHERE type='table' AND name='{table}';
+                "#
+            );
+            let table_exists: (i32,) = sqlx::query_as(test_sql)
+                .fetch_one(&pool)
+                .await
+                .expect(&format!("Failed to query sqlite_master for table {table}"));
 
-        assert_eq!(table_exists.0, 1, "Admin table does not exist");
+            assert_eq!(table_exists.0, 1, "{} table does not exist", table);
+        }
 
         // Cleanup
         env::remove_var("RW_SQLITE_URL");
