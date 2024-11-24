@@ -12,7 +12,7 @@ mod tests {
         let mut repo = InMemoryAdminRepo::new();
 
         // Create an Admin
-        let admin = Admin::new(
+        let mut admin = Admin::new(
             1,
             "admin".to_string(),
             "password123".to_string(),
@@ -20,7 +20,7 @@ mod tests {
         );
 
         // Save the Admin
-        let saved_id = repo.save(admin.clone()).await;
+        let saved_id = repo.save(&mut admin).await;
 
         // Verify that the saved ID is correct
         assert_eq!(saved_id, admin.id);
@@ -42,7 +42,7 @@ mod tests {
         found_admin.last_login_time = Some(Utc::now().naive_utc());
 
         // Save the updated admin back to the repository
-        repo.save(found_admin.clone()).await;
+        repo.save(&mut found_admin).await;
         assert_eq!(
             repo.find_by_username("admin")
                 .await

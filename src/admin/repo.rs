@@ -7,7 +7,7 @@ use super::models::Admin;
 
 pub trait AdminRepo {
     fn find_by_username(&self, username: &str) -> impl Future<Output = Option<Admin>> + Send; // Find an Admin by username
-    fn save(&mut self, admin: Admin) -> impl Future<Output = u32> + Send; // Save an Admin and return its ID
+    fn save(&mut self, admin: &mut Admin) -> impl Future<Output = u32> + Send; // Save an Admin and return its ID
     fn verify(&self, username: &str, password: &str) -> impl Future<Output = bool> + Send; // Verify username and password
 }
 
@@ -95,9 +95,13 @@ impl AdminRepo for InMemoryAdminRepo {
         admins.get(username).cloned()
     }
 
-    async fn save(&mut self, admin: Admin) -> u32 {
+    async fn save(&mut self, admin: &mut Admin) -> u32 {
         let mut admins = self.admins.lock().unwrap();
         admins.insert(admin.username.clone(), admin.clone());
+        if admin.id == 0 {
+            admin.id = admins.len() as u32 + 1;
+        }
+
         admin.id
     }
 
