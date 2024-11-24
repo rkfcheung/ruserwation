@@ -6,6 +6,8 @@ use crate::{setup::startup::SetupError, utils};
 
 type StdError = dyn std::error::Error;
 
+const SQLITE_IN_MEMORY: &str = "sqlite::memory:";
+
 impl From<sqlx::Error> for SetupError {
     fn from(err: sqlx::Error) -> SetupError {
         SetupError::DatabaseError(err)
@@ -18,13 +20,21 @@ impl From<Box<StdError>> for SetupError {
     }
 }
 
+pub async fn init_conn() -> Result<SqlitePool, sqlx::Error> {
+    let conn_url = get_conn_str();
+    info!("Connecting to {} ...", conn_url);
+    let pool = SqlitePool::connect(&conn_url).await?;
+
+    Ok(pool)
+}
+
 pub async fn init_db() -> Result<SqlitePool, Box<StdError>> {
     // Check the environment
     let max_conn = var_as_int_or("RW_SQLITE_MAX_CONN", 8) as u32; // Adjust the connection limit as needed
-    let conn_url = var_as_str_or("RW_SQLITE_URL", "sqlite::memory:".to_string());
+    let conn_url = get_conn_str();
     info!("Connecting to {} ...", conn_url);
 
-    if conn_url != "sqlite::memory:" && !Sqlite::database_exists(&conn_url).await.unwrap_or(false) {
+    if conn_url != SQLITE_IN_MEMORY && !Sqlite::database_exists(&conn_url).await.unwrap_or(false) {
         info!("Creating database {} ...", conn_url);
         Sqlite::create_database(&conn_url).await?;
     }
@@ -45,4 +55,9 @@ pub async fn migrate_db(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     info!("Migrated");
 
     Ok(())
+}
+
+fn get_conn_str() -> String {
+    let db_url = var_as_str_or("DATABASE_URL", SQLITE_IN_MEMORY.to_string());
+    var_as_str_or("RW_SQLITE_URL", db_url)
 }

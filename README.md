@@ -1,6 +1,6 @@
 # ruserwation
 
-Restaurant reservation web app using Rust, Warp, Maud, and SQLite.
+Restaurant reservation web app using [Rust](https://www.rust-lang.org), [Warp](https://github.com/seanmonstar/warp), [Maud](https://maud.lambda.xyz/), and [SQLite](https://www.sqlite.org) (with [SQLx](https://github.com/launchbadge/sqlx)).
 
 ## Objective
 

@@ -15,7 +15,7 @@ impl SqliteAdminRepo {
     async fn insert(&mut self, admin: &mut Admin) -> u32 {
         let result = query(
             r#"
-            INSERT INTO Admin (username, password, email, root, last_login_time)
+            INSERT INTO Admin (username, password, email, root, last_login_time)sq
             VALUES (?, ?, ?, ?, ?);
             "#,
         )
