@@ -1,17 +1,25 @@
 #[cfg(test)]
 mod tests {
 
-    use ruserwation::admin::{helper, models::Admin};
+    use ruserwation::{
+        admin::{helper, models::Admin},
+        utils::env_util::var_as_int_or,
+    };
     use std::env;
 
     // Test the Admin::new method
     #[test]
     fn test_admin_new() {
-        let username = "admin".to_string();
-        let password = "password123".to_string();
-        let email = "admin@localhost".to_string();
+        let username = "admin";
+        let password = "password123";
+        let email = "admin@localhost";
 
-        let admin = Admin::new(1, username.clone(), password.clone(), email.clone());
+        let admin = Admin::new(
+            1,
+            username.to_string(),
+            password.to_string(),
+            email.to_string(),
+        );
 
         assert_eq!(admin.id, 1);
         assert_eq!(admin.username, username);
@@ -47,10 +55,7 @@ mod tests {
     fn test_generate_password_with_env_length() {
         env::set_var("RW_ADMIN_PWD_LEN", "10");
 
-        let pwd_len = env::var("RW_ADMIN_PWD_LEN")
-            .unwrap()
-            .parse::<usize>()
-            .unwrap();
+        let pwd_len = var_as_int_or("RW_ADMIN_PWD_LEN", 0) as usize;
         let random_password = helper::generate_random_password(pwd_len);
 
         assert_eq!(random_password.len(), 10);
@@ -100,9 +105,9 @@ mod tests {
     #[test]
     fn test_verify_password() {
         let username = "admin".to_string();
-        let password = "password123".to_string();
+        let password = "password123";
         let email = "admin@localhost".to_string();
-        let admin = Admin::new(1, username.clone(), password.clone(), email.clone());
+        let admin = Admin::new(1, username, password.to_string(), email);
 
         // Verify with the correct password
         assert!(admin.verify_password(&password));
