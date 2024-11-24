@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct Customer {
     pub id: u32,
     pub email: String,

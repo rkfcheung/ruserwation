@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::env_util::{var_as_str, var_as_str_or};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct Admin {
     pub id: u32,
     pub username: String,
