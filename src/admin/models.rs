@@ -46,6 +46,12 @@ impl Admin {
         let admin_password = var_as_str("RW_ADMIN_PASSWORD");
         let admin_username = var_as_str_or("RW_ADMIN_USERNAME", "admin".to_string());
 
+        let username = if admin_username.is_empty() {
+            "admin".to_string()
+        } else {
+            admin_username
+        };
+
         let password = if admin_password.len() < 4 {
             let admin_pwd_len = match env::var("RW_ADMIN_PWD_LEN") {
                 Ok(value) => match value.parse::<usize>() {
@@ -71,7 +77,7 @@ impl Admin {
             admin_password
         };
 
-        Self::new(1, admin_username, password.clone(), admin_email)
+        Self::new(1, username, password, admin_email)
     }
 
     pub fn generate_random_password(n: usize) -> String {

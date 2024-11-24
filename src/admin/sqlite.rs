@@ -120,10 +120,9 @@ impl AdminRepo for SqliteAdminRepo {
     async fn verify(&self, username: &str, password: &str) -> bool {
         if let Some(admin) = self.find_by_username(username).await {
             // Compare the password (assuming stored passwords are hashed)
-            // Here we assume plain-text password, but in practice, you should hash the password
-            return admin.password == password.as_bytes(); // Simple password comparison (for illustration)
+            admin.verify_password(password)
+        } else {
+            false // Return false if no admin was found
         }
-
-        false // Return false if no admin was found
     }
 }
