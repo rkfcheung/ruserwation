@@ -13,7 +13,7 @@ mod tests {
         // Set environment variables for testing
         env::set_var("RW_ADMIN_PASSWORD", "local_test");
         env::set_var("RW_ADMIN_USERNAME", "startup");
-        env::set_var("RW_SQLITE_URL", "sqlite://local-test.db");
+        env::set_var("RW_SQLITE_URL", "sqlite://local-test-init.db");
 
         let result: Result<(), startup::SetupError> = startup::init().await;
         assert!(result.is_ok(), "Failed to init");
@@ -30,6 +30,6 @@ mod tests {
         env::remove_var("RW_ADMIN_PASSWORD");
         env::remove_var("RW_ADMIN_USERNAME");
         env::remove_var("RW_SQLITE_URL");
-        std::fs::remove_file("local-test.db").expect("Failed to remove test database file");
+        std::fs::remove_file("local-test-init.db").expect("Failed to remove test database file");
     }
 }

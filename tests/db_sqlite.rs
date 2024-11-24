@@ -67,6 +67,25 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_with_file_based_sqlite() {
+        std::env::set_var("RW_SQLITE_URL", "sqlite://local-test.db");
+
+        let pool = init_db().await.expect("Failed to initialize the database");
+
+        // Test query
+        let result: (i32,) = sqlx::query_as("SELECT 1")
+            .fetch_one(&pool)
+            .await
+            .expect("Failed to execute test query");
+
+        assert_eq!(result.0, 1);
+
+        // Cleanup
+        env::remove_var("RW_SQLITE_URL");
+        std::fs::remove_file("local-test.db").expect("Failed to remove test database file");
+    }
+
+    #[tokio::test]
     async fn test_with_in_memory_sqlite() {
         env::set_var("RW_SQLITE_URL", "sqlite::memory:");
 
