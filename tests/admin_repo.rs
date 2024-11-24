@@ -25,6 +25,10 @@ mod tests {
         // Verify that the saved ID is correct
         assert_eq!(saved_id, admin.id);
 
+        // Retrieve the Admin by ID
+        let found_admin = repo.find_by_id(1).await.unwrap();
+        assert_eq!(found_admin.id, 1);
+
         // Retrieve the Admin by username
         let mut found_admin = repo.find_by_username("admin").await.unwrap();
         assert_eq!(found_admin.username, admin.username);

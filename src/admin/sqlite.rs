@@ -12,24 +12,6 @@ impl SqliteAdminRepo {
         Self { pool }
     }
 
-    async fn find_by_id(&self, id: u32) -> Option<Admin> {
-        let result = query_as(
-            r#"
-            SELECT id, username, password, email, root, last_login_time
-            FROM Admin
-            WHERE id = ?;
-            "#,
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await;
-
-        match result {
-            Ok(admin) => admin, // Return found Admin
-            _ => None,          // Return None if not found or if there's an error
-        }
-    }
-
     async fn insert(&mut self, admin: &mut Admin) -> u32 {
         let result = query(
             r#"
@@ -83,6 +65,25 @@ impl SqliteAdminRepo {
 }
 
 impl AdminRepo for SqliteAdminRepo {
+    // Find an Admin by ID
+    async fn find_by_id(&self, id: u32) -> Option<Admin> {
+        let result = query_as(
+            r#"
+            SELECT id, username, password, email, root, last_login_time
+            FROM Admin
+            WHERE id = ?;
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await;
+
+        match result {
+            Ok(admin) => admin, // Return found Admin
+            _ => None,          // Return None if not found or if there's an error
+        }
+    }
+
     // Find an Admin by username
     async fn find_by_username(&self, username: &str) -> Option<Admin> {
         let result = query_as(
