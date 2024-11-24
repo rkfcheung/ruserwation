@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use ruserwation::db::sqlite::init_db;
+    use ruserwation::db::sqlite::{init_db, migrate_db};
     use std::env;
 
     #[tokio::test]
@@ -33,6 +33,33 @@ mod tests {
 
         // Cleanup
         env::remove_var("RW_SQLITE_MAX_CONN");
+        env::remove_var("RW_SQLITE_URL");
+    }
+
+    #[tokio::test]
+    async fn test_migrate_db() {
+        env::set_var("RW_SQLITE_URL", "sqlite::memory:");
+
+        let pool = init_db().await.expect("Failed to initialize the database");
+        let result = migrate_db(&pool)
+            .await
+            .expect("Failed to migrate the databse");
+        println!("{:?}", result);
+
+        let table_exists: (i32,) = sqlx::query_as(
+            r#"
+            SELECT COUNT(*) 
+            FROM sqlite_master 
+            WHERE type='table' AND name='Admin';
+            "#,
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("Failed to query sqlite_master");
+
+        assert_eq!(table_exists.0, 1, "Admin table does not exist");
+
+        // Cleanup
         env::remove_var("RW_SQLITE_URL");
     }
 
