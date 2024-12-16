@@ -3,13 +3,13 @@ use sqlx::{query, query_as, SqlitePool};
 
 use super::{models::Admin, repo::AdminRepo};
 
-pub struct SqliteAdminRepo {
-    pool: SqlitePool, // SQLite connection pool
+pub struct SqliteAdminRepo<'conn> {
+    pool: &'conn SqlitePool, // SQLite connection pool
 }
 
-impl SqliteAdminRepo {
+impl<'conn> SqliteAdminRepo<'conn> {
     // Create a new repository with a database connection pool
-    pub fn new(pool: SqlitePool) -> Self {
+    pub fn new(pool: &'conn SqlitePool) -> Self {
         Self { pool }
     }
 
@@ -24,7 +24,7 @@ impl SqliteAdminRepo {
         .bind(&admin.password)
         .bind(&admin.email)
         .bind(admin.root)
-        .execute(&self.pool)
+        .execute(self.pool)
         .await;
 
         match result {
@@ -54,7 +54,7 @@ impl SqliteAdminRepo {
         .bind(&admin.email)
         .bind(admin.last_login_time)
         .bind(admin.id)
-        .execute(&self.pool)
+        .execute(self.pool)
         .await;
 
         match result {
@@ -67,7 +67,7 @@ impl SqliteAdminRepo {
     }
 }
 
-impl AdminRepo for SqliteAdminRepo {
+impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
     // Find an Admin by ID
     async fn find_by_id(&self, id: u32) -> Option<Admin> {
         let result = query_as(
@@ -78,7 +78,7 @@ impl AdminRepo for SqliteAdminRepo {
             "#,
         )
         .bind(id)
-        .fetch_optional(&self.pool)
+        .fetch_optional(self.pool)
         .await;
 
         match result {
@@ -97,7 +97,7 @@ impl AdminRepo for SqliteAdminRepo {
             "#,
         )
         .bind(username)
-        .fetch_optional(&self.pool)
+        .fetch_optional(self.pool)
         .await;
 
         match result {

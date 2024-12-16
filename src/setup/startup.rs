@@ -41,13 +41,13 @@ pub async fn init() -> Result<(), SetupError> {
         .await
         .map_err(SetupError::from)?;
 
-    let mut admin_repo = SqliteAdminRepo::new(pool);
+    let mut admin_repo = SqliteAdminRepo::new(&pool);
     init_admin(&mut admin_repo).await?;
 
     Ok(())
 }
 
-async fn init_admin(admin_repo: &mut SqliteAdminRepo) -> Result<(), SetupError> {
+async fn init_admin(admin_repo: &mut SqliteAdminRepo<'_>) -> Result<(), SetupError> {
     let root_user = admin_repo.find_by_id(1).await;
     match root_user {
         Some(admin) => info!(
