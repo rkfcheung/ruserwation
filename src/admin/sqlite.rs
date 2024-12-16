@@ -1,4 +1,4 @@
-use log::warn;
+use log::{error, warn};
 use sqlx::{query, query_as, SqlitePool};
 
 use super::{
@@ -20,7 +20,7 @@ impl<'conn> SqliteAdminRepo<'conn> {
         }
     }
 
-    async fn insert(&mut self, admin: &mut Admin) -> u32 {
+    async fn insert(&self, admin: &mut Admin) -> Result<u32, sqlx::Error> {
         let result = query(
             r#"
             INSERT INTO Admin (username, password, email, root)
@@ -32,22 +32,13 @@ impl<'conn> SqliteAdminRepo<'conn> {
         .bind(&admin.email)
         .bind(admin.root)
         .execute(self.pool)
-        .await;
+        .await?;
 
-        match result {
-            Ok(r) => {
-                admin.id = r.last_insert_rowid() as u32;
-
-                admin.id
-            } // Return the inserted ID
-            _ => {
-                warn!("Failed to insert into Admin: {:?}", admin);
-                0
-            } // Return 0 if there's an error
-        }
+        admin.id = result.last_insert_rowid() as u32;
+        Ok(admin.id)
     }
 
-    async fn update(&mut self, admin: &Admin) -> u32 {
+    async fn update(&self, admin: &Admin) -> Result<u32, sqlx::Error> {
         let result = query(
             r#"
             UPDATE Admin
@@ -62,18 +53,9 @@ impl<'conn> SqliteAdminRepo<'conn> {
         .bind(admin.last_login_time)
         .bind(admin.id)
         .execute(self.pool)
-        .await;
+        .await?;
 
-        match result {
-            Ok(_) => admin.id,
-            _ => {
-                warn!(
-                    "Failed to update Admin with ID {}. Admin details: {:?}",
-                    admin.id, admin
-                );
-                0
-            }
-        }
+        Ok(admin.id)
     }
 }
 
@@ -114,8 +96,14 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
         .await;
 
         match result {
-            Ok(admin) => admin, // Return found Admin
-            _ => None,          // Return None if not found or if there's an error
+            Ok(admin) => admin,
+            Err(e) => {
+                error!(
+                    "Database error while finding admin by username {}: {:?}",
+                    username, e
+                );
+                None
+            }
         }
     }
 
@@ -125,13 +113,13 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
             match self.find_by_username(&admin.username).await {
                 Some(found) => {
                     admin.id = found.id;
-                    self.update(admin).await
+                    self.update(admin).await.unwrap_or(0)
                 }
-                None => self.insert(admin).await,
+                None => self.insert(admin).await.unwrap_or(0),
             }
         } else {
             match self.find_by_id(admin.id).await {
-                Some(_) => self.update(admin).await,
+                Some(_) => self.update(admin).await.unwrap_or(0),
                 None => 0,
             }
         }
