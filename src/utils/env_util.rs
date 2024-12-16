@@ -1,5 +1,9 @@
 use std::env;
 
+pub fn remove_whitespace(input: &str) -> String {
+    input.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
 pub fn truncate_string(input: &str, max_len: usize) -> String {
     input.chars().take(max_len).collect()
 }
