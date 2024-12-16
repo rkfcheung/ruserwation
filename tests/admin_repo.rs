@@ -40,7 +40,7 @@ mod tests {
         assert!(repo.verify("admin", "password123").await); // Ensure you check against the hashed password
 
         // Create a session for the admin
-        let session_id = repo.create_session("admin");
+        let session_id = repo.create_session("admin").await.unwrap();
 
         // Update the last login time for the admin
         found_admin.last_login_time = Some(Utc::now().naive_utc());
@@ -56,11 +56,11 @@ mod tests {
         );
 
         // Retrieve the session
-        let session = repo.get_session(&session_id).unwrap();
+        let session = repo.get_session(&session_id).await.unwrap();
         assert_eq!(session.get_raw("user").unwrap(), admin.username);
 
         // Destroy the session
-        repo.destroy_session(&session_id);
-        assert!(repo.get_session(&session_id).is_none()); // Ensure session is removed
+        repo.destroy_session(&session_id).await;
+        assert!(repo.get_session(&session_id).await.is_err()); // Ensure session is removed
     }
 }

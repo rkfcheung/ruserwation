@@ -1,16 +1,23 @@
 use log::warn;
 use sqlx::{query, query_as, SqlitePool};
 
-use super::{models::Admin, repo::AdminRepo};
+use super::{
+    models::Admin,
+    repo::{AdminRepo, Sessions},
+};
 
 pub struct SqliteAdminRepo<'conn> {
     pool: &'conn SqlitePool, // SQLite connection pool
+    sessions: Sessions,      // Session ID to Session mapping
 }
 
 impl<'conn> SqliteAdminRepo<'conn> {
     // Create a new repository with a database connection pool
     pub fn new(pool: &'conn SqlitePool) -> Self {
-        Self { pool }
+        Self {
+            pool,
+            sessions: Sessions::new(),
+        }
     }
 
     async fn insert(&mut self, admin: &mut Admin) -> u32 {
