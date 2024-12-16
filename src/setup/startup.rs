@@ -57,7 +57,6 @@ async fn init_admin(admin_repo: &mut SqliteAdminRepo<'_>) -> Result<(), SetupErr
         None => {
             info!("Initialising Admin ...");
             let mut admin = Admin::init();
-            admin.id = 0;
             let id = admin_repo.save(&mut admin).await;
             if id > 0 {
                 info!("Admin is created.");

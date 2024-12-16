@@ -1,12 +1,15 @@
+mod common;
+
 #[cfg(test)]
 mod tests {
     use std::env;
 
     use ruserwation::{
         admin::{repo::AdminRepo, sqlite::SqliteAdminRepo},
-        db,
         setup::startup,
     };
+
+    use crate::common::db_utils::init_conn;
 
     #[tokio::test]
     async fn test_init() {
@@ -18,7 +21,7 @@ mod tests {
         let result: Result<(), startup::SetupError> = startup::init().await;
         assert!(result.is_ok(), "Failed to init");
 
-        let pool = db::sqlite::init_conn().await.unwrap();
+        let pool = init_conn().await.unwrap();
         let admin_repo = SqliteAdminRepo::new(&pool);
         let root_user = admin_repo.find_by_id(1).await;
         assert!(root_user.is_some());

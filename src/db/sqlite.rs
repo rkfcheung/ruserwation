@@ -20,12 +20,9 @@ impl From<Box<StdError>> for SetupError {
     }
 }
 
-pub async fn init_conn() -> Result<SqlitePool, sqlx::Error> {
-    let conn_url = get_conn_str();
-    info!("Connecting to {} ...", conn_url);
-    let pool = SqlitePool::connect(&conn_url).await?;
-
-    Ok(pool)
+pub fn get_conn_str() -> String {
+    let db_url = var_as_str_or("DATABASE_URL", SQLITE_IN_MEMORY.to_string());
+    var_as_str_or("RW_SQLITE_URL", db_url)
 }
 
 pub async fn init_db() -> Result<SqlitePool, Box<StdError>> {
@@ -55,9 +52,4 @@ pub async fn migrate_db(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     info!("Migrated");
 
     Ok(())
-}
-
-fn get_conn_str() -> String {
-    let db_url = var_as_str_or("DATABASE_URL", SQLITE_IN_MEMORY.to_string());
-    var_as_str_or("RW_SQLITE_URL", db_url)
 }

@@ -1,29 +1,37 @@
+mod common;
+
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
     use ruserwation::admin::{
         models::Admin,
-        repo::{AdminRepo, EnableSession, InMemoryAdminRepo},
+        repo::{AdminRepo, EnableSession},
+        sqlite::SqliteAdminRepo,
     };
 
+    use crate::common::db_utils;
+
     #[tokio::test]
-    async fn test_in_memory_admin_repo() {
-        // Create an instance of InMemoryAdminRepo
-        let mut repo = InMemoryAdminRepo::new();
+    async fn test_sqlite_admin_repo() {
+        env_logger::init();
+
+        // Create an instance
+        let pool = db_utils::init_test_db().await.unwrap();
+        let mut repo = SqliteAdminRepo::new(&pool);
 
         // Create an Admin
-        let mut admin = Admin::new(
-            1,
-            "admin".to_string(),
-            "password123".to_string(),
-            "admin@localhost".to_string(),
-        );
+        let mut admin = Admin::builder()
+            .id(1)
+            .username("admin")
+            .password("password123")
+            .email("admin@localhost")
+            .build();
 
         // Save the Admin
         let saved_id = repo.save(&mut admin).await;
 
         // Verify that the saved ID is correct
         assert_eq!(saved_id, admin.id);
+        assert_eq!(saved_id, 1);
 
         // Retrieve the Admin by ID
         let found_admin = repo.find_by_id(1).await.unwrap();
@@ -42,17 +50,14 @@ mod tests {
         // Create a session for the admin
         let session_id = repo.create_session("admin").await.unwrap();
 
-        // Update the last login time for the admin
-        found_admin.last_login_time = Some(Utc::now().naive_utc());
+        // Update the email for the admin
+        found_admin.email = "admin-new@localhost".to_string();
 
         // Save the updated admin back to the repository
         repo.save(&mut found_admin).await;
         assert_eq!(
-            repo.find_by_username("admin")
-                .await
-                .unwrap()
-                .last_login_time,
-            found_admin.last_login_time
+            repo.find_by_username("admin").await.unwrap().email,
+            found_admin.email
         );
 
         // Retrieve the session
