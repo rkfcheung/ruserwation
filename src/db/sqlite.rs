@@ -4,9 +4,9 @@ use utils::env_util::{var_as_int_or, var_as_str_or};
 
 use crate::{setup::startup::SetupError, utils};
 
-type StdError = dyn std::error::Error;
+pub const SQLITE_IN_MEMORY: &str = "sqlite::memory:";
 
-const SQLITE_IN_MEMORY: &str = "sqlite::memory:";
+type StdError = dyn std::error::Error;
 
 impl From<sqlx::Error> for SetupError {
     fn from(err: sqlx::Error) -> SetupError {
@@ -18,11 +18,6 @@ impl From<Box<StdError>> for SetupError {
     fn from(err: Box<StdError>) -> SetupError {
         SetupError::InvalidConfigError(err.to_string())
     }
-}
-
-pub fn get_conn_str() -> String {
-    let db_url = var_as_str_or("DATABASE_URL", SQLITE_IN_MEMORY.to_string());
-    var_as_str_or("RW_SQLITE_URL", db_url)
 }
 
 pub async fn init_db() -> Result<SqlitePool, Box<StdError>> {
@@ -52,4 +47,9 @@ pub async fn migrate_db(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     info!("Migrated");
 
     Ok(())
+}
+
+fn get_conn_str() -> String {
+    let db_url = var_as_str_or("DATABASE_URL", SQLITE_IN_MEMORY.to_string());
+    var_as_str_or("RW_SQLITE_URL", db_url)
 }

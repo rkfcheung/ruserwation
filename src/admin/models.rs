@@ -94,7 +94,7 @@ impl AdminBuilder {
 
     /// Sets the email for the admin after validating it.
     pub fn email(mut self, email: &str) -> Self {
-        self.email = validate_email(email).into();
+        self.email = validate_email(email);
         self
     }
 
@@ -106,13 +106,13 @@ impl AdminBuilder {
 
     /// Sets the password for the admin after hashing it.
     pub fn password(mut self, password: &str) -> Self {
-        self.password = hash_password(password).into();
+        self.password = hash_password(password);
         self
     }
 
     /// Sets the username for the admin after validating it.
     pub fn username(mut self, username: &str) -> Self {
-        self.username = validate_username(username).into();
+        self.username = validate_username(username);
         self
     }
 }

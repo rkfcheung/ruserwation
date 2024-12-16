@@ -12,10 +12,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_sqlite_admin_repo() {
-        env_logger::init();
-
         // Create an instance
-        let pool = db_utils::init_test_db().await.unwrap();
+        let pool = db_utils::init_test_db()
+            .await
+            .expect("Failed to create test DB!");
         let mut repo = SqliteAdminRepo::new(&pool);
 
         // Create an Admin
@@ -55,10 +55,9 @@ mod tests {
 
         // Save the updated admin back to the repository
         repo.save(&mut found_admin).await;
-        assert_eq!(
-            repo.find_by_username("admin").await.unwrap().email,
-            found_admin.email
-        );
+        let updated = repo.find_by_username("admin").await.unwrap();
+        assert_eq!(updated.email, found_admin.email);
+        assert!(updated.last_login_time.is_some());
 
         // Retrieve the session
         let session = repo.get_session(&session_id).await.unwrap();
