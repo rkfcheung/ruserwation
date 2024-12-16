@@ -17,10 +17,10 @@ const VAR_LEN: usize = 256; // Maximum allowed length for variables like usernam
 pub fn hash_password(password: &str) -> Vec<u8> {
     let argon2 = Argon2::default();
     let salt = SaltString::generate(&mut OsRng);
-    let password = validate_password(&password);
+    let validated_password = validate_password(password);
 
     argon2
-        .hash_password(password.as_bytes(), &salt)
+        .hash_password(validated_password.as_bytes(), &salt)
         .expect("Failed to hash password")
         .to_string()
         .into_bytes()
@@ -28,10 +28,10 @@ pub fn hash_password(password: &str) -> Vec<u8> {
 
 /// Generates a random password with a given length.
 /// Ensures the password meets the minimum length requirement.
-pub fn generate_random_password(n: usize) -> String {
+pub fn generate_random_password(length: usize) -> String {
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
-        .take(n.max(PWD_MIN_LEN))
+        .take(length.clamp(PWD_MIN_LEN, PWD_MAX_LEN))
         .map(char::from)
         .collect()
 }
@@ -40,6 +40,7 @@ pub fn generate_random_password(n: usize) -> String {
 /// Returns a default email (`admin@localhost`) if invalid.
 pub fn validate_email(email: &str) -> String {
     let sanitized_email = remove_whitespace(email);
+
     if is_valid_email(&sanitized_email) {
         truncate_string(&sanitized_email, VAR_LEN)
     } else {
@@ -52,71 +53,92 @@ pub fn validate_email(email: &str) -> String {
 /// Generates a random password if the provided password is invalid.
 pub fn validate_password(password: &str) -> String {
     let sanitized_password = remove_whitespace(password);
+
     if sanitized_password.len() < PWD_MIN_LEN {
-        let admin_pwd_len = match env::var("RW_ADMIN_PWD_LEN") {
-            Ok(value) => match value.parse::<usize>() {
-                Ok(parsed_len) => parsed_len,
-                Err(_) => {
-                    debug!(
-                        "Invalid RW_ADMIN_PWD_LEN, using default value of {}.",
-                        PWD_DEF_LEN
-                    );
-                    PWD_DEF_LEN
-                }
-            },
-            Err(_) => {
+        // Get custom password length from the environment variable, falling back to default.
+        let admin_pwd_len = env::var("RW_ADMIN_PWD_LEN")
+            .ok()
+            .and_then(|value| value.parse::<usize>().ok())
+            .unwrap_or_else(|| {
                 debug!(
-                    "RW_ADMIN_PWD_LEN not set, using default value of {}.",
+                    "RW_ADMIN_PWD_LEN not set or invalid. Using default value: {}",
                     PWD_DEF_LEN
                 );
                 PWD_DEF_LEN
-            }
-        }
-        .min(PWD_MAX_LEN);
+            })
+            .clamp(PWD_MIN_LEN, PWD_MAX_LEN);
 
+        // Generate and log a random password
         let random_password = generate_random_password(admin_pwd_len);
         warn!(
-            "Admin password not set. Generated random password: {}",
+            "Invalid or missing admin password. Generated random password: {}",
             random_password
         );
         random_password
     } else {
-        truncate_string(password, PWD_MAX_LEN)
+        truncate_string(&sanitized_password, PWD_MAX_LEN)
     }
 }
 
+/// Validates and sanitizes a username.
+/// Returns a default username (`admin`) if invalid.
 pub fn validate_username(username: &str) -> String {
-    let username = if is_valid_username(username) {
-        &remove_whitespace(username)
+    let sanitized_username = remove_whitespace(username);
+
+    if is_valid_username(&sanitized_username) {
+        truncate_string(&sanitized_username, VAR_LEN)
     } else {
-        ""
-    };
-    if username.is_empty() {
+        warn!("Invalid username provided. Using default username: admin");
         "admin".to_string()
-    } else {
-        truncate_string(username, VAR_LEN)
     }
 }
 
+/// Checks if an email address is valid.
 fn is_valid_email(email: &str) -> bool {
-    if "admin@localhost" == email {
+    // Allow the special default email for convenience
+    if email == "admin@localhost" {
         return true;
     }
-    let email_regex = regex::Regex::new(r"^[\w\.-]+@[\w\.-]+\.\w+$").unwrap();
-    if email_regex.is_match(email) {
-        true
-    } else {
-        warn!("Invalid email format.");
-        false
+
+    // Compile the regex safely
+    let email_regex = regex::Regex::new(r"^[\w\.-]+@[\w\.-]+\.\w+$");
+    match email_regex {
+        Ok(regex) => {
+            if regex.is_match(email) {
+                true
+            } else {
+                warn!("Invalid email format: {}", email);
+                false
+            }
+        }
+        Err(e) => {
+            // Log an error if regex compilation fails
+            warn!("Failed to compile email regex: {}", e);
+            false
+        }
     }
 }
 
+/// Checks if a username is valid.
+/// Username must be 3-32 characters long, alphanumeric, and may include `_`.
 fn is_valid_username(username: &str) -> bool {
-    let username_regex = regex::Regex::new(r"^[a-zA-Z0-9_-]{3,32}$").unwrap();
-    if username_regex.is_match(username) {
-        true
-    } else {
-        warn!("Invalid username: Must be 3-32 characters, alphanumeric, and contain only _ or -.");
-        false
+    let username_regex = regex::Regex::new(r"^[a-zA-Z0-9_]{3,32}$");
+    match username_regex {
+        Ok(regex) => {
+            if regex.is_match(username) {
+                true
+            } else {
+                warn!(
+                    "Invalid username: '{}' (must be 3-32 alphanumeric characters, or `_`)",
+                    username
+                );
+                false
+            }
+        }
+        Err(e) => {
+            // Log an error if regex compilation fails
+            warn!("Failed to compile username regex: {}", e);
+            false
+        }
     }
 }

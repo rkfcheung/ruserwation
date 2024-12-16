@@ -85,13 +85,13 @@ mod tests {
     fn test_admin_init_with_env_vars() {
         // Set environment variables for testing
         env::set_var("RW_ADMIN_USERNAME", "env_admin");
-        env::set_var("RW_ADMIN_EMAIL", "env_admin@localhost");
+        env::set_var("RW_ADMIN_EMAIL", "env_admin@localhost.com");
         env::set_var("RW_ADMIN_PASSWORD", "env_password123");
 
         let admin = Admin::init();
 
         assert_eq!(admin.username, "env_admin");
-        assert_eq!(admin.email, "env_admin@localhost");
+        assert_eq!(admin.email, "env_admin@localhost.com");
         assert_eq!(admin.root, true); // Should be root because id is 1
 
         // Clean up environment variables after the test
