@@ -7,6 +7,22 @@ mod tests {
     };
     use std::env;
 
+    #[test]
+    fn test_admin_builder() {
+        let admin = Admin::builder()
+            .id(1)
+            .username("admin")
+            .password("secure_password")
+            .email("admin@localhost")
+            .build();
+
+        assert_eq!(admin.id, 1);
+        assert_eq!(admin.username, "admin");
+        assert!(admin.root);
+        assert_eq!(admin.email, "admin@localhost");
+        assert!(admin.password.len() > 0);
+    }
+
     // Test the Admin::new method
     #[test]
     fn test_admin_new() {
