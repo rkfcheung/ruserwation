@@ -60,7 +60,10 @@ impl<'conn> SqliteAdminRepo<'conn> {
         match result {
             Ok(_) => admin.id,
             _ => {
-                warn!("Failed to update into Admin: {:?}", admin);
+                warn!(
+                    "Failed to update Admin with ID {}. Admin details: {:?}",
+                    admin.id, admin
+                );
                 0
             }
         }
@@ -82,8 +85,11 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
         .await;
 
         match result {
-            Ok(admin) => admin, // Return found Admin
-            _ => None,          // Return None if not found or if there's an error
+            Ok(admin) => admin,
+            Err(e) => {
+                warn!("Error finding admin by ID: {:?}", e);
+                None
+            }
         }
     }
 
@@ -109,20 +115,18 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
     // Save an Admin and return its ID
     async fn save(&mut self, admin: &mut Admin) -> u32 {
         if admin.id == 0 {
-            let result = self.find_by_username(&admin.username).await;
-            return match result {
+            match self.find_by_username(&admin.username).await {
                 Some(found) => {
                     admin.id = found.id;
                     self.update(admin).await
                 }
-                _ => self.insert(admin).await,
-            };
-        }
-
-        let found = self.find_by_id(admin.id).await;
-        match found {
-            Some(_) => self.update(admin).await,
-            _ => 0,
+                None => self.insert(admin).await,
+            }
+        } else {
+            match self.find_by_id(admin.id).await {
+                Some(_) => self.update(admin).await,
+                None => 0,
+            }
         }
     }
 
