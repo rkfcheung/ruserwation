@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::{Arc, Mutex};
-use tokio::sync::RwLock;
 use warp_sessions::Session;
 
 use super::models::Admin;
@@ -33,7 +32,8 @@ pub trait EnableSession {
 }
 
 pub struct Sessions {
-    context: Arc<Mutex<HashMap<String, Session>>>, // Session ID to Session mapping
+    // Session ID to Session mapping
+    context: Arc<Mutex<HashMap<String, Session>>>,
 }
 
 impl Sessions {
@@ -65,70 +65,5 @@ impl Sessions {
     pub fn get(&self, session_id: &str) -> Option<Session> {
         let sessions = self.context.lock().unwrap();
         sessions.get(session_id).cloned()
-    }
-}
-
-pub struct InMemoryAdminRepo {
-    admins: Arc<RwLock<HashMap<String, Admin>>>, // Using username as the key
-    sessions: Sessions,                          // Session ID to Session mapping
-}
-
-impl InMemoryAdminRepo {
-    pub fn new() -> Self {
-        Self {
-            admins: Arc::new(RwLock::new(HashMap::new())),
-            sessions: Sessions::new(),
-        }
-    }
-}
-
-impl EnableSession for InMemoryAdminRepo {
-    async fn create_session(&self, username: &str) -> Result<String, String> {
-        let admins = self.admins.read().await;
-        if admins.contains_key(username) {
-            Ok(self.sessions.create(username))
-        } else {
-            Err(format!("Username '{}' not found", username))
-        }
-    }
-
-    async fn destroy_session(&self, session_id: &str) {
-        self.sessions.destroy(session_id);
-    }
-
-    async fn get_session(&self, session_id: &str) -> Result<Session, String> {
-        self.sessions
-            .get(session_id)
-            .ok_or_else(|| format!("Session '{}' not found", session_id))
-    }
-}
-
-impl AdminRepo for InMemoryAdminRepo {
-    async fn find_by_id(&self, id: u32) -> Option<Admin> {
-        let admins = self.admins.read().await;
-        admins.values().find(|&admin| admin.id == id).cloned()
-    }
-
-    async fn find_by_username(&self, username: &str) -> Option<Admin> {
-        let admins = self.admins.read().await;
-        admins.get(username).cloned()
-    }
-
-    async fn save(&mut self, admin: &mut Admin) -> u32 {
-        let mut admins = self.admins.write().await;
-        if admin.id == 0 {
-            admin.id = admins.len() as u32 + 1;
-        }
-        admins.insert(admin.username.clone(), admin.clone());
-        admin.id
-    }
-
-    async fn verify(&self, username: &str, password: &str) -> bool {
-        let admins = self.admins.read().await;
-        if let Some(admin) = admins.get(username) {
-            admin.verify_password(password)
-        } else {
-            false
-        }
     }
 }
