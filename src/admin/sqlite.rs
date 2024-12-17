@@ -111,10 +111,7 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
         match result {
             Ok(admin) => admin,
             Err(e) => {
-                error!(
-                    "Database error while finding admin by username {}: {:?}",
-                    username, e
-                );
+                error!("Error finding admin by username {}: {:?}", username, e);
                 None
             }
         }
@@ -183,8 +180,8 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
 
 impl<'conn> EnableSession for SqliteAdminRepo<'conn> {
     async fn create_session(&self, username: &str) -> Result<String, String> {
-        if let Some(_) = self.find_by_username(username).await {
-            Ok(self.sessions.create(&username))
+        if self.find_by_username(username).await.is_some() {
+            Ok(self.sessions.create(username))
         } else {
             Err(format!("Username '{}' not found", username))
         }

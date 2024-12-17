@@ -1,8 +1,8 @@
-use ruserwation::db::{self, sqlite::SQLITE_IN_MEMORY};
+use ruserwation::db::{self, sqlite::get_conn_str};
 use sqlx::SqlitePool;
 
 pub async fn init_conn() -> Result<SqlitePool, sqlx::Error> {
-    let pool = SqlitePool::connect(SQLITE_IN_MEMORY).await?;
+    let pool = SqlitePool::connect(&get_conn_str()).await?;
 
     Ok(pool)
 }

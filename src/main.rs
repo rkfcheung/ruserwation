@@ -4,7 +4,6 @@ mod restaurant;
 mod setup;
 mod utils;
 
-use dotenv;
 use log::info;
 use restaurant::{index::index_route, models::Restaurant};
 use setup::startup::{init, SetupError};

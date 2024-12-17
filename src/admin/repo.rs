@@ -31,6 +31,7 @@ pub trait EnableSession {
     ) -> impl std::future::Future<Output = Result<Session, String>> + Send;
 }
 
+#[derive(Default)]
 pub struct Sessions {
     // Session ID to Session mapping
     context: Arc<Mutex<HashMap<String, Session>>>,

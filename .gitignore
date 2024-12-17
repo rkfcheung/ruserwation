@@ -28,4 +28,4 @@ launch.json
 *_prod.*
 
 # Local Tests
-local-test*.*
+local_test*.*

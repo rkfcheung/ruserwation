@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ReservationStatus {
@@ -19,23 +20,26 @@ pub struct Reservation {
     pub status: ReservationStatus,
 }
 
-impl ReservationStatus {
-    // Convert to String for DB
-    pub fn to_string(&self) -> String {
-        match self {
-            ReservationStatus::Pending => "Pending".to_string(),
-            ReservationStatus::Confirmed => "Confirmed".to_string(),
-            ReservationStatus::Cancelled => "Cancelled".to_string(),
-        }
+// Convert to String for DB
+impl fmt::Display for ReservationStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let status = match self {
+            ReservationStatus::Pending => "Pending",
+            ReservationStatus::Confirmed => "Confirmed",
+            ReservationStatus::Cancelled => "Cancelled",
+        };
+        write!(f, "{}", status)
     }
+}
 
-    // Convert from String when reading from DB
-    pub fn from_string(status: &str) -> ReservationStatus {
+// Convert from String when reading from DB
+impl From<&str> for ReservationStatus {
+    fn from(status: &str) -> Self {
         match status {
             "Pending" => ReservationStatus::Pending,
             "Confirmed" => ReservationStatus::Confirmed,
             "Cancelled" => ReservationStatus::Cancelled,
-            _ => panic!("Unknown status: {}", status),
+            _ => ReservationStatus::Pending, // Default to Pending for unknown status
         }
     }
 }

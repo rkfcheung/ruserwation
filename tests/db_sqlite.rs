@@ -68,7 +68,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_with_file_based_sqlite() {
-        std::env::set_var("RW_SQLITE_URL", "sqlite://local-test.db");
+        std::env::set_var("RW_SQLITE_URL", "sqlite://local_test.db");
 
         let pool = init_db().await.expect("Failed to initialize the database");
 
@@ -82,7 +82,7 @@ mod tests {
 
         // Cleanup
         env::remove_var("RW_SQLITE_URL");
-        std::fs::remove_file("local-test.db").expect("Failed to remove test database file");
+        std::fs::remove_file("local_test.db").expect("Failed to remove test database file");
     }
 
     #[tokio::test]
