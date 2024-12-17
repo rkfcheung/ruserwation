@@ -20,9 +20,9 @@ In Rust, I trust!
 
 | Module      | Status                         |
 | ----------- | ------------------------------ |
-| Admin       | Backlog :waxing_crescent_moon: |
+| Admin       | Pending :waxing_crescent_moon: |
 | Customer    | Backlog :new_moon:             |
-| Database    | Pending :first_quarter_moon:   |
+| Database    | Done :full_moon:               |
 | Reservation | Backlog :new_moon:             |
 | Restaurant  | Backlog :new_moon:             |
 
@@ -62,22 +62,22 @@ sudo vi /etc/nginx/sites-available/default
 ```
 
 ```text
-	server_name ruserwation.com www.ruserwation.com;
+server_name ruserwation.com www.ruserwation.com;
 
-	location / {
-		proxy_pass http://localhost:3030;
-		proxy_set_header Host $host;
-		proxy_set_header X-Real-IP $remote_addr;
-		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+location / {
+	proxy_pass http://localhost:3030;
+	proxy_set_header Host $host;
+	proxy_set_header X-Real-IP $remote_addr;
+	proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 
-		try_files $uri $uri/ =404;
-	}
+	try_files $uri $uri/ =404;
+}
 
-	location /static/ {
-		alias /app/ruserwation/static/;
+location /static/ {
+	alias /app/ruserwation/static/;
 
-		try_files $uri $uri/ =404;
-	}
+	try_files $uri $uri/ =404;
+}
 ```
 
 ```shell
