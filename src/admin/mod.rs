@@ -1,4 +1,5 @@
 pub mod helper;
+pub mod login;
 pub mod models;
 pub mod repo;
 pub mod sqlite;

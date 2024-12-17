@@ -116,3 +116,9 @@ impl AdminBuilder {
         self
     }
 }
+
+#[derive(Deserialize, Serialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}

@@ -32,7 +32,8 @@ async fn main() -> Result<(), SetupError> {
 
     let routes = warp::get().and(static_route).or(index_route);
 
-    warp::serve(routes).run(([0, 0, 0, 0], 3030)).await;
+    let rest_port = var_as_int_or("RW_REST_PORT", 3030) as u16;
+    warp::serve(routes).run(([0, 0, 0, 0], rest_port)).await;
 
     Ok(())
 }
