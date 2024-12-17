@@ -1,4 +1,5 @@
 use log::{error, info};
+use std::sync::Arc;
 
 use crate::{
     admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
@@ -32,7 +33,7 @@ impl From<std::io::Error> for SetupError {
     }
 }
 
-pub async fn init() -> Result<(), SetupError> {
+pub async fn init() -> Result<Arc<SqliteAdminRepo>, SetupError> {
     env_logger::init();
     info!("Initialising Ruserwation ...");
 
@@ -41,13 +42,13 @@ pub async fn init() -> Result<(), SetupError> {
         .await
         .map_err(SetupError::from)?;
 
-    let mut admin_repo = SqliteAdminRepo::new(&pool);
-    init_admin(&mut admin_repo).await?;
+    let admin_repo = Arc::new(SqliteAdminRepo::new(Arc::new(pool)));
+    init_admin(admin_repo.clone()).await?;
 
-    Ok(())
+    Ok(admin_repo)
 }
 
-async fn init_admin(admin_repo: &mut SqliteAdminRepo<'_>) -> Result<(), SetupError> {
+async fn init_admin(admin_repo: Arc<SqliteAdminRepo>) -> Result<(), SetupError> {
     let root_user = admin_repo.find_by_id(1).await;
     match root_user {
         Some(admin) => info!(

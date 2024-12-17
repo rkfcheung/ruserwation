@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS Admin (
     id INTEGER PRIMARY KEY,
-    username TEXT NOT NULL CHECK (LENGTH(username) <= 256),
+    username TEXT NOT NULL UNIQUE CHECK (LENGTH(username) <= 256),
     password BLOB NOT NULL,
     email TEXT NOT NULL CHECK (LENGTH(email) <= 256),
     root BOOLEAN NOT NULL,

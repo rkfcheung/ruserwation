@@ -7,6 +7,7 @@ mod tests {
         repo::{AdminRepo, EnableSession},
         sqlite::SqliteAdminRepo,
     };
+    use std::sync::Arc;
 
     use crate::common::db_utils;
 
@@ -16,7 +17,7 @@ mod tests {
         let pool = db_utils::init_test_db()
             .await
             .expect("Failed to create test DB!");
-        let mut repo = SqliteAdminRepo::new(&pool);
+        let repo = SqliteAdminRepo::new(Arc::new(pool));
 
         // Create an Admin
         let mut admin = Admin::builder()

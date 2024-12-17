@@ -15,7 +15,7 @@ pub trait AdminRepo {
     fn find_by_username(&self, username: &str) -> impl Future<Output = Option<Admin>> + Send;
 
     // Save an Admin and return its ID
-    fn save(&mut self, admin: &mut Admin) -> impl Future<Output = u32> + Send;
+    fn save(&self, admin: &mut Admin) -> impl Future<Output = u32> + Send;
 
     // Verify username and password
     fn verify(&self, username: &str, password: &str) -> impl Future<Output = bool> + Send;

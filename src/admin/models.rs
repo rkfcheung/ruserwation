@@ -122,3 +122,25 @@ pub struct LoginRequest {
     pub username: String,
     pub password: String,
 }
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    pub message: String,
+    pub token: Option<String>,
+}
+
+impl LoginResponse {
+    pub fn ok(token: &str) -> Self {
+        Self {
+            message: "Login successful".into(),
+            token: Some(token.into()),
+        }
+    }
+
+    pub fn err(err_msg: &str) -> Self {
+        Self {
+            message: err_msg.into(),
+            token: None,
+        }
+    }
+}

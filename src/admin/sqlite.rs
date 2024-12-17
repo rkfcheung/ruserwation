@@ -1,5 +1,6 @@
 use log::{error, warn};
 use sqlx::{query, query_as, query_scalar, SqlitePool};
+use std::sync::Arc;
 use warp_sessions::Session;
 
 use super::{
@@ -13,14 +14,14 @@ enum OpType {
     NoOp,
 }
 
-pub struct SqliteAdminRepo<'conn> {
-    pool: &'conn SqlitePool, // SQLite connection pool
-    sessions: Sessions,      // Session ID to Session mapping
+pub struct SqliteAdminRepo {
+    pool: Arc<SqlitePool>, // SQLite connection pool
+    sessions: Sessions,    // Session ID to Session mapping
 }
 
-impl<'conn> SqliteAdminRepo<'conn> {
+impl SqliteAdminRepo {
     // Create a new repository with a database connection pool
-    pub fn new(pool: &'conn SqlitePool) -> Self {
+    pub fn new(pool: Arc<SqlitePool>) -> Self {
         Self {
             pool,
             sessions: Sessions::new(),
@@ -29,7 +30,7 @@ impl<'conn> SqliteAdminRepo<'conn> {
 
     async fn count(&self) -> Result<u32, sqlx::Error> {
         let count: u32 = query_scalar("SELECT COUNT(1) FROM Admin")
-            .fetch_one(self.pool)
+            .fetch_one(self.pool.as_ref())
             .await?;
         Ok(count)
     }
@@ -45,7 +46,7 @@ impl<'conn> SqliteAdminRepo<'conn> {
         .bind(&admin.password)
         .bind(&admin.email)
         .bind(admin.root)
-        .execute(self.pool)
+        .execute(self.pool.as_ref())
         .await?;
 
         admin.id = result.last_insert_rowid() as u32;
@@ -65,14 +66,14 @@ impl<'conn> SqliteAdminRepo<'conn> {
         .bind(&admin.password)
         .bind(&admin.email)
         .bind(admin.id)
-        .execute(self.pool)
+        .execute(self.pool.as_ref())
         .await?;
 
         Ok(admin.id)
     }
 }
 
-impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
+impl AdminRepo for SqliteAdminRepo {
     // Find an Admin by ID
     async fn find_by_id(&self, id: u32) -> Option<Admin> {
         let result = query_as(
@@ -83,7 +84,7 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
             "#,
         )
         .bind(id)
-        .fetch_optional(self.pool)
+        .fetch_optional(self.pool.as_ref())
         .await;
 
         match result {
@@ -105,7 +106,7 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
             "#,
         )
         .bind(username)
-        .fetch_optional(self.pool)
+        .fetch_optional(self.pool.as_ref())
         .await;
 
         match result {
@@ -118,7 +119,7 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
     }
 
     // Save an Admin and return its ID
-    async fn save(&mut self, admin: &mut Admin) -> u32 {
+    async fn save(&self, admin: &mut Admin) -> u32 {
         let op_type = if self.count().await.unwrap_or_default() == 0 {
             OpType::Insert
         } else if admin.id == 0 {
@@ -179,7 +180,7 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
 }
 
 type Error = String;
-impl<'conn> EnableSession<Error> for SqliteAdminRepo<'conn> {
+impl EnableSession<Error> for SqliteAdminRepo {
     async fn create_session(&self, username: &str) -> Result<String, Error> {
         if self.find_by_username(username).await.is_some() {
             match self.sessions.create(username) {

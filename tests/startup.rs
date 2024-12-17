@@ -2,12 +2,11 @@ mod common;
 
 #[cfg(test)]
 mod tests {
-    use std::env;
-
     use ruserwation::{
         admin::{repo::AdminRepo, sqlite::SqliteAdminRepo},
         setup::startup,
     };
+    use std::{env, sync::Arc};
 
     use crate::common::db_utils::init_conn;
 
@@ -18,7 +17,7 @@ mod tests {
         env::set_var("RW_ADMIN_USERNAME", "startup");
         env::set_var("RW_SQLITE_URL", "sqlite://local_test_init.db");
 
-        let result: Result<(), startup::SetupError> = startup::init().await;
+        let result: Result<_, startup::SetupError> = startup::init().await;
         assert!(result.is_ok(), "Failed to init");
 
         // Verify table exists
@@ -31,7 +30,7 @@ mod tests {
         .unwrap();
         assert_eq!(result.0, 1, "Admin table should exist");
 
-        let admin_repo = SqliteAdminRepo::new(&pool);
+        let admin_repo = SqliteAdminRepo::new(Arc::new(pool));
         let root_user: Option<ruserwation::admin::models::Admin> = admin_repo.find_by_id(1).await;
         assert!(root_user.is_some());
 
