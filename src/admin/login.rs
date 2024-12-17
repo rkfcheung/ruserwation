@@ -30,7 +30,7 @@ async fn handle_admin_login(
     if admin_repo.verify(&body.username, &body.password).await {
         return match admin_repo.create_session(&body.username).await {
             Ok(sid) => Ok(with_status(
-                json(&serde_json::json!({ "message": "Login successful", "session_id": sid })),
+                json(&serde_json::json!({ "message": "Login successful", "token": sid })),
                 StatusCode::OK,
             )),
             Err(err) => Ok(with_status(

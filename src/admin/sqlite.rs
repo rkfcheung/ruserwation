@@ -178,8 +178,9 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
     }
 }
 
-impl<'conn> EnableSession for SqliteAdminRepo<'conn> {
-    async fn create_session(&self, username: &str) -> Result<String, String> {
+type Error = String;
+impl<'conn> EnableSession<Error> for SqliteAdminRepo<'conn> {
+    async fn create_session(&self, username: &str) -> Result<String, Error> {
         if self.find_by_username(username).await.is_some() {
             match self.sessions.create(username) {
                 Some(created) => Ok(created),
@@ -194,7 +195,7 @@ impl<'conn> EnableSession for SqliteAdminRepo<'conn> {
         self.sessions.destroy(session_id);
     }
 
-    async fn get_session(&self, session_id: &str) -> Result<Session, String> {
+    async fn get_session(&self, session_id: &str) -> Result<Session, Error> {
         self.sessions
             .get(session_id)
             .ok_or_else(|| format!("Session '{}' not found", session_id))
