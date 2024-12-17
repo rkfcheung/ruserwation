@@ -22,15 +22,9 @@ pub trait AdminRepo {
 }
 
 pub trait EnableSession<E> {
-    fn create_session(
-        &self,
-        username: &str,
-    ) -> impl std::future::Future<Output = Result<String, E>> + Send;
-    fn destroy_session(&self, session_id: &str) -> impl std::future::Future<Output = ()> + Send;
-    fn get_session(
-        &self,
-        session_id: &str,
-    ) -> impl std::future::Future<Output = Result<Session, E>> + Send;
+    fn create_session(&self, username: &str) -> impl Future<Output = Result<String, E>> + Send;
+    fn destroy_session(&self, session_id: &str) -> impl Future<Output = ()> + Send;
+    fn get_session(&self, session_id: &str) -> impl Future<Output = Result<Session, E>> + Send;
 }
 
 #[derive(Default)]

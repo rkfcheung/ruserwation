@@ -37,5 +37,5 @@ fn render_index(restaurant: &Restaurant) -> Markup {
         }
     };
 
-    render_html(&restaurant, body_content)
+    render_html(restaurant, body_content)
 }

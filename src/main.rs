@@ -4,6 +4,7 @@ mod restaurant;
 mod setup;
 mod utils;
 
+use admin::login::admin_login_route;
 use log::info;
 use restaurant::{index::index_route, models::Restaurant};
 use setup::startup::{init, SetupError};
@@ -18,7 +19,7 @@ async fn main() -> Result<(), SetupError> {
         _ => dotenv::dotenv().ok(),
     };
 
-    init().await?;
+    let admin_repo = init().await?;
 
     let rest_name = var_as_str_or("RW_REST_NAME", "<Name>".to_string());
     let rest_max_capacity = var_as_int_or("RW_REST_MAX_CAPACITY", 64) as u32;
@@ -29,8 +30,12 @@ async fn main() -> Result<(), SetupError> {
 
     let static_route = warp::path("static").and(warp::fs::dir("./static"));
     let index_route = index_route(restaurant);
+    let admin_login_route = admin_login_route(admin_repo);
 
-    let routes = warp::get().and(static_route).or(index_route);
+    let routes = warp::get()
+        .and(static_route)
+        .or(index_route)
+        .or(admin_login_route);
 
     let rest_port = var_as_int_or("RW_REST_PORT", 3030) as u16;
     warp::serve(routes).run(([0, 0, 0, 0], rest_port)).await;

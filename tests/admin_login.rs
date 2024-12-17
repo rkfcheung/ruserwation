@@ -53,11 +53,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_successful_login() {
-        let repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(MockAdminRepo {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
-        let filter = admin_login_route(repo.clone());
+        let filter = admin_login_route(admin_repo);
 
         let resp = request()
             .method("POST")
@@ -74,11 +74,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_invalid_credentials() {
-        let repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(MockAdminRepo {
             verify_result: false,
             session_result: None,
         });
-        let filter = admin_login_route(repo.clone());
+        let filter = admin_login_route(admin_repo);
 
         let resp = request()
             .method("POST")
@@ -94,11 +94,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_session_creation_failure() {
-        let repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(MockAdminRepo {
             verify_result: true,
             session_result: Some(Err("Session creation failed".into())),
         });
-        let filter = admin_login_route(repo.clone());
+        let filter = admin_login_route(admin_repo);
 
         let resp = request()
             .method("POST")
@@ -114,11 +114,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_malformed_json_body() {
-        let repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(MockAdminRepo {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
-        let filter = admin_login_route(repo.clone());
+        let filter = admin_login_route(admin_repo);
 
         let resp = request()
             .method("POST")
@@ -132,11 +132,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_missing_fields() {
-        let repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(MockAdminRepo {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
-        let filter = admin_login_route(repo.clone());
+        let filter = admin_login_route(admin_repo);
 
         let resp = request()
             .method("POST")
