@@ -11,10 +11,10 @@ use super::models::Restaurant;
 pub fn index_route(
     restaurant: Restaurant,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path::end().map(move || warp::reply::html(render_index(restaurant.clone()).into_string()))
+    warp::path::end().map(move || warp::reply::html(render_index(&restaurant).into_string()))
 }
 
-fn render_index(restaurant: Restaurant) -> Markup {
+fn render_index(restaurant: &Restaurant) -> Markup {
     let poster = var_as_str_or("RW_POSTER", "poster.webp".to_string());
     let is_und_constr = var_as_bool_or("RW_UNDER_CONSTRUCTION", false);
     let rest_details = format!("{}, {}", restaurant.name, restaurant.location);
@@ -37,5 +37,5 @@ fn render_index(restaurant: Restaurant) -> Markup {
         }
     };
 
-    render_html(restaurant, body_content)
+    render_html(&restaurant, body_content)
 }

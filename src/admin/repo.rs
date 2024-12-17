@@ -1,3 +1,4 @@
+use log::warn;
 use std::collections::HashMap;
 use std::future::Future;
 use std::sync::{Arc, Mutex};
@@ -44,27 +45,36 @@ impl Sessions {
         }
     }
 
-    pub fn create(&self, username: &str) -> String {
+    pub fn create(&self, username: &str) -> Option<String> {
         // Create a new session
         let mut session = Session::new();
         session.insert_raw("user", username.to_string());
 
         // Lock the sessions HashMap and insert the new session
-        let mut sessions = self.context.lock().unwrap();
+        let mut sessions = self.context.lock().ok()?;
         let session_id = session.id().to_owned();
-        sessions.insert(session_id.clone(), session);
 
-        // Return the session ID
-        session_id
+        // Insert the session into the HashMap and return session_id
+        sessions.insert(session_id.clone(), session);
+        Some(session_id) // Return the session_id if successful
     }
 
     pub fn destroy(&self, session_id: &str) {
-        let mut sessions = self.context.lock().unwrap();
-        sessions.remove(session_id);
+        // Attempt to lock the sessions HashMap
+        if let Ok(mut sessions) = self.context.lock() {
+            // Successfully locked, so proceed to remove the session
+            sessions.remove(session_id);
+        } else {
+            // Locking failed, handle the error (e.g., log or return)
+            warn!(
+                "Failed to lock sessions while destroying session: {}",
+                session_id
+            );
+        }
     }
 
     pub fn get(&self, session_id: &str) -> Option<Session> {
-        let sessions = self.context.lock().unwrap();
+        let sessions = self.context.lock().ok()?;
         sessions.get(session_id).cloned()
     }
 }

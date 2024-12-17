@@ -181,7 +181,10 @@ impl<'conn> AdminRepo for SqliteAdminRepo<'conn> {
 impl<'conn> EnableSession for SqliteAdminRepo<'conn> {
     async fn create_session(&self, username: &str) -> Result<String, String> {
         if self.find_by_username(username).await.is_some() {
-            Ok(self.sessions.create(username))
+            match self.sessions.create(username) {
+                Some(created) => Ok(created),
+                None => Err(format!("Failed to create session for '{}'", username)),
+            }
         } else {
             Err(format!("Username '{}' not found", username))
         }

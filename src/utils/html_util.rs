@@ -3,7 +3,7 @@ use maud::{html, Markup, DOCTYPE};
 
 use crate::{restaurant::models::Restaurant, utils::env_util::var_as_str};
 
-pub fn render_html(restaurant: Restaurant, body_content: Markup) -> Markup {
+pub fn render_html(restaurant: &Restaurant, body_content: Markup) -> Markup {
     let rest_details = format!("{}, {}", restaurant.name, restaurant.location);
     let app_env = var_as_str("APP_ENV");
     let (apple_touch_icon, favicon) = if app_env == "prod" {
