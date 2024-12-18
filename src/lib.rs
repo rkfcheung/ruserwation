@@ -1,4 +1,5 @@
 pub mod admin;
+pub mod config;
 pub mod customer;
 pub mod db;
 pub mod reservation;
