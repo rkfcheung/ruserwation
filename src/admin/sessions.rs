@@ -1,11 +1,7 @@
-use log::warn;
-use std::{
-    collections::HashMap,
-    future::Future,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
-use warp_sessions::Session;
+use std::{future::Future, sync::Arc, time::Duration};
+use warp_sessions::{MemoryStore, Session, SessionStore};
+
+use super::{errors::SessionError, repo::AdminRepo};
 
 const DEFAULT_EXPIRE_IN: u64 = 43_200;
 
@@ -25,68 +21,122 @@ pub trait EnableSession {
     ) -> impl Future<Output = Result<Session, Self::Error>> + Send;
 }
 
-#[derive(Default)]
 pub struct Sessions {
     // Session ID to Session mapping
-    context: Arc<Mutex<HashMap<String, Session>>>,
+    context: MemoryStore,
     default_expire_in: Duration,
+}
+
+impl Default for Sessions {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Sessions {
     pub fn new() -> Self {
         Self {
-            context: Arc::new(Mutex::new(HashMap::new())),
+            context: MemoryStore::new(),
             default_expire_in: Duration::from_secs(DEFAULT_EXPIRE_IN),
         }
     }
 
-    pub fn create(&self, username: &str) -> Option<String> {
+    pub async fn create(&self, username: &str) -> Option<String> {
         self.create_with_expire_in(username, self.default_expire_in)
+            .await
     }
 
-    pub fn create_with_expire_in(&self, username: &str, expire_in: Duration) -> Option<String> {
+    pub async fn create_with_expire_in(
+        &self,
+        username: &str,
+        expire_in: Duration,
+    ) -> Option<String> {
         // Create a new session
         let mut session = Session::new();
         session.insert_raw("user", username.to_string());
         session.expire_in(expire_in);
 
-        // Lock the sessions HashMap and insert the new session
-        let mut sessions = self.context.lock().ok()?;
-        let session_id = session.id().to_owned();
-
-        // Insert the session into the HashMap and return session_id
-        sessions.insert(session_id.clone(), session);
-        Some(session_id) // Return the session_id if successful
+        if let Ok(session_id) = self.context.store_session(session).await {
+            session_id
+        } else {
+            None
+        }
     }
 
-    pub fn destroy(&self, session_id: &str) -> bool {
-        // Attempt to lock the sessions HashMap
-        if let Ok(mut sessions) = self.context.lock() {
-            // Successfully locked, so proceed to remove the session
-            sessions.remove(session_id);
-            true
+    pub async fn destroy(&self, session_id: &str) -> bool {
+        if let Some(session) = self.get_session(session_id).await {
+            match self.context.destroy_session(session).await {
+                Ok(_) => {
+                    log::info!("Session {} destroyed successfully.", session_id);
+                    true
+                }
+                Err(err) => {
+                    log::warn!("Session {} failed to destroy: {}", session_id, err);
+                    false
+                }
+            }
         } else {
-            // Locking failed, handle the error (e.g., log or return)
-            warn!(
-                "Failed to lock sessions while destroying session: {}",
-                session_id
-            );
+            log::warn!("Session {} not found during destruction.", session_id);
             false
         }
     }
 
-    pub fn get(&self, session_id: &str) -> Option<Session> {
-        let mut sessions = self.context.lock().ok()?;
-        if let Some(session) = sessions.get(session_id) {
-            if session.is_expired() {
-                sessions.remove(session_id);
+    pub async fn get(&self, session_id: &str) -> Option<Session> {
+        let session = self.get_session(session_id).await?;
 
-                None
-            } else {
-                Some(session.clone())
-            }
+        if session.is_expired() {
+            log::info!("Session {} has expired.", session_id);
+            let _ = self.context.destroy_session(session).await;
+            return None;
+        }
+
+        Some(session.clone())
+    }
+
+    async fn get_session(&self, session_id: &str) -> Option<Session> {
+        if let Ok(session) = self.context.load_session(session_id.into()).await {
+            session
         } else {
             None
         }
+    }
+}
+
+pub struct SessionManager<R>
+where
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+{
+    store: Arc<R>,
+}
+
+impl<R> SessionManager<R>
+where
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+{
+    pub fn new(store: Arc<R>) -> Self {
+        Self { store }
+    }
+
+    pub async fn verify(&self, username: &str, password: &str) -> bool {
+        self.store.verify(username, password).await
+    }
+}
+
+impl<R> EnableSession for SessionManager<R>
+where
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+{
+    type Error = SessionError;
+
+    async fn create_session(&self, username: &str) -> Result<String, Self::Error> {
+        self.store.create_session(username).await
+    }
+
+    async fn destroy_session(&self, session_id: &str) {
+        self.store.destroy_session(session_id).await
+    }
+
+    async fn get_session(&self, session_id: &str) -> Result<Session, Self::Error> {
+        self.store.get_session(session_id).await
     }
 }
