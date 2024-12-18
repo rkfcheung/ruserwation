@@ -32,7 +32,7 @@ impl EnableSession for FakeAdminRepo {
     async fn create_session(&self, _username: &str) -> Result<String, Self::Error> {
         self.session_result
             .clone()
-            .unwrap_or_else(|| Ok("mock_token".into()))
+            .unwrap_or_else(|| Ok("mock_session_id".into()))
     }
 
     async fn destroy_session(&self, _session_id: &str) {

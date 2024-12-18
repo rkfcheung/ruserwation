@@ -16,7 +16,7 @@ mod tests {
     async fn test_successful_login() {
         let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
-            session_result: Some(Ok("mock_token".into())),
+            session_result: Some(Ok("mock_session_id".into())),
         });
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
@@ -31,7 +31,14 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::OK);
         let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
         assert_eq!(body["message"], "Login successful");
-        assert_eq!(body["token"], "mock_token");
+
+        // Validate the Set-Cookie header
+        let cookie_header = resp.headers().get("set-cookie").unwrap();
+        assert!(cookie_header
+            .to_str()
+            .unwrap()
+            .contains("session_id=mock_session_id"));
+        assert!(cookie_header.to_str().unwrap().contains("HttpOnly"));
     }
 
     #[tokio::test]
@@ -53,6 +60,13 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::UNAUTHORIZED);
         let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
         assert_eq!(body["message"], "Invalid credentials");
+        assert_eq!(
+            resp.headers().get("warning").unwrap(),
+            StatusCode::UNAUTHORIZED.as_str()
+        );
+
+        // Validate there is no Set-Cookie header
+        assert!(resp.headers().get("set-cookie").is_none());
     }
 
     #[tokio::test]
@@ -74,13 +88,20 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
         let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
         assert_eq!(body["message"], "Failed to create session for 'mock'");
+        assert_eq!(
+            resp.headers().get("warning").unwrap(),
+            StatusCode::INTERNAL_SERVER_ERROR.as_str()
+        );
+
+        // Validate there is no Set-Cookie header
+        assert!(resp.headers().get("set-cookie").is_none());
     }
 
     #[tokio::test]
     async fn test_malformed_json_body() {
         let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
-            session_result: Some(Ok("mock_token".into())),
+            session_result: Some(Ok("mock_session_id".into())),
         });
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
@@ -99,7 +120,7 @@ mod tests {
     async fn test_missing_fields() {
         let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
-            session_result: Some(Ok("mock_token".into())),
+            session_result: Some(Ok("mock_session_id".into())),
         });
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);

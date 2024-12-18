@@ -1,10 +1,13 @@
 use serde_json::json as to_json;
 use std::sync::Arc;
 use warp::{
-    http::StatusCode,
-    reply::{json, with_status},
+    filters::{cookie, reply::headers},
+    http::{header, StatusCode},
+    reply::{json, with_header, with_status},
     Filter, Rejection, Reply,
 };
+
+use crate::utils::env_util::{is_prod, var_as_str};
 
 use super::{
     errors::SessionError,
@@ -38,20 +41,35 @@ where
     // If credentials match, return a success response
     if session_manager.verify(&body.username, &body.password).await {
         match session_manager.create_session(&body.username).await {
-            Ok(token) => Ok(with_status(
-                json(&to_json!(LoginResponse::ok(&token))),
-                StatusCode::OK,
-            )),
-            Err(err) => Ok(with_status(
-                json(&to_json!(LoginResponse::err(&err.to_string()))),
-                StatusCode::INTERNAL_SERVER_ERROR,
+            Ok(session_id) => {
+                let response = json(&to_json!(LoginResponse::ok()));
+                let secured = if is_prod() { " Secure;" } else { "" };
+                let cookie = format!("session_id={}; HttpOnly;{} Path=/", session_id, secured);
+
+                Ok(with_header(
+                    with_status(response, StatusCode::OK),
+                    header::SET_COOKIE,
+                    cookie,
+                ))
+            }
+            Err(err) => Ok(with_header(
+                with_status(
+                    json(&to_json!(LoginResponse::err(&err.to_string()))),
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                ),
+                header::WARNING,
+                StatusCode::INTERNAL_SERVER_ERROR.as_str(),
             )),
         }
     } else {
         // If credentials don't match, return an error response
-        Ok(with_status(
-            json(&to_json!(LoginResponse::err("Invalid credentials"))),
-            StatusCode::UNAUTHORIZED,
+        Ok(with_header(
+            with_status(
+                json(&to_json!(LoginResponse::err("Invalid credentials"))),
+                StatusCode::UNAUTHORIZED,
+            ),
+            header::WARNING,
+            StatusCode::UNAUTHORIZED.as_str(),
         ))
     }
 }

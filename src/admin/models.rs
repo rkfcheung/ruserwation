@@ -126,21 +126,18 @@ pub struct LoginRequest {
 #[derive(Serialize)]
 pub struct LoginResponse {
     pub message: String,
-    pub token: Option<String>,
 }
 
 impl LoginResponse {
-    pub fn ok(token: &str) -> Self {
+    pub fn ok() -> Self {
         Self {
             message: "Login successful".into(),
-            token: Some(token.into()),
         }
     }
 
     pub fn err(msg: &str) -> Self {
         Self {
             message: msg.into(),
-            token: None,
         }
     }
 }

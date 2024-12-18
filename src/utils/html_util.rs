@@ -1,12 +1,11 @@
 use chrono::Datelike;
 use maud::{html, Markup, DOCTYPE};
 
-use crate::{restaurant::models::Restaurant, utils::env_util::var_as_str};
+use crate::{restaurant::models::Restaurant, utils::env_util::is_prod};
 
 pub fn render_html(restaurant: &Restaurant, body_content: Markup) -> Markup {
     let rest_details = format!("{}, {}", restaurant.name, restaurant.location);
-    let app_env = var_as_str("APP_ENV");
-    let (apple_touch_icon, favicon) = if app_env == "prod" {
+    let (apple_touch_icon, favicon) = if is_prod() {
         ("apple-touch-icon_prod.png", "favicon_prod.ico")
     } else {
         ("apple-touch-icon.webp", "favicon.ico")

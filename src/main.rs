@@ -11,15 +11,15 @@ use admin::login::admin_login_route;
 use log::info;
 use restaurant::{index::index_route, models::Restaurant};
 use setup::{errors::SetupError, startup::init};
-use utils::env_util::{var_as_int_or, var_as_str, var_as_str_or};
+use utils::env_util::{is_prod, var_as_int_or, var_as_str_or};
 
 #[tokio::main]
 async fn main() -> Result<(), SetupError> {
-    let app_env = var_as_str("APP_ENV");
-    match app_env.as_str() {
-        "prod" => dotenv::from_filename(".env.prod").ok(),
-        _ => dotenv::dotenv().ok(),
-    };
+    if is_prod() {
+        dotenv::from_filename(".env.prod").ok();
+    } else {
+        dotenv::dotenv().ok();
+    }
 
     let app_state = init().await?;
 
