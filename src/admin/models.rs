@@ -137,9 +137,9 @@ impl LoginResponse {
         }
     }
 
-    pub fn err(err_msg: &str) -> Self {
+    pub fn err(msg: &str) -> Self {
         Self {
-            message: err_msg.into(),
+            message: msg.into(),
             token: None,
         }
     }

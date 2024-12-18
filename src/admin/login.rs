@@ -7,6 +7,7 @@ use warp::{
 };
 
 use super::{
+    errors::SessionError,
     models::{LoginRequest, LoginResponse},
     repo::AdminRepo,
     sessions::EnableSession,
@@ -17,7 +18,7 @@ pub fn admin_login_route<R>(
     admin_repo: Arc<R>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone
 where
-    R: AdminRepo + EnableSession<Error = String> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync + 'static,
 {
     warp::post()
         .and(warp::path!("admin" / "login"))
@@ -32,7 +33,7 @@ async fn handle_admin_login<R>(
     admin_repo: Arc<R>,
 ) -> Result<impl Reply, Rejection>
 where
-    R: AdminRepo + EnableSession<Error = String> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync + 'static,
 {
     // If credentials match, return a success response
     if admin_repo.verify(&body.username, &body.password).await {
@@ -42,7 +43,7 @@ where
                 StatusCode::OK,
             )),
             Err(err) => Ok(with_status(
-                json(&to_json!(LoginResponse::err(&err))),
+                json(&to_json!(LoginResponse::err(&err.to_string()))),
                 StatusCode::INTERNAL_SERVER_ERROR,
             )),
         }
@@ -60,7 +61,7 @@ fn with_admin_repo<R>(
     admin_repo: Arc<R>,
 ) -> impl Filter<Extract = (Arc<R>,), Error = std::convert::Infallible> + Clone
 where
-    R: AdminRepo + EnableSession<Error = String> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync + 'static,
 {
     warp::any().map(move || admin_repo.clone())
 }

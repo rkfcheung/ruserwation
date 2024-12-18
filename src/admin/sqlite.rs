@@ -4,6 +4,7 @@ use std::sync::Arc;
 use warp_sessions::Session;
 
 use super::{
+    errors::SessionError,
     models::Admin,
     repo::AdminRepo,
     sessions::{EnableSession, Sessions},
@@ -181,16 +182,15 @@ impl AdminRepo for SqliteAdminRepo {
 }
 
 impl EnableSession for SqliteAdminRepo {
-    type Error = String;
+    type Error = SessionError;
 
     async fn create_session(&self, username: &str) -> Result<String, Self::Error> {
         if self.find_by_username(username).await.is_some() {
-            match self.sessions.create(username) {
-                Some(created) => Ok(created),
-                None => Err(format!("Failed to create session for '{}'", username)),
-            }
+            self.sessions
+                .create(username)
+                .ok_or(SessionError::SessionCreationFailed(username.into()))
         } else {
-            Err(format!("Username '{}' not found", username))
+            Err(SessionError::UserNotFound(username.into()))
         }
     }
 
@@ -201,6 +201,6 @@ impl EnableSession for SqliteAdminRepo {
     async fn get_session(&self, session_id: &str) -> Result<Session, Self::Error> {
         self.sessions
             .get(session_id)
-            .ok_or_else(|| format!("Session '{}' not found", session_id))
+            .ok_or(SessionError::SessionNotFound(session_id.into()))
     }
 }

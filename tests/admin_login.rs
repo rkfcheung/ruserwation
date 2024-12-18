@@ -2,6 +2,7 @@ mod common;
 
 #[cfg(test)]
 mod tests {
+    use ruserwation::admin::errors::SessionError;
     use ruserwation::admin::login::admin_login_route;
     use ruserwation::admin::models::Admin;
     use ruserwation::admin::repo::AdminRepo;
@@ -12,10 +13,9 @@ mod tests {
     use warp::test::request;
     use warp_sessions::Session;
 
-    type Error = String;
     struct MockAdminRepo {
         verify_result: bool,
-        session_result: Option<Result<String, Error>>,
+        session_result: Option<Result<String, SessionError>>,
     }
 
     impl AdminRepo for MockAdminRepo {
@@ -37,9 +37,9 @@ mod tests {
     }
 
     impl EnableSession for MockAdminRepo {
-        type Error = String;
+        type Error = SessionError;
 
-        async fn create_session(&self, _username: &str) -> Result<String, Error> {
+        async fn create_session(&self, _username: &str) -> Result<String, Self::Error> {
             self.session_result
                 .clone()
                 .unwrap_or_else(|| Ok("mock_token".into()))
@@ -49,7 +49,7 @@ mod tests {
             unimplemented!()
         }
 
-        async fn get_session(&self, _session_id: &str) -> Result<Session, Error> {
+        async fn get_session(&self, _session_id: &str) -> Result<Session, Self::Error> {
             unimplemented!()
         }
     }
@@ -99,7 +99,7 @@ mod tests {
     async fn test_session_creation_failure() {
         let admin_repo = Arc::new(MockAdminRepo {
             verify_result: true,
-            session_result: Some(Err("Session creation failed".into())),
+            session_result: Some(Err(SessionError::SessionCreationFailed("mock".into()))),
         });
         let filter = admin_login_route(admin_repo);
 
@@ -112,7 +112,7 @@ mod tests {
 
         assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
         let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
-        assert_eq!(body["message"], "Session creation failed");
+        assert_eq!(body["message"], "Failed to create session for 'mock'");
     }
 
     #[tokio::test]
