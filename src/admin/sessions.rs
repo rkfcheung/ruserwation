@@ -56,11 +56,10 @@ impl Sessions {
         session.insert_raw("user", username.to_string());
         session.expire_in(expire_in);
 
-        if let Ok(session_id) = self.context.store_session(session).await {
-            session_id
-        } else {
-            None
-        }
+        self.context
+            .store_session(session)
+            .await
+            .unwrap_or_default()
     }
 
     pub async fn destroy(&self, session_id: &str) -> bool {
@@ -94,11 +93,10 @@ impl Sessions {
     }
 
     async fn get_session(&self, session_id: &str) -> Option<Session> {
-        if let Ok(session) = self.context.load_session(session_id.into()).await {
-            session
-        } else {
-            None
-        }
+        self.context
+            .load_session(session_id.into())
+            .await
+            .unwrap_or_default()
     }
 }
 

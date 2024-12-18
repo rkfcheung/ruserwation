@@ -1,62 +1,20 @@
-mod common;
+mod fake;
 
 #[cfg(test)]
 mod tests {
     use ruserwation::admin::errors::SessionError;
     use ruserwation::admin::login::admin_login_route;
-    use ruserwation::admin::models::Admin;
-    use ruserwation::admin::repo::AdminRepo;
-    use ruserwation::admin::sessions::{EnableSession, SessionManager};
+    use ruserwation::admin::sessions::SessionManager;
     use serde_json::json as to_json;
     use std::sync::Arc;
     use warp::http::StatusCode;
     use warp::test::request;
-    use warp_sessions::Session;
 
-    struct MockAdminRepo {
-        verify_result: bool,
-        session_result: Option<Result<String, SessionError>>,
-    }
-
-    impl AdminRepo for MockAdminRepo {
-        async fn verify(&self, _username: &str, _password: &str) -> bool {
-            self.verify_result
-        }
-
-        async fn find_by_id(&self, _id: u32) -> Option<Admin> {
-            unimplemented!()
-        }
-
-        async fn find_by_username(&self, _username: &str) -> Option<Admin> {
-            unimplemented!()
-        }
-
-        async fn save(&self, _admin: &mut ruserwation::admin::models::Admin) -> u32 {
-            unimplemented!()
-        }
-    }
-
-    impl EnableSession for MockAdminRepo {
-        type Error = SessionError;
-
-        async fn create_session(&self, _username: &str) -> Result<String, Self::Error> {
-            self.session_result
-                .clone()
-                .unwrap_or_else(|| Ok("mock_token".into()))
-        }
-
-        async fn destroy_session(&self, _session_id: &str) {
-            unimplemented!()
-        }
-
-        async fn get_session(&self, _session_id: &str) -> Result<Session, Self::Error> {
-            unimplemented!()
-        }
-    }
+    use crate::fake::admin_repo::FakeAdminRepo;
 
     #[tokio::test]
     async fn test_successful_login() {
-        let admin_repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
@@ -78,7 +36,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_invalid_credentials() {
-        let admin_repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: false,
             session_result: None,
         });
@@ -99,7 +57,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_session_creation_failure() {
-        let admin_repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
             session_result: Some(Err(SessionError::SessionCreationFailed("mock".into()))),
         });
@@ -120,7 +78,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_malformed_json_body() {
-        let admin_repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
@@ -139,7 +97,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_missing_fields() {
-        let admin_repo = Arc::new(MockAdminRepo {
+        let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
