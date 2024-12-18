@@ -2,7 +2,6 @@ use argon2::{
     password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
     Argon2,
 };
-use log::{debug, warn};
 use rand::{distributions::Alphanumeric, Rng};
 use std::env;
 
@@ -44,7 +43,7 @@ pub fn validate_email(email: &str) -> String {
     if is_valid_email(&sanitized_email) {
         truncate_string(&sanitized_email, VAR_LEN)
     } else {
-        warn!("Invalid email provided. Using default email: admin@localhost");
+        log::warn!("Invalid email provided. Using default email: admin@localhost");
         "admin@localhost".to_string()
     }
 }
@@ -60,7 +59,7 @@ pub fn validate_password(password: &str) -> String {
             .ok()
             .and_then(|value| value.parse::<usize>().ok())
             .unwrap_or_else(|| {
-                debug!(
+                log::debug!(
                     "RW_ADMIN_PWD_LEN not set or invalid. Using default value: {}",
                     PWD_DEF_LEN
                 );
@@ -70,7 +69,7 @@ pub fn validate_password(password: &str) -> String {
 
         // Generate and log a random password
         let random_password = generate_random_password(admin_pwd_len);
-        warn!(
+        log::warn!(
             "Invalid or missing admin password. Generated random password: {}",
             random_password
         );
@@ -88,7 +87,7 @@ pub fn validate_username(username: &str) -> String {
     if is_valid_username(&sanitized_username) {
         truncate_string(&sanitized_username, VAR_LEN)
     } else {
-        warn!("Invalid username provided. Using default username: admin");
+        log::warn!("Invalid username provided. Using default username: admin");
         "admin".to_string()
     }
 }
@@ -107,13 +106,13 @@ fn is_valid_email(email: &str) -> bool {
             if regex.is_match(email) {
                 true
             } else {
-                warn!("Invalid email format: {}", email);
+                log::warn!("Invalid email format: {}", email);
                 false
             }
         }
         Err(e) => {
             // Log an error if regex compilation fails
-            warn!("Failed to compile email regex: {}", e);
+            log::warn!("Failed to compile email regex: {}", e);
             false
         }
     }
@@ -128,7 +127,7 @@ fn is_valid_username(username: &str) -> bool {
             if regex.is_match(username) {
                 true
             } else {
-                warn!(
+                log::warn!(
                     "Invalid username: '{}' (must be 3-32 alphanumeric characters, or `_`)",
                     username
                 );
@@ -137,7 +136,7 @@ fn is_valid_username(username: &str) -> bool {
         }
         Err(e) => {
             // Log an error if regex compilation fails
-            warn!("Failed to compile username regex: {}", e);
+            log::warn!("Failed to compile username regex: {}", e);
             false
         }
     }
