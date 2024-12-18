@@ -12,14 +12,12 @@ use super::{
     sessions::EnableSession,
 };
 
-type Error = String;
-
 // Define the route for login
 pub fn admin_login_route<R>(
     admin_repo: Arc<R>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone
 where
-    R: AdminRepo + EnableSession<Error> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = String> + Send + Sync + 'static,
 {
     warp::post()
         .and(warp::path!("admin" / "login"))
@@ -34,7 +32,7 @@ async fn handle_admin_login<R>(
     admin_repo: Arc<R>,
 ) -> Result<impl Reply, Rejection>
 where
-    R: AdminRepo + EnableSession<Error> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = String> + Send + Sync + 'static,
 {
     // If credentials match, return a success response
     if admin_repo.verify(&body.username, &body.password).await {
@@ -62,7 +60,7 @@ fn with_admin_repo<R>(
     admin_repo: Arc<R>,
 ) -> impl Filter<Extract = (Arc<R>,), Error = std::convert::Infallible> + Clone
 where
-    R: AdminRepo + EnableSession<Error> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = String> + Send + Sync + 'static,
 {
     warp::any().map(move || admin_repo.clone())
 }

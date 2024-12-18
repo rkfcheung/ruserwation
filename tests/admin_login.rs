@@ -4,7 +4,8 @@ mod common;
 mod tests {
     use ruserwation::admin::login::admin_login_route;
     use ruserwation::admin::models::Admin;
-    use ruserwation::admin::repo::{AdminRepo, EnableSession};
+    use ruserwation::admin::repo::AdminRepo;
+    use ruserwation::admin::sessions::EnableSession;
     use serde_json::json as to_json;
     use std::sync::Arc;
     use warp::http::StatusCode;
@@ -35,7 +36,9 @@ mod tests {
         }
     }
 
-    impl EnableSession<Error> for MockAdminRepo {
+    impl EnableSession for MockAdminRepo {
+        type Error = String;
+
         async fn create_session(&self, _username: &str) -> Result<String, Error> {
             self.session_result
                 .clone()

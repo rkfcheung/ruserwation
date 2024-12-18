@@ -3,9 +3,7 @@ mod common;
 #[cfg(test)]
 mod tests {
     use ruserwation::admin::{
-        models::Admin,
-        repo::{AdminRepo, EnableSession},
-        sqlite::SqliteAdminRepo,
+        models::Admin, repo::AdminRepo, sessions::EnableSession, sqlite::SqliteAdminRepo,
     };
     use std::sync::Arc;
 

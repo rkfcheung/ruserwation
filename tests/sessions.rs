@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use ruserwation::admin::repo::Sessions;
+    use ruserwation::admin::sessions::Sessions;
     use std::thread;
     use std::time::Duration;
 

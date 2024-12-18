@@ -9,10 +9,20 @@ use warp_sessions::Session;
 
 const DEFAULT_EXPIRE_IN: u64 = 43_200;
 
-pub trait EnableSession<E> {
-    fn create_session(&self, username: &str) -> impl Future<Output = Result<String, E>> + Send;
+pub trait EnableSession {
+    type Error;
+
+    fn create_session(
+        &self,
+        username: &str,
+    ) -> impl Future<Output = Result<String, Self::Error>> + Send;
+
     fn destroy_session(&self, session_id: &str) -> impl Future<Output = ()> + Send;
-    fn get_session(&self, session_id: &str) -> impl Future<Output = Result<Session, E>> + Send;
+
+    fn get_session(
+        &self,
+        session_id: &str,
+    ) -> impl Future<Output = Result<Session, Self::Error>> + Send;
 }
 
 #[derive(Default)]
