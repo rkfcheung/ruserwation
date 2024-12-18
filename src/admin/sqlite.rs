@@ -1,4 +1,3 @@
-use log::{error, warn};
 use sqlx::{query, query_as, query_scalar, SqlitePool};
 use std::sync::Arc;
 use warp_sessions::Session;
@@ -18,7 +17,7 @@ enum OpType {
 
 pub struct SqliteAdminRepo {
     pool: Arc<SqlitePool>, // SQLite connection pool
-    sessions: Sessions,    // Session ID to Session mapping
+    sessions: Sessions,    // Session store
 }
 
 impl SqliteAdminRepo {
@@ -92,7 +91,7 @@ impl AdminRepo for SqliteAdminRepo {
         match result {
             Ok(admin) => admin,
             Err(e) => {
-                warn!("Error finding admin by ID: {:?}", e);
+                log::warn!("Error finding admin by ID: {:?}", e);
                 None
             }
         }
@@ -114,7 +113,7 @@ impl AdminRepo for SqliteAdminRepo {
         match result {
             Ok(admin) => admin,
             Err(e) => {
-                error!("Error finding admin by username {}: {:?}", username, e);
+                log::error!("Error finding admin by username {}: {:?}", username, e);
                 None
             }
         }
@@ -143,9 +142,10 @@ impl AdminRepo for SqliteAdminRepo {
             OpType::Insert => match self.insert(admin).await {
                 Ok(id) => id,
                 Err(e) => {
-                    error!(
+                    log::error!(
                         "Failed to insert admin with username '{}': {:?}",
-                        admin.username, e
+                        admin.username,
+                        e
                     );
                     0
                 }
@@ -153,15 +153,16 @@ impl AdminRepo for SqliteAdminRepo {
             OpType::Update => match self.update(admin).await {
                 Ok(id) => id,
                 Err(e) => {
-                    error!(
+                    log::error!(
                         "Failed to update admin with username '{}': {:?}",
-                        admin.username, e
+                        admin.username,
+                        e
                     );
                     0
                 }
             },
             OpType::NoOp => {
-                warn!(
+                log::warn!(
                     "Admin with ID {} not found. Save operation skipped.",
                     admin.id
                 );
@@ -188,6 +189,7 @@ impl EnableSession for SqliteAdminRepo {
         if self.find_by_username(username).await.is_some() {
             self.sessions
                 .create(username)
+                .await
                 .ok_or(SessionError::SessionCreationFailed(username.into()))
         } else {
             Err(SessionError::UserNotFound(username.into()))
@@ -195,12 +197,13 @@ impl EnableSession for SqliteAdminRepo {
     }
 
     async fn destroy_session(&self, session_id: &str) {
-        self.sessions.destroy(session_id);
+        self.sessions.destroy(session_id).await;
     }
 
     async fn get_session(&self, session_id: &str) -> Result<Session, Self::Error> {
         self.sessions
             .get(session_id)
+            .await
             .ok_or(SessionError::SessionNotFound(session_id.into()))
     }
 }

@@ -2,7 +2,7 @@ use log::info;
 use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite, SqlitePool};
 use utils::env_util::{var_as_int_or, var_as_str_or};
 
-use crate::{setup::startup::SetupError, utils};
+use crate::{setup::errors::SetupError, utils};
 
 const SQLITE_IN_MEMORY: &str = "sqlite::memory:";
 

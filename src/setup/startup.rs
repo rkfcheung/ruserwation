@@ -1,18 +1,14 @@
 use log::{error, info};
+use sqlx::Sqlite;
 use std::sync::Arc;
 
 use crate::{
     admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
+    config::models::AppState,
     db,
 };
 
-#[derive(Debug)]
-pub enum SetupError {
-    Database(sqlx::Error), // For sqlx errors
-    InvalidConfig(String), // For invalid configuration errors
-    IO(std::io::Error),    // For I/O related errors
-    Other(String),         // For any other kind of error
-}
+use super::errors::SetupError;
 
 impl std::fmt::Display for SetupError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -33,19 +29,30 @@ impl From<std::io::Error> for SetupError {
     }
 }
 
-pub async fn init() -> Result<Arc<SqliteAdminRepo>, SetupError> {
+pub async fn init() -> Result<Arc<AppState<Sqlite, SqliteAdminRepo>>, SetupError> {
+    // Initialise logging
     env_logger::init();
     info!("Initialising Ruserwation ...");
 
+    // Initialise the SQLite database connection pool
     let pool = db::sqlite::init_db().await.map_err(SetupError::from)?;
+
+    // Run database migrations
     db::sqlite::migrate_db(&pool)
         .await
         .map_err(SetupError::from)?;
 
-    let admin_repo = Arc::new(SqliteAdminRepo::new(Arc::new(pool)));
+    // Initialise the AdminRepo
+    let pool = Arc::new(pool);
+    let admin_repo = Arc::new(SqliteAdminRepo::new(pool.clone()));
+
+    // Perform admin initialisation
     init_admin(admin_repo.clone()).await?;
 
-    Ok(admin_repo)
+    // Create the AppState
+    let app_state = AppState::new(pool, admin_repo);
+
+    Ok(Arc::new(app_state))
 }
 
 async fn init_admin(admin_repo: Arc<SqliteAdminRepo>) -> Result<(), SetupError> {

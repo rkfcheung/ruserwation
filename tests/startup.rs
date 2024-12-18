@@ -4,6 +4,7 @@ mod common;
 mod tests {
     use ruserwation::{
         admin::{repo::AdminRepo, sqlite::SqliteAdminRepo},
+        setup::errors,
         setup::startup,
     };
     use std::{env, sync::Arc};
@@ -17,7 +18,7 @@ mod tests {
         env::set_var("RW_ADMIN_USERNAME", "startup");
         env::set_var("RW_SQLITE_URL", "sqlite://local_test_init.db");
 
-        let result: Result<_, startup::SetupError> = startup::init().await;
+        let result: Result<_, errors::SetupError> = startup::init().await;
         assert!(result.is_ok(), "Failed to init");
 
         // Verify table exists

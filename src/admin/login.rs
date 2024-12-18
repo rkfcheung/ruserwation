@@ -10,34 +10,34 @@ use super::{
     errors::SessionError,
     models::{LoginRequest, LoginResponse},
     repo::AdminRepo,
-    sessions::EnableSession,
+    sessions::{EnableSession, SessionManager},
 };
 
 // Define the route for login
 pub fn admin_login_route<R>(
-    admin_repo: Arc<R>,
+    session_manager: Arc<SessionManager<R>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone
 where
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
 {
     warp::post()
         .and(warp::path!("admin" / "login"))
         .and(warp::body::json())
-        .and(with_admin_repo(admin_repo))
+        .and(with_session_manager(session_manager))
         .and_then(handle_admin_login)
 }
 
 // The handler for the admin login
 async fn handle_admin_login<R>(
     body: LoginRequest,
-    admin_repo: Arc<R>,
+    session_manager: Arc<SessionManager<R>>,
 ) -> Result<impl Reply, Rejection>
 where
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
 {
     // If credentials match, return a success response
-    if admin_repo.verify(&body.username, &body.password).await {
-        match admin_repo.create_session(&body.username).await {
+    if session_manager.verify(&body.username, &body.password).await {
+        match session_manager.create_session(&body.username).await {
             Ok(token) => Ok(with_status(
                 json(&to_json!(LoginResponse::ok(&token))),
                 StatusCode::OK,
@@ -57,11 +57,11 @@ where
 }
 
 // Helper function to attach admin_repo with correct lifetime
-fn with_admin_repo<R>(
-    admin_repo: Arc<R>,
-) -> impl Filter<Extract = (Arc<R>,), Error = std::convert::Infallible> + Clone
+fn with_session_manager<R>(
+    session_manager: Arc<SessionManager<R>>,
+) -> impl Filter<Extract = (Arc<SessionManager<R>>,), Error = std::convert::Infallible> + Clone
 where
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync + 'static,
+    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
 {
-    warp::any().map(move || admin_repo.clone())
+    warp::any().map(move || session_manager.clone())
 }

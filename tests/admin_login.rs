@@ -6,7 +6,7 @@ mod tests {
     use ruserwation::admin::login::admin_login_route;
     use ruserwation::admin::models::Admin;
     use ruserwation::admin::repo::AdminRepo;
-    use ruserwation::admin::sessions::EnableSession;
+    use ruserwation::admin::sessions::{EnableSession, SessionManager};
     use serde_json::json as to_json;
     use std::sync::Arc;
     use warp::http::StatusCode;
@@ -60,7 +60,8 @@ mod tests {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
-        let filter = admin_login_route(admin_repo);
+        let session_manager = Arc::new(SessionManager::new(admin_repo));
+        let filter = admin_login_route(session_manager);
 
         let resp = request()
             .method("POST")
@@ -81,7 +82,8 @@ mod tests {
             verify_result: false,
             session_result: None,
         });
-        let filter = admin_login_route(admin_repo);
+        let session_manager = Arc::new(SessionManager::new(admin_repo));
+        let filter = admin_login_route(session_manager);
 
         let resp = request()
             .method("POST")
@@ -101,7 +103,8 @@ mod tests {
             verify_result: true,
             session_result: Some(Err(SessionError::SessionCreationFailed("mock".into()))),
         });
-        let filter = admin_login_route(admin_repo);
+        let session_manager = Arc::new(SessionManager::new(admin_repo));
+        let filter = admin_login_route(session_manager);
 
         let resp = request()
             .method("POST")
@@ -121,7 +124,8 @@ mod tests {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
-        let filter = admin_login_route(admin_repo);
+        let session_manager = Arc::new(SessionManager::new(admin_repo));
+        let filter = admin_login_route(session_manager);
 
         let resp = request()
             .method("POST")
@@ -139,7 +143,8 @@ mod tests {
             verify_result: true,
             session_result: Some(Ok("mock_token".into())),
         });
-        let filter = admin_login_route(admin_repo);
+        let session_manager = Arc::new(SessionManager::new(admin_repo));
+        let filter = admin_login_route(session_manager);
 
         let resp = request()
             .method("POST")

@@ -3,7 +3,10 @@ mod common;
 #[cfg(test)]
 mod tests {
     use ruserwation::admin::{
-        models::Admin, repo::AdminRepo, sessions::EnableSession, sqlite::SqliteAdminRepo,
+        models::Admin,
+        repo::AdminRepo,
+        sessions::{EnableSession, SessionManager},
+        sqlite::SqliteAdminRepo,
     };
     use std::sync::Arc;
 
@@ -15,7 +18,9 @@ mod tests {
         let pool = db_utils::init_test_db()
             .await
             .expect("Failed to create test DB!");
-        let repo = SqliteAdminRepo::new(Arc::new(pool));
+        let admin_repo = Arc::new(SqliteAdminRepo::new(Arc::new(pool)));
+        let session_manager = SessionManager::new(admin_repo.clone());
+        let repo = &admin_repo.as_ref();
 
         // Create an Admin
         let mut admin = Admin::builder()
@@ -47,7 +52,7 @@ mod tests {
         assert!(repo.verify("admin", "password123").await); // Ensure you check against the hashed password
 
         // Create a session for the admin
-        let session_id = repo.create_session("admin").await.unwrap();
+        let session_id = session_manager.create_session("admin").await.unwrap();
 
         // Update the email for the admin
         found_admin.email = "admin-new@localhost".to_string();
@@ -59,12 +64,12 @@ mod tests {
         assert!(updated.last_login_time.is_some());
 
         // Retrieve the session
-        let session = repo.get_session(&session_id).await.unwrap();
+        let session = session_manager.get_session(&session_id).await.unwrap();
         assert!(!session.is_expired());
         assert_eq!(session.get_raw("user").unwrap(), admin.username);
 
         // Destroy the session
-        repo.destroy_session(&session_id).await;
-        assert!(repo.get_session(&session_id).await.is_err()); // Ensure session is removed
+        session_manager.destroy_session(&session_id).await;
+        assert!(session_manager.get_session(&session_id).await.is_err()); // Ensure session is removed
     }
 }

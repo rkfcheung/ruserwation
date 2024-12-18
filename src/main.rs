@@ -1,15 +1,17 @@
 mod admin;
+mod config;
 mod db;
 mod restaurant;
 mod setup;
 mod utils;
 
+use warp::Filter;
+
 use admin::login::admin_login_route;
 use log::info;
 use restaurant::{index::index_route, models::Restaurant};
-use setup::startup::{init, SetupError};
+use setup::{errors::SetupError, startup::init};
 use utils::env_util::{var_as_int_or, var_as_str, var_as_str_or};
-use warp::Filter;
 
 #[tokio::main]
 async fn main() -> Result<(), SetupError> {
@@ -19,7 +21,7 @@ async fn main() -> Result<(), SetupError> {
         _ => dotenv::dotenv().ok(),
     };
 
-    let admin_repo = init().await?;
+    let app_state = init().await?;
 
     let rest_name = var_as_str_or("RW_REST_NAME", "<Name>".to_string());
     let rest_max_capacity = var_as_int_or("RW_REST_MAX_CAPACITY", 64) as u32;
@@ -30,7 +32,7 @@ async fn main() -> Result<(), SetupError> {
 
     let static_route = warp::path("static").and(warp::fs::dir("./static"));
     let index_route = index_route(restaurant);
-    let admin_login_route = admin_login_route(admin_repo);
+    let admin_login_route = admin_login_route(app_state.session_manager());
 
     let routes = warp::get()
         .and(static_route)
