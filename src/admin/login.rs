@@ -8,7 +8,8 @@ use warp::{
 
 use super::{
     models::{LoginRequest, LoginResponse},
-    repo::{AdminRepo, EnableSession},
+    repo::AdminRepo,
+    sessions::EnableSession,
 };
 
 type Error = String;

@@ -5,7 +5,8 @@ use warp_sessions::Session;
 
 use super::{
     models::Admin,
-    repo::{AdminRepo, EnableSession, Sessions},
+    repo::AdminRepo,
+    sessions::{EnableSession, Sessions},
 };
 
 enum OpType {
