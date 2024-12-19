@@ -4,19 +4,18 @@ mod fake;
 mod tests {
     use ruserwation::admin::errors::SessionError;
     use ruserwation::admin::login::admin_login_route;
-    use ruserwation::admin::sessions::SessionManager;
+    use ruserwation::admin::sessions::EnableSession;
     use serde_json::json as to_json;
     use std::sync::Arc;
     use warp::http::StatusCode;
     use warp::test::request;
 
-    use crate::fake::admin_repo::FakeAdminRepo;
+    use crate::fake::sessions::FakeSessionManager;
 
     #[tokio::test]
     async fn test_successful_login() {
-        let admin_repo = Arc::new(FakeAdminRepo::ok());
-        let session_manager = Arc::new(SessionManager::new(admin_repo));
-        let filter = admin_login_route(session_manager);
+        let session_manager = Arc::new(FakeSessionManager::ok());
+        let filter = admin_login_route(session_manager.clone());
 
         let resp = request()
             .method("POST")
@@ -28,6 +27,10 @@ mod tests {
         assert_eq!(resp.status(), StatusCode::OK);
         let body: serde_json::Value = serde_json::from_slice(resp.body()).unwrap();
         assert_eq!(body["message"], "Login successful");
+        assert_eq!(
+            session_manager.create_session("admin").await.unwrap(),
+            "mock_session_id"
+        );
 
         // Validate the Set-Cookie header
         let cookie_header = resp.headers().get("set-cookie").unwrap();
@@ -40,11 +43,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_invalid_credentials() {
-        let admin_repo = Arc::new(FakeAdminRepo {
+        let session_manager = Arc::new(FakeSessionManager {
             verify_result: false,
             session_result: None,
         });
-        let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
 
         let resp = request()
@@ -68,11 +70,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_session_creation_failure() {
-        let admin_repo = Arc::new(FakeAdminRepo {
+        let session_manager = Arc::new(FakeSessionManager {
             verify_result: true,
             session_result: Some(Err(SessionError::SessionCreationFailed("mock".to_string()))),
         });
-        let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
 
         let resp = request()
@@ -96,8 +97,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_malformed_json_body() {
-        let admin_repo = Arc::new(FakeAdminRepo::ok());
-        let session_manager = Arc::new(SessionManager::new(admin_repo));
+        let session_manager = Arc::new(FakeSessionManager::ok());
         let filter = admin_login_route(session_manager);
 
         let resp = request()
@@ -112,8 +112,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_missing_fields() {
-        let admin_repo = Arc::new(FakeAdminRepo::ok());
-        let session_manager = Arc::new(SessionManager::new(admin_repo));
+        let session_manager = Arc::new(FakeSessionManager::ok());
         let filter = admin_login_route(session_manager);
 
         let resp = request()
