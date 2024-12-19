@@ -190,9 +190,9 @@ impl EnableSession for SqliteAdminRepo {
             self.sessions
                 .create(username)
                 .await
-                .ok_or(SessionError::SessionCreationFailed(username.into()))
+                .ok_or(SessionError::SessionCreationFailed(username.to_string()))
         } else {
-            Err(SessionError::UserNotFound(username.into()))
+            Err(SessionError::UserNotFound(username.to_string()))
         }
     }
 
@@ -204,6 +204,6 @@ impl EnableSession for SqliteAdminRepo {
         self.sessions
             .get(session_id)
             .await
-            .ok_or(SessionError::SessionNotFound(session_id.into()))
+            .ok_or(SessionError::SessionNotFound(session_id.to_string()))
     }
 }

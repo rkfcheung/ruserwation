@@ -94,7 +94,7 @@ impl Sessions {
 
     async fn get_session(&self, session_id: &str) -> Option<Session> {
         self.context
-            .load_session(session_id.into())
+            .load_session(session_id.to_string())
             .await
             .unwrap_or_default()
     }

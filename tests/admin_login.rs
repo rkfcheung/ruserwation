@@ -16,7 +16,7 @@ mod tests {
     async fn test_successful_login() {
         let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
-            session_result: Some(Ok("mock_session_id".into())),
+            session_result: Some(Ok("mock_session_id".to_string())),
         });
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
@@ -73,7 +73,7 @@ mod tests {
     async fn test_session_creation_failure() {
         let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
-            session_result: Some(Err(SessionError::SessionCreationFailed("mock".into()))),
+            session_result: Some(Err(SessionError::SessionCreationFailed("mock".to_string()))),
         });
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
@@ -101,7 +101,7 @@ mod tests {
     async fn test_malformed_json_body() {
         let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
-            session_result: Some(Ok("mock_session_id".into())),
+            session_result: Some(Ok("mock_session_id".to_string())),
         });
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
@@ -120,7 +120,7 @@ mod tests {
     async fn test_missing_fields() {
         let admin_repo = Arc::new(FakeAdminRepo {
             verify_result: true,
-            session_result: Some(Ok("mock_session_id".into())),
+            session_result: Some(Ok("mock_session_id".to_string())),
         });
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
