@@ -3,8 +3,10 @@ mod fake;
 #[cfg(test)]
 mod tests {
     use ruserwation::admin::errors::SessionError;
-    use ruserwation::admin::login::admin_login_route;
+    use ruserwation::admin::login::{admin_login_form_route, admin_login_route};
+    use ruserwation::restaurant::models::Restaurant;
     use serde_json::json as to_json;
+    use std::sync::Arc;
     use warp::http::StatusCode;
     use warp::test::request;
 
@@ -117,5 +119,61 @@ mod tests {
             .await;
 
         assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    }
+
+    #[tokio::test]
+    async fn test_admin_login_form_route() {
+        // Mock the session manager
+        let session_manager = Arc::new(FakeSessionManager::ok());
+
+        // Mock the restaurant
+        let restaurant = Arc::new(Restaurant {
+            id: 1,
+            name: "Test Restaurant".to_string(),
+            max_capacity: 32,
+            location: "Test City".to_string(),
+            active: true,
+        });
+
+        // Create the filter
+        let filter = admin_login_form_route(session_manager.clone(), restaurant.clone());
+
+        // Test case 1: No session cookie provided
+        let res = request()
+            .method("GET")
+            .path("/admin/login")
+            .reply(&filter)
+            .await;
+
+        assert_eq!(res.status(), 200);
+        let body = String::from_utf8(res.body().to_vec()).unwrap();
+        assert!(body.contains("Admin Login"));
+        assert!(body.contains("<form method=\"POST\" action=\"/admin/login\">"));
+
+        // Test case 2: Valid session cookie provided
+        let res = request()
+            .method("GET")
+            .path("/admin/login")
+            .header("Cookie", "session_id=valid_session_id")
+            .reply(&filter)
+            .await;
+
+        assert_eq!(res.status(), 200);
+        let body = String::from_utf8(res.body().to_vec()).unwrap();
+        assert!(body.contains("Logged in already!"));
+        assert!(body.contains("Welcome, admin."));
+
+        // Test case 3: Invalid session cookie provided
+        let res = request()
+            .method("GET")
+            .path("/admin/login")
+            .header("Cookie", "session_id=invalid_session_id")
+            .reply(&filter)
+            .await;
+
+        assert_eq!(res.status(), 200);
+        let body = String::from_utf8(res.body().to_vec()).unwrap();
+        assert!(body.contains("Admin Login"));
+        assert!(body.contains("<form method=\"POST\" action=\"/admin/login\">"));
     }
 }

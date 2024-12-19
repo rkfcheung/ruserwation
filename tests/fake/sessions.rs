@@ -26,8 +26,14 @@ impl EnableSession for FakeSessionManager {
         unimplemented!()
     }
 
-    async fn get_session(&self, _session_id: &str) -> Result<Session, SessionError> {
-        unimplemented!()
+    async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
+        if session_id == "valid_session_id" {
+            let mut session = Session::new();
+            session.insert_raw("user", "admin".to_string());
+            Ok(session)
+        } else {
+            Err(SessionError::SessionNotFound(session_id.to_string()))
+        }
     }
 }
 
