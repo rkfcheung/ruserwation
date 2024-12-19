@@ -4,8 +4,10 @@ use std::sync::Arc;
 
 use crate::{
     admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
-    config::models::AppState,
+    config::models::{AppState, AppStateBuilder},
     db,
+    restaurant::models::Restaurant,
+    utils::env_util::{var_as_int_or, var_as_str_or},
 };
 
 use super::errors::SetupError;
@@ -57,7 +59,14 @@ pub fn init_app_state(
     pool: Arc<Pool<Sqlite>>,
     admin_repo: Arc<SqliteAdminRepo>,
 ) -> Result<Arc<AppState<Sqlite, SqliteAdminRepo>>, SetupError> {
-    let app_state = AppState::new(pool, admin_repo);
+    // Perform restaurant initilisation
+    let restaurant = Arc::new(init_restaurant());
+
+    let app_state = AppStateBuilder::new()
+        .with_restaurant(restaurant)
+        .with_pool(pool)
+        .with_admin_repo(admin_repo)
+        .build();
 
     Ok(Arc::new(app_state))
 }
@@ -85,4 +94,15 @@ async fn init_admin(admin_repo: Arc<SqliteAdminRepo>) -> Result<(), SetupError> 
     }
 
     Ok(())
+}
+
+fn init_restaurant() -> Restaurant {
+    let rest_name = var_as_str_or("RW_REST_NAME", "<Name>".to_string());
+    let rest_max_capacity = var_as_int_or("RW_REST_MAX_CAPACITY", 64) as u32;
+    let rest_location = var_as_str_or("RW_REST_LOCATION", "<Location>".to_string());
+
+    let restaurant = Restaurant::new(1, &rest_name, rest_max_capacity, &rest_location);
+    info!("{:?}", restaurant);
+
+    restaurant
 }
