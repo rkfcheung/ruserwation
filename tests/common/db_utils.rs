@@ -2,6 +2,7 @@ use ruserwation::{
     admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
     config::models::AppState,
     db::{self, sqlite::get_conn_str},
+    setup::startup::init_app_state,
 };
 use sqlx::{Sqlite, SqlitePool};
 use std::{env, sync::Arc};
@@ -36,7 +37,5 @@ pub(crate) async fn init_test_app_state() -> Arc<AppState<Sqlite, SqliteAdminRep
     let _ = &admin_repo.save(&mut admin).await;
 
     // Create the AppState
-    let app_state = AppState::new(pool, admin_repo);
-
-    Arc::new(app_state)
+    init_app_state(pool, admin_repo).unwrap()
 }

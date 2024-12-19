@@ -1,5 +1,5 @@
 use log::{error, info};
-use sqlx::Sqlite;
+use sqlx::{Pool, Sqlite};
 use std::sync::Arc;
 
 use crate::{
@@ -50,6 +50,13 @@ pub async fn init() -> Result<Arc<AppState<Sqlite, SqliteAdminRepo>>, SetupError
     init_admin(admin_repo.clone()).await?;
 
     // Create the AppState
+    init_app_state(pool, admin_repo)
+}
+
+pub fn init_app_state(
+    pool: Arc<Pool<Sqlite>>,
+    admin_repo: Arc<SqliteAdminRepo>,
+) -> Result<Arc<AppState<Sqlite, SqliteAdminRepo>>, SetupError> {
     let app_state = AppState::new(pool, admin_repo);
 
     Ok(Arc::new(app_state))

@@ -10,17 +10,13 @@ use crate::utils::env_util::is_prod;
 
 use super::{
     models::{LoginRequest, LoginResponse},
-    repo::AdminRepo,
-    sessions::{EnableSession, SessionManager},
+    sessions::{EnableSession, VerifyUser},
 };
 
 // Define the route for login
-pub fn admin_login_route<R>(
-    session_manager: Arc<SessionManager<R>>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone
-where
-    R: AdminRepo + EnableSession + Send + Sync,
-{
+pub fn admin_login_route(
+    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
+) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::post()
         .and(warp::path!("admin" / "login"))
         .and(warp::body::json())
@@ -29,13 +25,10 @@ where
 }
 
 // The handler for the admin login
-async fn handle_admin_login<R>(
+async fn handle_admin_login(
     body: LoginRequest,
-    session_manager: Arc<SessionManager<R>>,
-) -> Result<impl Reply, Rejection>
-where
-    R: AdminRepo + EnableSession + Send + Sync,
-{
+    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
+) -> Result<impl Reply, Rejection> {
     // If credentials match, return a success response
     if session_manager.verify(&body.username, &body.password).await {
         match session_manager.create_session(&body.username).await {
@@ -73,11 +66,11 @@ where
 }
 
 // Helper function to attach admin_repo with correct lifetime
-fn with_session_manager<R>(
-    session_manager: Arc<SessionManager<R>>,
-) -> impl Filter<Extract = (Arc<SessionManager<R>>,), Error = std::convert::Infallible> + Clone
-where
-    R: AdminRepo + EnableSession + Send + Sync,
-{
+fn with_session_manager(
+    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
+) -> impl Filter<
+    Extract = (Arc<impl EnableSession + VerifyUser + Send + Sync>,),
+    Error = std::convert::Infallible,
+> + Clone {
     warp::any().map(move || session_manager.clone())
 }

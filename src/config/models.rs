@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::admin::{
     repo::AdminRepo,
-    sessions::{EnableSession, SessionManager},
+    sessions::{EnableSession, SessionManager, VerifyUser},
 };
 
 pub struct AppState<DB, R>
@@ -31,7 +31,7 @@ where
         }
     }
 
-    pub fn session_manager(&self) -> Arc<SessionManager<R>> {
+    pub fn session_manager(&self) -> Arc<impl EnableSession + VerifyUser + Send + Sync> {
         self.session_manager.clone()
     }
 }

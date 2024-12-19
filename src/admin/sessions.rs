@@ -19,6 +19,14 @@ pub trait EnableSession {
     ) -> impl Future<Output = Result<Session, SessionError>> + Send;
 }
 
+pub trait VerifyUser {
+    // Check if user exists
+    fn contains(&self, username: &str) -> impl Future<Output = bool> + Send;
+
+    // Verify username and password
+    fn verify(&self, username: &str, password: &str) -> impl Future<Output = bool> + Send;
+}
+
 pub struct Sessions {
     context: MemoryStore,
     default_expire_in: Duration,
@@ -101,19 +109,19 @@ pub struct SessionManager<R>
 where
     R: AdminRepo + EnableSession + Send + Sync,
 {
-    store: Arc<R>,
+    admin_repo: Arc<R>,
 }
 
 impl<R> SessionManager<R>
 where
     R: AdminRepo + EnableSession + Send + Sync,
 {
-    pub fn new(store: Arc<R>) -> Self {
-        Self { store }
+    pub fn new(admin_repo: Arc<R>) -> Self {
+        Self { admin_repo }
     }
 
     pub async fn verify(&self, username: &str, password: &str) -> bool {
-        self.store.verify(username, password).await
+        self.admin_repo.verify(username, password).await
     }
 }
 
@@ -122,14 +130,27 @@ where
     R: AdminRepo + EnableSession + Send + Sync,
 {
     async fn create_session(&self, username: &str) -> Result<String, SessionError> {
-        self.store.create_session(username).await
+        self.admin_repo.create_session(username).await
     }
 
     async fn destroy_session(&self, session_id: &str) {
-        self.store.destroy_session(session_id).await
+        self.admin_repo.destroy_session(session_id).await
     }
 
     async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
-        self.store.get_session(session_id).await
+        self.admin_repo.get_session(session_id).await
+    }
+}
+
+impl<R> VerifyUser for SessionManager<R>
+where
+    R: AdminRepo + EnableSession + Send + Sync,
+{
+    async fn contains(&self, username: &str) -> bool {
+        self.admin_repo.find_by_username(username).await.is_some()
+    }
+
+    async fn verify(&self, username: &str, password: &str) -> bool {
+        self.admin_repo.verify(username, password).await
     }
 }
