@@ -4,7 +4,10 @@ use serde::{Deserialize, Serialize};
 use std::str::from_utf8;
 
 use super::helper::{hash_password, validate_email, validate_username};
-use crate::utils::env_util::{var_as_str, var_as_str_or};
+use crate::{
+    response::Response,
+    utils::env_util::{var_as_str, var_as_str_or},
+};
 
 const ROOT_ADMIN_ID: u32 = 1;
 
@@ -125,19 +128,20 @@ pub struct LoginRequest {
 
 #[derive(Serialize)]
 pub struct LoginResponse {
-    pub message: String,
+    #[serde(flatten)]
+    response: Response,
 }
 
 impl LoginResponse {
     pub fn ok() -> Self {
         Self {
-            message: "Login successful".into(),
+            response: Response::ok("Login successful"),
         }
     }
 
     pub fn err(msg: &str) -> Self {
         Self {
-            message: msg.into(),
+            response: Response::err(msg),
         }
     }
 }

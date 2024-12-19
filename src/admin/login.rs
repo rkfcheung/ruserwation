@@ -1,13 +1,12 @@
 use serde_json::json as to_json;
 use std::sync::Arc;
 use warp::{
-    filters::{cookie, reply::headers},
     http::{header, StatusCode},
     reply::{json, with_header, with_status},
     Filter, Rejection, Reply,
 };
 
-use crate::utils::env_util::{is_prod, var_as_str};
+use crate::utils::env_util::is_prod;
 
 use super::{
     errors::SessionError,

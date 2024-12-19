@@ -1,6 +1,7 @@
 mod admin;
 mod config;
 mod db;
+mod response;
 mod restaurant;
 mod setup;
 mod utils;
@@ -9,6 +10,7 @@ use warp::Filter;
 
 use admin::login::admin_login_route;
 use log::info;
+use response::handle_rejections;
 use restaurant::{index::index_route, models::Restaurant};
 use setup::{errors::SetupError, startup::init};
 use utils::env_util::{is_prod, var_as_int_or, var_as_str_or};
@@ -37,7 +39,8 @@ async fn main() -> Result<(), SetupError> {
     let routes = warp::get()
         .and(static_route)
         .or(index_route)
-        .or(admin_login_route);
+        .or(admin_login_route)
+        .recover(handle_rejections);
 
     let rest_port = var_as_int_or("RW_REST_PORT", 3030) as u16;
     warp::serve(routes).run(([0, 0, 0, 0], rest_port)).await;

@@ -3,9 +3,11 @@ mod common;
 #[cfg(test)]
 mod integration_tests {
     use ruserwation::admin::login::admin_login_route;
-    use serde_json::json as to_json;
+    use ruserwation::response::handle_rejections;
+    use serde_json::{json as to_json, Value};
     use warp::http::StatusCode;
     use warp::test::request;
+    use warp::Filter;
 
     use crate::common::db_utils::init_test_app_state;
 
@@ -32,7 +34,7 @@ mod integration_tests {
         assert_eq!(response.status(), StatusCode::OK);
 
         // Assert the response body
-        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        let body: Value = serde_json::from_slice(response.body()).unwrap();
         assert_eq!(body["message"], "Login successful");
 
         // Assert the Set-Cookie header exists
@@ -63,7 +65,7 @@ mod integration_tests {
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
         // Assert the response body
-        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        let body: Value = serde_json::from_slice(response.body()).unwrap();
         assert_eq!(body["message"], "Invalid credentials");
 
         // Assert no Set-Cookie header exists
@@ -76,7 +78,7 @@ mod integration_tests {
         let app_state = init_test_app_state().await;
 
         // Build the login route
-        let filter = admin_login_route(app_state.session_manager());
+        let filter = admin_login_route(app_state.session_manager()).recover(handle_rejections);
 
         // Perform a POST request with missing fields
         let response = request()
@@ -93,7 +95,7 @@ mod integration_tests {
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 
         // Assert the response body (if your application provides error details)
-        let body: serde_json::Value = serde_json::from_slice(response.body()).unwrap();
+        let body: Value = serde_json::from_slice(response.body()).unwrap();
         assert!(body["message"].is_string());
     }
 }
