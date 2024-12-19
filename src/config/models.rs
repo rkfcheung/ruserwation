@@ -9,7 +9,7 @@ use crate::admin::{
 pub struct AppState<DB, R>
 where
     DB: sqlx::Database,
-    R: AdminRepo + EnableSession + Send + Sync,
+    R: AdminRepo + VerifyUser + Send + Sync,
 {
     pool: Arc<Pool<DB>>,
     admin_repo: Arc<R>,
@@ -19,7 +19,7 @@ where
 impl<DB, R> AppState<DB, R>
 where
     DB: sqlx::Database,
-    R: AdminRepo + EnableSession + Send + Sync,
+    R: AdminRepo + VerifyUser + Send + Sync,
 {
     pub fn new(pool: Arc<Pool<DB>>, admin_repo: Arc<R>) -> Self {
         let session_manager = Arc::new(SessionManager::new(admin_repo.clone()));

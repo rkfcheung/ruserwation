@@ -1,5 +1,8 @@
 use ruserwation::admin::{
-    errors::SessionError, models::Admin, repo::AdminRepo, sessions::EnableSession,
+    errors::SessionError,
+    models::Admin,
+    repo::AdminRepo,
+    sessions::{EnableSession, VerifyUser},
 };
 use warp_sessions::Session;
 
@@ -9,10 +12,6 @@ pub(crate) struct FakeAdminRepo {
 }
 
 impl AdminRepo for FakeAdminRepo {
-    async fn verify(&self, _username: &str, _password: &str) -> bool {
-        self.verify_result
-    }
-
     async fn find_by_id(&self, _id: u32) -> Option<Admin> {
         unimplemented!()
     }
@@ -37,6 +36,16 @@ impl EnableSession for FakeAdminRepo {
 
     async fn get_session(&self, _session_id: &str) -> Result<Session, SessionError> {
         unimplemented!()
+    }
+}
+
+impl VerifyUser for FakeAdminRepo {
+    async fn contains(&self, _username: &str) -> bool {
+        self.verify_result
+    }
+
+    async fn verify(&self, _username: &str, _password: &str) -> bool {
+        self.verify_result
     }
 }
 

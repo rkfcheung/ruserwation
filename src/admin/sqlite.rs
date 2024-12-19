@@ -6,7 +6,7 @@ use super::{
     errors::SessionError,
     models::Admin,
     repo::AdminRepo,
-    sessions::{EnableSession, Sessions},
+    sessions::{EnableSession, Sessions, VerifyUser},
 };
 
 enum OpType {
@@ -170,16 +170,6 @@ impl AdminRepo for SqliteAdminRepo {
             }
         }
     }
-
-    // Verify username and password
-    async fn verify(&self, username: &str, password: &str) -> bool {
-        if let Some(admin) = self.find_by_username(username).await {
-            // Compare the password (assuming stored passwords are hashed)
-            admin.verify_password(password)
-        } else {
-            false // Return false if no admin was found
-        }
-    }
 }
 
 impl EnableSession for SqliteAdminRepo {
@@ -203,5 +193,21 @@ impl EnableSession for SqliteAdminRepo {
             .get(session_id)
             .await
             .ok_or(SessionError::SessionNotFound(session_id.to_string()))
+    }
+}
+
+impl VerifyUser for SqliteAdminRepo {
+    async fn contains(&self, username: &str) -> bool {
+        self.find_by_username(username).await.is_some()
+    }
+
+    // Verify username and password
+    async fn verify(&self, username: &str, password: &str) -> bool {
+        if let Some(admin) = self.find_by_username(username).await {
+            // Compare the password (assuming stored passwords are hashed)
+            admin.verify_password(password)
+        } else {
+            false // Return false if no admin was found
+        }
     }
 }

@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc, time::Duration};
 use warp_sessions::{MemoryStore, Session, SessionStore};
 
-use super::{errors::SessionError, repo::AdminRepo};
+use super::errors::SessionError;
 
 const DEFAULT_EXPIRE_IN: u64 = 43_200;
 
@@ -107,50 +107,64 @@ impl Sessions {
 
 pub struct SessionManager<R>
 where
-    R: AdminRepo + EnableSession + Send + Sync,
+    R: VerifyUser + Send + Sync,
 {
-    admin_repo: Arc<R>,
+    user_store: Arc<R>,
+    sessions: Sessions,
 }
 
 impl<R> SessionManager<R>
 where
-    R: AdminRepo + EnableSession + Send + Sync,
+    R: VerifyUser + Send + Sync,
 {
-    pub fn new(admin_repo: Arc<R>) -> Self {
-        Self { admin_repo }
+    pub fn new(user_store: Arc<R>) -> Self {
+        Self {
+            user_store,
+            sessions: Sessions::new(),
+        }
     }
 
     pub async fn verify(&self, username: &str, password: &str) -> bool {
-        self.admin_repo.verify(username, password).await
+        self.user_store.verify(username, password).await
     }
 }
 
 impl<R> EnableSession for SessionManager<R>
 where
-    R: AdminRepo + EnableSession + Send + Sync,
+    R: VerifyUser + Send + Sync,
 {
     async fn create_session(&self, username: &str) -> Result<String, SessionError> {
-        self.admin_repo.create_session(username).await
+        if self.contains(username).await {
+            self.sessions
+                .create(username)
+                .await
+                .ok_or(SessionError::SessionCreationFailed(username.to_string()))
+        } else {
+            Err(SessionError::UserNotFound(username.to_string()))
+        }
     }
 
     async fn destroy_session(&self, session_id: &str) {
-        self.admin_repo.destroy_session(session_id).await
+        self.sessions.destroy(session_id).await;
     }
 
     async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
-        self.admin_repo.get_session(session_id).await
+        self.sessions
+            .get(session_id)
+            .await
+            .ok_or(SessionError::SessionNotFound(session_id.to_string()))
     }
 }
 
 impl<R> VerifyUser for SessionManager<R>
 where
-    R: AdminRepo + EnableSession + Send + Sync,
+    R: VerifyUser + Send + Sync,
 {
     async fn contains(&self, username: &str) -> bool {
-        self.admin_repo.find_by_username(username).await.is_some()
+        self.user_store.contains(username).await
     }
 
     async fn verify(&self, username: &str, password: &str) -> bool {
-        self.admin_repo.verify(username, password).await
+        self.user_store.verify(username, password).await
     }
 }
