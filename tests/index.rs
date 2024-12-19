@@ -14,7 +14,7 @@ mod tests {
             active: true,
         };
 
-        let index_filter = index_route(restaurant);
+        let index_filter = index_route(restaurant.into());
 
         let res = request().method("GET").path("/").reply(&index_filter).await;
         assert_eq!(res.status(), 200);

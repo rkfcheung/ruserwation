@@ -33,7 +33,7 @@ mod tests {
         .unwrap();
         assert_eq!(result.0, 1, "Admin table should exist");
 
-        let admin_repo = SqliteAdminRepo::new(Arc::new(pool));
+        let admin_repo = SqliteAdminRepo::new(pool.into());
         let root_user: Option<ruserwation::admin::models::Admin> = admin_repo.find_by_id(1).await;
         assert!(root_user.is_some());
 

@@ -18,7 +18,7 @@ mod tests {
         let pool = db_utils::init_test_db()
             .await
             .expect("Failed to create test DB!");
-        let admin_repo = Arc::new(SqliteAdminRepo::new(Arc::new(pool)));
+        let admin_repo = Arc::new(SqliteAdminRepo::new(pool.into()));
         let session_manager = SessionManager::new(admin_repo.clone());
         let repo = &admin_repo.as_ref();
 

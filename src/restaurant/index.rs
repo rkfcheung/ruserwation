@@ -1,4 +1,5 @@
 use maud::{html, Markup};
+use std::sync::Arc;
 use warp::{Filter, Rejection, Reply};
 
 use crate::utils::{
@@ -9,7 +10,7 @@ use crate::utils::{
 use super::models::Restaurant;
 
 pub fn index_route(
-    restaurant: Restaurant,
+    restaurant: Arc<Restaurant>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::path::end().map(move || warp::reply::html(render_index(&restaurant).into_string()))
 }
