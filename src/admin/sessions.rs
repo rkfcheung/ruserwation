@@ -6,23 +6,20 @@ use super::{errors::SessionError, repo::AdminRepo};
 const DEFAULT_EXPIRE_IN: u64 = 43_200;
 
 pub trait EnableSession {
-    type Error;
-
     fn create_session(
         &self,
         username: &str,
-    ) -> impl Future<Output = Result<String, Self::Error>> + Send;
+    ) -> impl Future<Output = Result<String, SessionError>> + Send;
 
     fn destroy_session(&self, session_id: &str) -> impl Future<Output = ()> + Send;
 
     fn get_session(
         &self,
         session_id: &str,
-    ) -> impl Future<Output = Result<Session, Self::Error>> + Send;
+    ) -> impl Future<Output = Result<Session, SessionError>> + Send;
 }
 
 pub struct Sessions {
-    // Session ID to Session mapping
     context: MemoryStore,
     default_expire_in: Duration,
 }
@@ -102,14 +99,14 @@ impl Sessions {
 
 pub struct SessionManager<R>
 where
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+    R: AdminRepo + EnableSession + Send + Sync,
 {
     store: Arc<R>,
 }
 
 impl<R> SessionManager<R>
 where
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+    R: AdminRepo + EnableSession + Send + Sync,
 {
     pub fn new(store: Arc<R>) -> Self {
         Self { store }
@@ -122,11 +119,9 @@ where
 
 impl<R> EnableSession for SessionManager<R>
 where
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+    R: AdminRepo + EnableSession + Send + Sync,
 {
-    type Error = SessionError;
-
-    async fn create_session(&self, username: &str) -> Result<String, Self::Error> {
+    async fn create_session(&self, username: &str) -> Result<String, SessionError> {
         self.store.create_session(username).await
     }
 
@@ -134,7 +129,7 @@ where
         self.store.destroy_session(session_id).await
     }
 
-    async fn get_session(&self, session_id: &str) -> Result<Session, Self::Error> {
+    async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
         self.store.get_session(session_id).await
     }
 }

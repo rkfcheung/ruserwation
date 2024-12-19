@@ -2,7 +2,6 @@ use sqlx::Pool;
 use std::sync::Arc;
 
 use crate::admin::{
-    errors::SessionError,
     repo::AdminRepo,
     sessions::{EnableSession, SessionManager},
 };
@@ -10,7 +9,7 @@ use crate::admin::{
 pub struct AppState<DB, R>
 where
     DB: sqlx::Database,
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+    R: AdminRepo + EnableSession + Send + Sync,
 {
     pool: Arc<Pool<DB>>,
     admin_repo: Arc<R>,
@@ -20,7 +19,7 @@ where
 impl<DB, R> AppState<DB, R>
 where
     DB: sqlx::Database,
-    R: AdminRepo + EnableSession<Error = SessionError> + Send + Sync,
+    R: AdminRepo + EnableSession + Send + Sync,
 {
     pub fn new(pool: Arc<Pool<DB>>, admin_repo: Arc<R>) -> Self {
         let session_manager = Arc::new(SessionManager::new(admin_repo.clone()));

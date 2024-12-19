@@ -183,9 +183,7 @@ impl AdminRepo for SqliteAdminRepo {
 }
 
 impl EnableSession for SqliteAdminRepo {
-    type Error = SessionError;
-
-    async fn create_session(&self, username: &str) -> Result<String, Self::Error> {
+    async fn create_session(&self, username: &str) -> Result<String, SessionError> {
         if self.find_by_username(username).await.is_some() {
             self.sessions
                 .create(username)
@@ -200,7 +198,7 @@ impl EnableSession for SqliteAdminRepo {
         self.sessions.destroy(session_id).await;
     }
 
-    async fn get_session(&self, session_id: &str) -> Result<Session, Self::Error> {
+    async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
         self.sessions
             .get(session_id)
             .await
