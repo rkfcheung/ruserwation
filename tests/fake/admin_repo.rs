@@ -27,19 +27,24 @@ impl AdminRepo for FakeAdminRepo {
 }
 
 impl EnableSession for FakeAdminRepo {
-    type Error = SessionError;
-
-    async fn create_session(&self, _username: &str) -> Result<String, Self::Error> {
-        self.session_result
-            .clone()
-            .unwrap_or_else(|| Ok("mock_session_id".to_string()))
+    async fn create_session(&self, _username: &str) -> Result<String, SessionError> {
+        self.session_result.clone().unwrap()
     }
 
     async fn destroy_session(&self, _session_id: &str) {
         unimplemented!()
     }
 
-    async fn get_session(&self, _session_id: &str) -> Result<Session, Self::Error> {
+    async fn get_session(&self, _session_id: &str) -> Result<Session, SessionError> {
         unimplemented!()
+    }
+}
+
+impl FakeAdminRepo {
+    pub(crate) fn ok() -> Self {
+        Self {
+            verify_result: true,
+            session_result: Some(Ok("mock_session_id".to_string())),
+        }
     }
 }

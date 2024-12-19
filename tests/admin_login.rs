@@ -14,10 +14,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_successful_login() {
-        let admin_repo = Arc::new(FakeAdminRepo {
-            verify_result: true,
-            session_result: Some(Ok("mock_session_id".to_string())),
-        });
+        let admin_repo = Arc::new(FakeAdminRepo::ok());
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
 
@@ -99,10 +96,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_malformed_json_body() {
-        let admin_repo = Arc::new(FakeAdminRepo {
-            verify_result: true,
-            session_result: Some(Ok("mock_session_id".to_string())),
-        });
+        let admin_repo = Arc::new(FakeAdminRepo::ok());
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
 
@@ -118,10 +112,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_missing_fields() {
-        let admin_repo = Arc::new(FakeAdminRepo {
-            verify_result: true,
-            session_result: Some(Ok("mock_session_id".to_string())),
-        });
+        let admin_repo = Arc::new(FakeAdminRepo::ok());
         let session_manager = Arc::new(SessionManager::new(admin_repo));
         let filter = admin_login_route(session_manager);
 
