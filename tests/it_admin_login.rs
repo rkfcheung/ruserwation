@@ -96,6 +96,9 @@ mod integration_tests {
 
         // Assert the response body (if your application provides error details)
         let body: Value = serde_json::from_slice(response.body()).unwrap();
-        assert!(body["message"].is_string());
+        assert_eq!(
+            body["message"],
+            "Request body deserialize error: missing field `password` at line 1 column 20"
+        );
     }
 }

@@ -6,7 +6,7 @@ mod tests {
 
     // Helper function to create a mock session for testing
     fn setup_sessions() -> Sessions {
-        Sessions::new()
+        Sessions::default()
     }
 
     #[tokio::test]
@@ -16,11 +16,11 @@ mod tests {
 
         // Test session creation
         let session_id = sessions.create(username).await;
-        assert!(session_id.is_some(), "Session ID should be returned");
+        assert!(session_id.is_ok(), "Session ID should be returned");
 
         let session_id = session_id.unwrap();
         let retrieved_session = sessions.get(&session_id).await;
-        assert!(retrieved_session.is_some(), "Session should be retrievable");
+        assert!(retrieved_session.is_ok(), "Session should be retrievable");
 
         let session = retrieved_session.unwrap();
         let value: String = session.get_raw("user").unwrap();
@@ -35,20 +35,17 @@ mod tests {
 
         // Test session creation with custom expiration
         let session_id = sessions.create_with_expire_in(username, expire_in).await;
-        assert!(session_id.is_some(), "Session ID should be returned");
+        assert!(session_id.is_ok(), "Session ID should be returned");
 
         let session_id = session_id.unwrap();
         let session = sessions.get(&session_id).await;
-        assert!(
-            session.is_some(),
-            "Session should be retrievable immediately"
-        );
+        assert!(session.is_ok(), "Session should be retrievable immediately");
 
         // Wait for the session to expire
         thread::sleep(Duration::from_secs(3));
         let expired_session = sessions.get(&session_id).await;
         assert!(
-            expired_session.is_none(),
+            expired_session.is_err(),
             "Session should be expired and no longer retrievable"
         );
     }
@@ -60,18 +57,18 @@ mod tests {
 
         // Create a session
         let session_id = sessions.create(username).await;
-        assert!(session_id.is_some(), "Session ID should be returned");
+        assert!(session_id.is_ok(), "Session ID should be returned");
 
         let session_id = session_id.unwrap();
         let session = sessions.get(&session_id).await;
-        assert!(session.is_some(), "Session should exist before destroy");
+        assert!(session.is_ok(), "Session should exist before destroy");
 
         // Destroy the session
         let result = sessions.destroy(&session_id).await;
         let session_after_destroy = sessions.get(&session_id).await;
         assert!(result, "Session should be destroyed");
         assert!(
-            session_after_destroy.is_none(),
+            session_after_destroy.is_err(),
             "Session should not exist after being destroyed"
         );
     }
@@ -84,7 +81,7 @@ mod tests {
         let session_id = "invalid_id";
         let session = sessions.get(session_id).await;
         assert!(
-            session.is_none(),
+            session.is_err(),
             "Nonexistent session should not be retrievable"
         );
     }
@@ -98,7 +95,7 @@ mod tests {
         let session_id = sessions
             .create_with_expire_in(username, Duration::from_secs(1))
             .await;
-        assert!(session_id.is_some(), "Session ID should be returned");
+        assert!(session_id.is_ok(), "Session ID should be returned");
 
         let session_id = session_id.unwrap();
         thread::sleep(Duration::from_secs(2));
@@ -106,7 +103,7 @@ mod tests {
         // Access the session after expiry
         let session = sessions.get(&session_id).await;
         assert!(
-            session.is_none(),
+            session.is_err(),
             "Expired session should be removed and not retrievable"
         );
     }

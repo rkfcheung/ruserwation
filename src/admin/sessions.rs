@@ -26,19 +26,15 @@ pub struct Sessions {
 
 impl Default for Sessions {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Sessions {
-    pub fn new() -> Self {
         Self {
             context: MemoryStore::new(),
             default_expire_in: Duration::from_secs(DEFAULT_EXPIRE_IN),
         }
     }
+}
 
-    pub async fn create(&self, username: &str) -> Option<String> {
+impl Sessions {
+    pub async fn create(&self, username: &str) -> Result<String, SessionError> {
         self.create_with_expire_in(username, self.default_expire_in)
             .await
     }
@@ -47,27 +43,33 @@ impl Sessions {
         &self,
         username: &str,
         expire_in: Duration,
-    ) -> Option<String> {
+    ) -> Result<String, SessionError> {
         // Create a new session
         let mut session = Session::new();
         session.insert_raw("user", username.to_string());
         session.expire_in(expire_in);
 
-        self.context
+        let result = self
+            .context
             .store_session(session)
             .await
-            .unwrap_or_default()
+            .map_err(|err| SessionError::StoreException(err.to_string()))?;
+        if let Some(session_id) = result {
+            Ok(session_id)
+        } else {
+            Err(SessionError::SessionCreationFailed(username.to_string()))
+        }
     }
 
     pub async fn destroy(&self, session_id: &str) -> bool {
-        if let Some(session) = self.get_session(session_id).await {
+        if let Ok(session) = self.get_session(session_id).await {
             match self.context.destroy_session(session).await {
                 Ok(_) => {
                     log::info!("Session {} destroyed successfully.", session_id);
                     true
                 }
                 Err(err) => {
-                    log::warn!("Session {} failed to destroy: {}", session_id, err);
+                    log::warn!("Failed to destroy session {}: {}", session_id, err);
                     false
                 }
             }
@@ -77,23 +79,30 @@ impl Sessions {
         }
     }
 
-    pub async fn get(&self, session_id: &str) -> Option<Session> {
+    pub async fn get(&self, session_id: &str) -> Result<Session, SessionError> {
         let session = self.get_session(session_id).await?;
 
         if session.is_expired() {
-            log::info!("Session {} has expired.", session_id);
+            log::info!("Session {} has expired and will be destroyed.", session_id);
             let _ = self.context.destroy_session(session).await;
-            return None;
-        }
 
-        Some(session.clone())
+            Err(SessionError::SessionExpired(session_id.to_string()))
+        } else {
+            Ok(session)
+        }
     }
 
-    async fn get_session(&self, session_id: &str) -> Option<Session> {
-        self.context
+    async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
+        let result = self
+            .context
             .load_session(session_id.to_string())
             .await
-            .unwrap_or_default()
+            .map_err(|err| SessionError::StoreException(err.to_string()))?;
+        if let Some(session) = result {
+            Ok(session)
+        } else {
+            Err(SessionError::SessionNotFound(session_id.to_string()))
+        }
     }
 }
 
@@ -112,7 +121,7 @@ where
     pub fn new(user_store: Arc<R>) -> Self {
         Self {
             user_store,
-            sessions: Sessions::new(),
+            sessions: Sessions::default(),
         }
     }
 }
@@ -123,10 +132,7 @@ where
 {
     async fn create_session(&self, username: &str) -> Result<String, SessionError> {
         if self.contains(username).await {
-            self.sessions
-                .create(username)
-                .await
-                .ok_or(SessionError::SessionCreationFailed(username.to_string()))
+            self.sessions.create(username).await
         } else {
             Err(SessionError::UserNotFound(username.to_string()))
         }
@@ -137,10 +143,7 @@ where
     }
 
     async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
-        self.sessions
-            .get(session_id)
-            .await
-            .ok_or(SessionError::SessionNotFound(session_id.to_string()))
+        self.sessions.get(session_id).await
     }
 }
 
