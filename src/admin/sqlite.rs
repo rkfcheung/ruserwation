@@ -1,12 +1,9 @@
 use sqlx::{query, query_as, query_scalar, SqlitePool};
 use std::sync::Arc;
-use warp_sessions::Session;
 
 use super::{
-    errors::SessionError,
     models::Admin,
-    repo::AdminRepo,
-    sessions::{EnableSession, Sessions, VerifyUser},
+    repo::{AdminRepo, VerifyUser},
 };
 
 enum OpType {
@@ -17,16 +14,12 @@ enum OpType {
 
 pub struct SqliteAdminRepo {
     pool: Arc<SqlitePool>, // SQLite connection pool
-    sessions: Sessions,    // Session store
 }
 
 impl SqliteAdminRepo {
     // Create a new repository with a database connection pool
     pub fn new(pool: Arc<SqlitePool>) -> Self {
-        Self {
-            pool,
-            sessions: Sessions::new(),
-        }
+        Self { pool }
     }
 
     async fn count(&self) -> Result<u32, sqlx::Error> {
@@ -169,30 +162,6 @@ impl AdminRepo for SqliteAdminRepo {
                 0
             }
         }
-    }
-}
-
-impl EnableSession for SqliteAdminRepo {
-    async fn create_session(&self, username: &str) -> Result<String, SessionError> {
-        if self.find_by_username(username).await.is_some() {
-            self.sessions
-                .create(username)
-                .await
-                .ok_or(SessionError::SessionCreationFailed(username.to_string()))
-        } else {
-            Err(SessionError::UserNotFound(username.to_string()))
-        }
-    }
-
-    async fn destroy_session(&self, session_id: &str) {
-        self.sessions.destroy(session_id).await;
-    }
-
-    async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
-        self.sessions
-            .get(session_id)
-            .await
-            .ok_or(SessionError::SessionNotFound(session_id.to_string()))
     }
 }
 

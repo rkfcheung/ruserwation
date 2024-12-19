@@ -2,8 +2,8 @@ use sqlx::Pool;
 use std::sync::Arc;
 
 use crate::admin::{
-    repo::AdminRepo,
-    sessions::{EnableSession, SessionManager, VerifyUser},
+    repo::{AdminRepo, VerifyUser},
+    sessions::{EnableSession, SessionManager},
 };
 
 pub struct AppState<DB, R>

@@ -1,7 +1,7 @@
 use std::{future::Future, sync::Arc, time::Duration};
 use warp_sessions::{MemoryStore, Session, SessionStore};
 
-use super::errors::SessionError;
+use super::{errors::SessionError, repo::VerifyUser};
 
 const DEFAULT_EXPIRE_IN: u64 = 43_200;
 
@@ -17,14 +17,6 @@ pub trait EnableSession {
         &self,
         session_id: &str,
     ) -> impl Future<Output = Result<Session, SessionError>> + Send;
-}
-
-pub trait VerifyUser {
-    // Check if user exists
-    fn contains(&self, username: &str) -> impl Future<Output = bool> + Send;
-
-    // Verify username and password
-    fn verify(&self, username: &str, password: &str) -> impl Future<Output = bool> + Send;
 }
 
 pub struct Sessions {
@@ -122,10 +114,6 @@ where
             user_store,
             sessions: Sessions::new(),
         }
-    }
-
-    pub async fn verify(&self, username: &str, password: &str) -> bool {
-        self.user_store.verify(username, password).await
     }
 }
 

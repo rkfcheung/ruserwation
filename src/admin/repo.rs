@@ -12,3 +12,11 @@ pub trait AdminRepo {
     // Save an Admin and return its ID
     fn save(&self, admin: &mut Admin) -> impl Future<Output = u32> + Send;
 }
+
+pub trait VerifyUser {
+    // Check if user exists
+    fn contains(&self, username: &str) -> impl Future<Output = bool> + Send;
+
+    // Verify username and password
+    fn verify(&self, username: &str, password: &str) -> impl Future<Output = bool> + Send;
+}

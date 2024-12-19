@@ -3,7 +3,10 @@ mod common;
 #[cfg(test)]
 mod tests {
     use ruserwation::{
-        admin::{repo::AdminRepo, sessions::VerifyUser, sqlite::SqliteAdminRepo},
+        admin::{
+            repo::{AdminRepo, VerifyUser},
+            sqlite::SqliteAdminRepo,
+        },
         setup::{errors, startup},
     };
     use std::{env, sync::Arc};

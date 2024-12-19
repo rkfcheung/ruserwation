@@ -10,7 +10,8 @@ use crate::utils::env_util::is_prod;
 
 use super::{
     models::{LoginRequest, LoginResponse},
-    sessions::{EnableSession, VerifyUser},
+    repo::VerifyUser,
+    sessions::EnableSession,
 };
 
 // Define the route for login

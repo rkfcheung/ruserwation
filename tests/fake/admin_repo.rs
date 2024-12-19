@@ -1,8 +1,8 @@
 use ruserwation::admin::{
     errors::SessionError,
     models::Admin,
-    repo::AdminRepo,
-    sessions::{EnableSession, VerifyUser},
+    repo::{AdminRepo, VerifyUser},
+    sessions::EnableSession,
 };
 use warp_sessions::Session;
 

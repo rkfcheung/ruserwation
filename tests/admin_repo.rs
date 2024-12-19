@@ -4,8 +4,8 @@ mod common;
 mod tests {
     use ruserwation::admin::{
         models::Admin,
-        repo::AdminRepo,
-        sessions::{EnableSession, SessionManager, VerifyUser},
+        repo::{AdminRepo, VerifyUser},
+        sessions::{EnableSession, SessionManager},
         sqlite::SqliteAdminRepo,
     };
     use std::sync::Arc;
