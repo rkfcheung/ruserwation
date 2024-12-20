@@ -4,12 +4,12 @@ mod fake;
 mod tests {
     use ruserwation::admin::errors::SessionError;
     use ruserwation::admin::login::{admin_login_form_route, admin_login_route};
-    use ruserwation::restaurant::models::Restaurant;
     use serde_json::json as to_json;
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
     use warp::http::StatusCode;
     use warp::test::request;
 
+    use crate::fake::fake_restaurant;
     use crate::fake::sessions::FakeSessionManager;
 
     #[tokio::test]
@@ -33,16 +33,13 @@ mod tests {
         assert!(cookie_header
             .to_str()
             .unwrap()
-            .contains("session_id=mock_session_id"));
+            .contains("session_id=valid_session_id"));
         assert!(cookie_header.to_str().unwrap().contains("HttpOnly"));
     }
 
     #[tokio::test]
     async fn test_invalid_credentials() {
-        let session_manager = FakeSessionManager {
-            verify_result: false,
-            session_result: None,
-        };
+        let session_manager = FakeSessionManager::default();
         let filter = admin_login_route(session_manager.into());
 
         let resp = request()
@@ -69,6 +66,7 @@ mod tests {
         let session_manager = FakeSessionManager {
             verify_result: true,
             session_result: Some(Err(SessionError::SessionCreationFailed("mock".to_string()))),
+            sessions: Mutex::default(),
         };
         let filter = admin_login_route(session_manager.into());
 
@@ -127,13 +125,7 @@ mod tests {
         let session_manager = Arc::new(FakeSessionManager::ok());
 
         // Mock the restaurant
-        let restaurant = Arc::new(Restaurant {
-            id: 1,
-            name: "Test Restaurant".to_string(),
-            max_capacity: 32,
-            location: "Test City".to_string(),
-            active: true,
-        });
+        let restaurant = Arc::new(fake_restaurant());
 
         // Create the filter
         let filter = admin_login_form_route(session_manager.clone(), restaurant.clone());

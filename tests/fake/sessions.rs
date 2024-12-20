@@ -1,10 +1,12 @@
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
-
+use std::{collections::HashSet, sync::Mutex};
 use warp_sessions::Session;
 
+#[derive(Default)]
 pub struct FakeSessionManager {
     pub(crate) verify_result: bool,
     pub(crate) session_result: Option<Result<String, SessionError>>,
+    pub(crate) sessions: Mutex<HashSet<String>>,
 }
 
 impl VerifyUser for FakeSessionManager {
@@ -22,12 +24,13 @@ impl EnableSession for FakeSessionManager {
         self.session_result.clone().unwrap()
     }
 
-    async fn destroy_session(&self, _session_id: &str) {
-        unimplemented!()
+    async fn destroy_session(&self, session_id: &str) {
+        let mut sessions = self.sessions.lock().unwrap();
+        sessions.remove(session_id);
     }
 
     async fn get_session(&self, session_id: &str) -> Result<Session, SessionError> {
-        if session_id == "valid_session_id" {
+        if self.has_session(session_id) {
             let mut session = Session::new();
             let _ = session.insert("user", "admin".to_string());
             Ok(session)
@@ -39,9 +42,18 @@ impl EnableSession for FakeSessionManager {
 
 impl FakeSessionManager {
     pub(crate) fn ok() -> Self {
+        let session_id = "valid_session_id";
+        let mut sessions = HashSet::new();
+        sessions.insert(session_id.to_string());
+
         Self {
             verify_result: true,
-            session_result: Some(Ok("mock_session_id".to_string())),
+            session_result: Some(Ok(session_id.to_string())),
+            sessions: Mutex::new(sessions),
         }
+    }
+
+    pub(crate) fn has_session(&self, session_id: &str) -> bool {
+        self.sessions.lock().unwrap().contains(session_id)
     }
 }

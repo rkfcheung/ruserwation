@@ -8,7 +8,10 @@ mod utils;
 
 use warp::Filter;
 
-use admin::login::{admin_login_form_route, admin_login_route};
+use admin::{
+    login::{admin_login_form_route, admin_login_route},
+    logout::admin_logout_route,
+};
 use response::handle_rejections;
 use restaurant::index::index_route;
 use setup::{errors::SetupError, startup::init};
@@ -27,16 +30,18 @@ async fn main() -> Result<(), SetupError> {
     let restaurant = app_state.restaurant();
 
     let static_route = warp::path("static").and(warp::fs::dir("./static"));
-    let index_route = index_route(restaurant.clone());
-    let admin_login_route = admin_login_route(session_manager.clone());
-    let admin_login_form_route =
-        admin_login_form_route(session_manager.clone(), restaurant.clone());
-
     let routes = warp::get()
         .and(static_route)
-        .or(index_route)
-        .or(admin_login_route)
-        .or(admin_login_form_route)
+        .or(index_route(restaurant.clone()))
+        .or(admin_login_route(session_manager.clone()))
+        .or(admin_login_form_route(
+            session_manager.clone(),
+            restaurant.clone(),
+        ))
+        .or(admin_logout_route(
+            session_manager.clone(),
+            restaurant.clone(),
+        ))
         .recover(handle_rejections);
 
     let rest_port = var_as_int_or("RW_REST_PORT", 3030) as u16;
