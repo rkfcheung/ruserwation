@@ -37,6 +37,17 @@ mod tests {
         assert!(body.contains("Logged out successfully"));
         assert!(body.contains("Go to Homepage"));
         assert!(!&session_manager.has_session("valid_session_id"));
+
+        // Check that the Set-Cookie header is set (indicating the session is deleted)
+        let set_cookie_header = response.headers().get("Set-Cookie");
+        assert!(set_cookie_header.is_some());
+
+        // Ensure that the session_id cookie has been set to expire (in the past)
+        if let Some(cookie_header) = set_cookie_header {
+            let cookie_value = cookie_header.to_str().unwrap();
+            // Assert that the cookie header contains the expiration date in the past
+            assert!(cookie_value.contains("expires=Thu, 01 Jan 1970"));
+        }
     }
 
     #[tokio::test]
@@ -63,5 +74,9 @@ mod tests {
         let body = String::from_utf8(response.body().to_vec()).unwrap();
         assert!(body.contains("No active session"));
         assert!(body.contains("Login as Admin"));
+
+        // Check that no Set-Cookie header is set (since no session existed)
+        let set_cookie_header = response.headers().get("Set-Cookie");
+        assert!(set_cookie_header.is_none());
     }
 }
