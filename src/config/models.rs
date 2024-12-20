@@ -20,6 +20,7 @@ where
     session_manager: Arc<SessionManager<R>>,
 }
 
+#[derive(Default)]
 pub struct AppStateBuilder<DB, R>
 where
     DB: sqlx::Database,
@@ -35,34 +36,12 @@ where
     DB: sqlx::Database,
     R: AdminRepo + VerifyUser + Send + Sync,
 {
-    pub fn new(
-        restaurant: Arc<Restaurant>,
-        pool: Arc<Pool<DB>>,
-        admin_repo: Arc<R>,
-        session_manager: Arc<SessionManager<R>>,
-    ) -> Self {
-        Self {
-            restaurant,
-            pool,
-            admin_repo,
-            session_manager,
-        }
-    }
-
-    pub fn admin_repo(&self) -> Arc<R> {
-        self.admin_repo.clone()
-    }
-
-    pub fn pool(&self) -> Arc<Pool<DB>> {
-        self.pool.clone()
+    pub fn restaurant(&self) -> Arc<Restaurant> {
+        self.restaurant.clone()
     }
 
     pub fn session_manager(&self) -> Arc<impl EnableSession + VerifyUser + Send + Sync> {
         self.session_manager.clone()
-    }
-
-    pub fn restaurant(&self) -> Arc<Restaurant> {
-        self.restaurant.clone()
     }
 }
 
@@ -105,6 +84,11 @@ where
         let admin_repo = self.admin_repo.expect("Admin repo is required");
         let session_manager = Arc::new(SessionManager::new(admin_repo.clone()));
 
-        AppState::new(restaurant, pool, admin_repo, session_manager)
+        AppState {
+            restaurant,
+            pool,
+            admin_repo,
+            session_manager,
+        }
     }
 }
