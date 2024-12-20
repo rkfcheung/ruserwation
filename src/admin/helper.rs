@@ -35,25 +35,25 @@ pub fn generate_random_password(length: usize) -> String {
         .collect()
 }
 
-/// Validates and sanitizes an email address.
+/// Validates and sanitises an email address.
 /// Returns a default email (`admin@localhost`) if invalid.
 pub fn validate_email(email: &str) -> String {
-    let sanitized_email = remove_whitespace(email);
+    let sanitised_email = remove_whitespace(email);
 
-    if is_valid_email(&sanitized_email) {
-        truncate_string(&sanitized_email, VAR_LEN)
+    if is_valid_email(&sanitised_email) {
+        truncate_string(&sanitised_email, VAR_LEN)
     } else {
         log::warn!("Invalid email provided. Using default email: admin@localhost");
         "admin@localhost".to_string()
     }
 }
 
-/// Validates and sanitizes a password.
+/// Validates and sanitises a password.
 /// Generates a random password if the provided password is invalid.
 pub fn validate_password(password: &str) -> String {
-    let sanitized_password = remove_whitespace(password);
+    let sanitised_password = remove_whitespace(password);
 
-    if sanitized_password.len() < PWD_MIN_LEN {
+    if sanitised_password.len() < PWD_MIN_LEN {
         // Get custom password length from the environment variable, falling back to default.
         let admin_pwd_len = env::var("RW_ADMIN_PWD_LEN")
             .ok()
@@ -75,17 +75,17 @@ pub fn validate_password(password: &str) -> String {
         );
         random_password
     } else {
-        truncate_string(&sanitized_password, PWD_MAX_LEN)
+        truncate_string(&sanitised_password, PWD_MAX_LEN)
     }
 }
 
-/// Validates and sanitizes a username.
+/// Validates and sanitises a username.
 /// Returns a default username (`admin`) if invalid.
 pub fn validate_username(username: &str) -> String {
-    let sanitized_username = remove_whitespace(username);
+    let sanitised_username = remove_whitespace(username);
 
-    if is_valid_username(&sanitized_username) {
-        truncate_string(&sanitized_username, VAR_LEN)
+    if is_valid_username(&sanitised_username) {
+        truncate_string(&sanitised_username, VAR_LEN)
     } else {
         log::warn!("Invalid username provided. Using default username: admin");
         "admin".to_string()

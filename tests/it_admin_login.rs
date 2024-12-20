@@ -61,7 +61,7 @@ mod integration_tests {
             .reply(&filter)
             .await;
 
-        // Assert the status is 401 Unauthorized
+        // Assert the status is 401 Unauthorised
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
 
         // Assert the response body

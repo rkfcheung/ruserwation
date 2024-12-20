@@ -40,7 +40,7 @@ mod tests {
     async fn test_migrate_db() {
         env::set_var("RW_SQLITE_URL", "sqlite::memory:");
 
-        let pool = init_db().await.expect("Failed to initialize the database");
+        let pool = init_db().await.expect("Failed to initialise the database");
         migrate_db(&pool)
             .await
             .expect("Failed to migrate the databse");
@@ -70,7 +70,7 @@ mod tests {
     async fn test_with_file_based_sqlite() {
         std::env::set_var("RW_SQLITE_URL", "sqlite://local_test.db");
 
-        let pool = init_db().await.expect("Failed to initialize the database");
+        let pool = init_db().await.expect("Failed to initialise the database");
 
         // Test query
         let result: (i32,) = sqlx::query_as("SELECT 1")
@@ -89,7 +89,7 @@ mod tests {
     async fn test_with_in_memory_sqlite() {
         env::set_var("RW_SQLITE_URL", "sqlite::memory:");
 
-        let pool = init_db().await.expect("Failed to initialize the database");
+        let pool = init_db().await.expect("Failed to initialise the database");
 
         // Test query
         let result: (i32,) = sqlx::query_as("SELECT 1")
