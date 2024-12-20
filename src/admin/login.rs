@@ -9,6 +9,7 @@ use warp::{
 };
 
 use crate::{
+    admin::helper::get_cookie_session_id,
     restaurant::models::Restaurant,
     utils::{env_util::is_prod, html_util::render_html},
 };
@@ -57,68 +58,6 @@ pub fn admin_login_form_route(
         })
 }
 
-async fn render_admin_login(
-    cookie: Option<String>,
-    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
-    restaurant: Arc<Restaurant>,
-) -> Result<impl Reply, Rejection> {
-    let session_id = cookie
-        .and_then(|c| c.split('=').nth(1).map(|s| s.to_string()))
-        .unwrap_or_default();
-
-    if let Ok(session) = session_manager.get_session(&session_id).await {
-        let username = session
-            .get::<String>("user")
-            .unwrap_or("unknown".to_string());
-        let content = html! {
-            div class="container mt-5" {
-                div class="alert alert-success" role="alert" {
-                    h4 class="alert-heading" { "Logged in already!" }
-                    p { "Welcome, " (username) "." }
-                    hr;
-                    p { "You're already logged in as an admin." }
-                }
-            }
-        };
-        return Ok(warp::reply::html(
-            render_html(&restaurant, content).into_string(),
-        ));
-    }
-
-    let content = html! {
-        div class="container mt-5" {
-            div class="row justify-content-center" {
-                div class="col-md-6" {
-                    div class="card shadow-lg" {
-                        div class="card-header bg-primary text-white" {
-                            h4 class="mb-0" { "Admin Login" }
-                        }
-                        div class="card-body" {
-                            form method="POST" action="/admin/login" enctype="application/x-www-form-urlencoded" {
-                                div class="mb-3" {
-                                    label for="username" class="form-label" { "Username" }
-                                    input type="text" class="form-control" id="username" name="username" required="true" placeholder="Enter your username";
-                                }
-                                div class="mb-3" {
-                                    label for="password" class="form-label" { "Password" }
-                                    input type="password" class="form-control" id="password" name="password" required="true" placeholder="Enter your password";
-                                }
-                                div class="d-grid gap-2" {
-                                    button type="submit" class="btn btn-primary btn-block" { "Login" }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    Ok(warp::reply::html(
-        render_html(&restaurant, content).into_string(),
-    ))
-}
-
 // The handler for the admin login
 async fn handle_admin_login(
     body: LoginRequest,
@@ -158,6 +97,82 @@ async fn handle_admin_login(
             StatusCode::UNAUTHORIZED.as_str(),
         ))
     }
+}
+
+// Generates HTML content for the login form
+fn login_form_content() -> maud::Markup {
+    html! {
+        div class="container mt-5" {
+            div class="row justify-content-center" {
+                div class="col-md-6" {
+                    div class="card shadow-lg" {
+                        div class="card-header bg-primary text-white" {
+                            h4 class="mb-0" { "Admin Login" }
+                        }
+                        div class="card-body" {
+                            form method="POST" action="/admin/login" enctype="application/x-www-form-urlencoded" {
+                                div class="mb-3" {
+                                    label for="username" class="form-label" { "Username" }
+                                    input type="text" class="form-control" id="username" name="username" required="true" placeholder="Enter your username";
+                                }
+                                div class="mb-3" {
+                                    label for="password" class="form-label" { "Password" }
+                                    input type="password" class="form-control" id="password" name="password" required="true" placeholder="Enter your password";
+                                }
+                                div class="d-grid gap-2" {
+                                    button type="submit" class="btn btn-primary btn-block" { "Login" }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Generates HTML content for logged-in users
+fn logged_in_content(username: &str) -> maud::Markup {
+    html! {
+        div class="container mt-5" {
+            div class="alert alert-success" role="alert" {
+                h4 class="alert-heading" { "Logged in already!" }
+                p { "Welcome, " (username) "." }
+                hr;
+                p { "You're already logged in as an admin." }
+            }
+        }
+    }
+}
+
+async fn render_admin_login(
+    cookie: Option<String>,
+    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
+    restaurant: Arc<Restaurant>,
+) -> Result<impl Reply, Rejection> {
+    // Retrieve session ID from the cookie
+    if let Some(session_id) = get_cookie_session_id(cookie) {
+        match session_manager.get_session(&session_id).await {
+            Ok(session) => {
+                let username = session
+                    .get::<String>("user")
+                    .unwrap_or_else(|| "unknown".to_string());
+                return Ok(warp::reply::html(
+                    render_html(&restaurant, logged_in_content(&username)).into_string(),
+                ));
+            }
+            Err(err) => {
+                log::warn!("Failed to retrieve session: {:?}", err);
+            }
+        }
+    } else {
+        log::debug!("No session_id found in cookies.");
+    }
+
+    // Render login form if session is not found or invalid
+    Ok(warp::reply::html(
+        render_html(&restaurant, login_form_content()).into_string(),
+    ))
 }
 
 // Helper function to attach admin_repo with correct lifetime
