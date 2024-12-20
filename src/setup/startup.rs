@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use crate::{
     admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
-    config::models::{AppState, AppStateBuilder},
+    config::models::{AppState, SqliteAppStateBuilder},
     db,
     restaurant::models::Restaurant,
     utils::env_util::{var_as_int_or, var_as_str_or},
@@ -31,7 +31,7 @@ impl From<std::io::Error> for SetupError {
     }
 }
 
-pub async fn init() -> Result<Arc<AppState<Sqlite, SqliteAdminRepo>>, SetupError> {
+pub async fn init() -> Result<Arc<AppState<SqliteAdminRepo>>, SetupError> {
     // Initialise logging
     env_logger::init();
     info!("Initialising Ruserwation ...");
@@ -44,31 +44,26 @@ pub async fn init() -> Result<Arc<AppState<Sqlite, SqliteAdminRepo>>, SetupError
         .await
         .map_err(SetupError::from)?;
 
-    // Initialise the AdminRepo
-    let pool = Arc::new(pool);
-    let admin_repo = Arc::new(SqliteAdminRepo::new(pool.clone()));
+    // Create the AppState
+    let app_state = init_app_state(pool.into());
 
     // Perform admin initialisation
+    let admin_repo = &app_state.as_ref().admin_repo();
     init_admin(admin_repo.clone()).await?;
 
-    // Create the AppState
-    init_app_state(pool, admin_repo)
+    Ok(app_state)
 }
 
-pub fn init_app_state(
-    pool: Arc<Pool<Sqlite>>,
-    admin_repo: Arc<SqliteAdminRepo>,
-) -> Result<Arc<AppState<Sqlite, SqliteAdminRepo>>, SetupError> {
+pub fn init_app_state(pool: Arc<Pool<Sqlite>>) -> Arc<AppState<SqliteAdminRepo>> {
     // Perform restaurant initilisation
     let restaurant = Arc::new(init_restaurant());
 
-    let app_state = AppStateBuilder::new()
+    let app_state = SqliteAppStateBuilder::default()
         .with_restaurant(restaurant)
         .with_pool(pool)
-        .with_admin_repo(admin_repo)
         .build();
 
-    Ok(Arc::new(app_state))
+    Arc::new(app_state)
 }
 
 async fn init_admin(admin_repo: Arc<SqliteAdminRepo>) -> Result<(), SetupError> {
