@@ -46,7 +46,7 @@ impl Sessions {
     ) -> Result<String, SessionError> {
         // Create a new session
         let mut session = Session::new();
-        session.insert_raw("user", username.to_string());
+        let _ = session.insert("user", username.to_string());
         session.expire_in(expire_in);
 
         let result = self

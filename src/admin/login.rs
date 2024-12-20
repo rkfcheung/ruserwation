@@ -53,7 +53,9 @@ async fn render_admin_login(
         .unwrap_or_default();
 
     if let Ok(session) = session_manager.get_session(&session_id).await {
-        let username = session.get_raw("user").unwrap_or("unknown".to_string());
+        let username = session
+            .get::<String>("user")
+            .unwrap_or("unknown".to_string());
         let content = html! {
             h1 { "Logged in already!" }
             p { "Welcome, " (username) "." }

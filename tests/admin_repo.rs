@@ -67,7 +67,7 @@ mod tests {
         // Retrieve the session
         let session = session_manager.get_session(&session_id).await.unwrap();
         assert!(!session.is_expired());
-        assert_eq!(session.get_raw("user").unwrap(), admin.username);
+        assert_eq!(session.get::<String>("user").unwrap(), admin.username);
 
         // Destroy the session
         session_manager.destroy_session(&session_id).await;

@@ -23,7 +23,7 @@ mod tests {
         assert!(retrieved_session.is_ok(), "Session should be retrievable");
 
         let session = retrieved_session.unwrap();
-        let value: String = session.get_raw("user").unwrap();
+        let value: String = session.get::<String>("user").unwrap();
         assert_eq!(value, username, "Session should store the correct username");
     }
 
