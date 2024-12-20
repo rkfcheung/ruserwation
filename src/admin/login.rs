@@ -57,9 +57,14 @@ async fn render_admin_login(
             .get::<String>("user")
             .unwrap_or("unknown".to_string());
         let content = html! {
-            h1 { "Logged in already!" }
-            p { "Welcome, " (username) "." }
-            p { "You're already logged in as an admin." }
+            div class="container mt-5" {
+                div class="alert alert-success" role="alert" {
+                    h4 class="alert-heading" { "Logged in already!" }
+                    p { "Welcome, " (username) "." }
+                    hr;
+                    p { "You're already logged in as an admin." }
+                }
+            }
         };
         return Ok(warp::reply::html(
             render_html(&restaurant, content).into_string(),
@@ -67,18 +72,30 @@ async fn render_admin_login(
     }
 
     let content = html! {
-        h1 { "Admin Login" }
-        form method="POST" action="/admin/login" {
-            div {
-                label for="username" { "Username: " }
-                input type="text" id="username" name="username" required="true";
-            }
-            div {
-                label for="password" { "Password: " }
-                input type="password" id="password" name="password" required="true";
-            }
-            div {
-                button type="submit" { "Login" }
+        div class="container mt-5" {
+            div class="row justify-content-center" {
+                div class="col-md-6" {
+                    div class="card shadow-lg" {
+                        div class="card-header bg-primary text-white" {
+                            h4 class="mb-0" { "Admin Login" }
+                        }
+                        div class="card-body" {
+                            form method="POST" action="/admin/login" {
+                                div class="mb-3" {
+                                    label for="username" class="form-label" { "Username" }
+                                    input type="text" class="form-control" id="username" name="username" required="true" placeholder="Enter your username";
+                                }
+                                div class="mb-3" {
+                                    label for="password" class="form-label" { "Password" }
+                                    input type="password" class="form-control" id="password" name="password" required="true" placeholder="Enter your password";
+                                }
+                                div class="d-grid gap-2" {
+                                    button type="submit" class="btn btn-primary btn-block" { "Login" }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     };
