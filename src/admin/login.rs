@@ -2,6 +2,7 @@ use maud::html;
 use serde_json::json as to_json;
 use std::{convert::Infallible, sync::Arc};
 use warp::{
+    filters::body,
     http::{header, StatusCode},
     reply::{json, with_header, with_status},
     Filter, Rejection, Reply,
@@ -22,11 +23,24 @@ use super::{
 pub fn admin_login_route(
     session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::post()
+    let json_body = warp::post()
         .and(warp::path!("admin" / "login"))
+        .and(warp::header::exact("Content-Type", "application/json"))
         .and(warp::body::json())
+        .and(with_session_manager(session_manager.clone()))
+        .and_then(handle_admin_login);
+
+    let form_body = warp::post()
+        .and(warp::path!("admin" / "login"))
+        .and(warp::header::exact(
+            "Content-Type",
+            "application/x-www-form-urlencoded",
+        ))
+        .and(body::form::<LoginRequest>()) // Parse form body
         .and(with_session_manager(session_manager))
-        .and_then(handle_admin_login)
+        .and_then(handle_admin_login);
+
+    json_body.or(form_body)
 }
 
 pub fn admin_login_form_route(
@@ -80,7 +94,7 @@ async fn render_admin_login(
                             h4 class="mb-0" { "Admin Login" }
                         }
                         div class="card-body" {
-                            form method="POST" action="/admin/login" {
+                            form method="POST" action="/admin/login" enctype="application/x-www-form-urlencoded" {
                                 div class="mb-3" {
                                     label for="username" class="form-label" { "Username" }
                                     input type="text" class="form-control" id="username" name="username" required="true" placeholder="Enter your username";

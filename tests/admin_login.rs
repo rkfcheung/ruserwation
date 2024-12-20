@@ -147,8 +147,9 @@ mod tests {
 
         assert_eq!(res.status(), 200);
         let body = String::from_utf8(res.body().to_vec()).unwrap();
+        let form_tag = "<form method=\"POST\" action=\"/admin/login\" enctype=\"application/x-www-form-urlencoded\">";
         assert!(body.contains("Admin Login"));
-        assert!(body.contains("<form method=\"POST\" action=\"/admin/login\">"));
+        assert!(body.contains(form_tag));
 
         // Test case 2: Valid session cookie provided
         let res = request()
@@ -174,6 +175,35 @@ mod tests {
         assert_eq!(res.status(), 200);
         let body = String::from_utf8(res.body().to_vec()).unwrap();
         assert!(body.contains("Admin Login"));
-        assert!(body.contains("<form method=\"POST\" action=\"/admin/login\">"));
+        assert!(body.contains(form_tag));
+    }
+
+    #[tokio::test]
+    async fn test_form_body_login() {
+        // Create a mock session manager
+        let mock_session_manager = Arc::new(FakeSessionManager::ok());
+
+        // Create the warp filter
+        let filter = admin_login_route(mock_session_manager);
+
+        // Prepare the form data
+        let form_data = "username=test_user&password=test_pass";
+
+        // Perform the request
+        let response = request()
+            .method("POST")
+            .path("/admin/login")
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(form_data)
+            .reply(&filter)
+            .await;
+
+        // Assert the response
+        assert_eq!(response.status(), 200); // Replace with expected status code
+        let body = String::from_utf8(response.body().to_vec()).unwrap();
+        assert_eq!(
+            body,
+            "{\"message\":\"Login successful\",\"status\":\"Success\"}"
+        );
     }
 }
