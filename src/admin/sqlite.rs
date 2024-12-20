@@ -65,6 +65,21 @@ impl SqliteAdminRepo {
 
         Ok(admin.id)
     }
+
+    async fn update_login_time(&self, id: u32) -> Result<(), sqlx::Error> {
+        query(
+            r#"
+            UPDATE Admin
+                SET last_login_time = CURRENT_TIMESTAMP
+            WHERE id = ?;
+            "#,
+        )
+        .bind(id)
+        .execute(self.pool.as_ref())
+        .await?;
+
+        Ok(())
+    }
 }
 
 impl AdminRepo for SqliteAdminRepo {
@@ -174,9 +189,11 @@ impl VerifyUser for SqliteAdminRepo {
     async fn verify(&self, username: &str, password: &str) -> bool {
         if let Some(admin) = self.find_by_username(username).await {
             // Compare the password (assuming stored passwords are hashed)
-            admin.verify_password(password)
-        } else {
-            false // Return false if no admin was found
+            if admin.verify_password(password) {
+                return self.update_login_time(admin.id).await.is_ok();
+            }
         }
+
+        false
     }
 }

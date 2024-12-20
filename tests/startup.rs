@@ -9,7 +9,7 @@ mod tests {
         },
         setup::{errors, startup},
     };
-    use std::{env, sync::Arc};
+    use std::env;
 
     use crate::common::db_utils::init_conn;
 
