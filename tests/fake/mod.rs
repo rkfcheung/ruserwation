@@ -1,6 +1,6 @@
 use ruserwation::restaurant::models::Restaurant;
 
-pub mod sessions;
+pub(crate) mod sessions;
 
 pub(crate) fn fake_restaurant() -> Restaurant {
     Restaurant {
