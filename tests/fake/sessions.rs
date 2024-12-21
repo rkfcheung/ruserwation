@@ -1,12 +1,15 @@
+use mocks::CalledCount;
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};
+use test_utils::{mock_call_count, MockVerify};
 use warp_sessions::Session;
 
-#[derive(Default)]
+#[derive(Default, MockVerify)]
 pub struct FakeSessionManager {
     pub(crate) verify_result: bool,
     pub(crate) session_result: Option<Result<String, SessionError>>,
     pub(crate) sessions: Mutex<HashSet<String>>,
+    pub(crate) called_count: CalledCount,
 }
 
 impl VerifyUser for FakeSessionManager {
@@ -24,6 +27,7 @@ impl EnableSession for FakeSessionManager {
         self.session_result.clone().unwrap()
     }
 
+    #[mock_call_count]
     async fn destroy_session(&self, session_id: &str) {
         let mut sessions = self.sessions.lock().unwrap();
         sessions.remove(session_id);
@@ -50,6 +54,7 @@ impl FakeSessionManager {
             verify_result: true,
             session_result: Some(Ok(session_id.to_string())),
             sessions: Mutex::new(sessions),
+            called_count: CalledCount::default(),
         }
     }
 

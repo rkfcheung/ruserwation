@@ -48,6 +48,7 @@ mod tests {
             // Assert that the cookie header contains the expiration date in the past
             assert!(cookie_value.contains("expires=Thu, 01 Jan 1970"));
         }
+        session_manager.verify_result("destroy_session", 1);
     }
 
     #[tokio::test]
@@ -78,5 +79,6 @@ mod tests {
         // Check that no Set-Cookie header is set (since no session existed)
         let set_cookie_header = response.headers().get("Set-Cookie");
         assert!(set_cookie_header.is_none());
+        session_manager.verify_result("destroy_session", 0);
     }
 }

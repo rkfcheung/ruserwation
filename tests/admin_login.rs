@@ -2,6 +2,7 @@ mod fake;
 
 #[cfg(test)]
 mod tests {
+    use mocks::CalledCount;
     use ruserwation::admin::errors::SessionError;
     use ruserwation::admin::login::{admin_login_form_route, admin_login_route};
     use serde_json::json as to_json;
@@ -67,6 +68,7 @@ mod tests {
             verify_result: true,
             session_result: Some(Err(SessionError::SessionCreationFailed("mock".to_string()))),
             sessions: Mutex::default(),
+            called_count: CalledCount::default(),
         };
         let filter = admin_login_route(session_manager.into());
 
