@@ -1,37 +1,35 @@
 use maud::html;
-use std::{convert::Infallible, sync::Arc};
+use std::sync::Arc;
 use warp::{http::HeaderValue, http::Response, Filter, Rejection, Reply};
 
-use super::helper::get_cookie_session_id;
+use super::{auth::get_cookie_session_id, auth::with_context};
 use crate::{
-    admin::sessions::EnableSession, restaurant::models::Restaurant, utils::html_util::render_html,
+    admin::sessions::EnableSession, config::models::Context, utils::html_util::render_html,
 };
 
 /// Defines the route for admin logout.
 pub fn admin_logout_route(
-    session_manager: Arc<impl EnableSession + Send + Sync>,
-    restaurant: Arc<Restaurant>,
+    context: Arc<Context<impl EnableSession + Send + Sync>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path!("admin" / "logout")
-        .and(warp::get())
+    warp::get()
+        .and(warp::path!("admin" / "logout"))
         .and(warp::header::optional::<String>("Cookie"))
-        .and(with_session_manager(session_manager))
-        .and_then(move |cookie: Option<String>, session_manager| {
-            let restaurant = restaurant.clone();
-            async move { handle_admin_logout(cookie, session_manager, restaurant.clone()).await }
+        .and(with_context(context))
+        .and_then(move |cookie: Option<String>, context| async move {
+            handle_admin_logout(cookie, context).await
         })
 }
 
 // Handles the admin logout logic.
 async fn handle_admin_logout(
     cookie: Option<String>,
-    session_manager: Arc<impl EnableSession + Send + Sync>,
-    restaurant: Arc<Restaurant>,
+    context: Arc<Context<impl EnableSession + Send + Sync>>,
 ) -> Result<impl Reply, Rejection> {
     // Extract the session ID from the cookie (e.g., "session_id=...")
     let mut destroyed = false;
     let content = if let Some(session_id) = get_cookie_session_id(cookie) {
         // Attempt to destroy the session
+        let session_manager = context.get();
         session_manager.destroy_session(&session_id).await;
         destroyed = true;
 
@@ -61,6 +59,7 @@ async fn handle_admin_logout(
     };
 
     // Render the HTML with the restaurant layout
+    let restaurant = context.restaurant();
     let mut response = Response::new(render_html(&restaurant, content).into_string());
 
     // Set the cookie with the same name and expire it in the past
@@ -74,11 +73,4 @@ async fn handle_admin_logout(
 
     // Return the response with the "Set-Cookie" header to delete the session cookie
     Ok(response)
-}
-
-// Helper function to pass `SessionManager` into routes.
-fn with_session_manager(
-    session_manager: Arc<impl EnableSession + Send + Sync>,
-) -> impl Filter<Extract = (Arc<impl EnableSession + Send + Sync>,), Error = Infallible> + Clone {
-    warp::any().map(move || session_manager.clone())
 }

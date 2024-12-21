@@ -3,6 +3,7 @@ mod fake;
 #[cfg(test)]
 mod tests {
     use ruserwation::admin::logout::admin_logout_route;
+    use ruserwation::config::models::Context;
     use std::sync::Arc;
     use warp::http::StatusCode;
     use warp::test::request;
@@ -20,7 +21,8 @@ mod tests {
         let restaurant = Arc::new(fake_restaurant());
 
         // Create the route
-        let route = admin_logout_route(session_manager.clone(), restaurant.clone());
+        let context = Context::create(session_manager.clone(), restaurant);
+        let route = admin_logout_route(context);
 
         // Simulate a GET request with a valid cookie
         assert!(&session_manager.has_session("valid_session_id"));
@@ -65,7 +67,8 @@ mod tests {
         let restaurant = Arc::new(fake_restaurant());
 
         // Create the route
-        let route = admin_logout_route(session_manager.clone(), restaurant.clone());
+        let context = Context::create(session_manager.clone(), restaurant);
+        let route = admin_logout_route(context);
 
         // Simulate a GET request without a cookie
         let response = request()

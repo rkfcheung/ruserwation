@@ -35,20 +35,6 @@ pub fn generate_random_password(length: usize) -> String {
         .collect()
 }
 
-pub fn get_cookie_session_id(cookie: Option<String>) -> Option<String> {
-    cookie.and_then(|c| {
-        c.split(';') // Split by semicolons to handle multiple key-value pairs
-            .find_map(|pair| {
-                let parts: Vec<_> = pair.trim().splitn(2, '=').collect(); // Split key-value pair by '='
-                if parts.len() == 2 && parts[0].trim() == "session_id" {
-                    Some(parts[1].to_string()) // Return the value if the key is "session_id"
-                } else {
-                    None
-                }
-            })
-    })
-}
-
 /// Validates and sanitises an email address.
 /// Returns a default email (`admin@localhost`) if invalid.
 pub fn validate_email(email: &str) -> String {

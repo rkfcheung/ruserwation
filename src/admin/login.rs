@@ -9,7 +9,7 @@ use warp::{
 };
 
 use crate::{
-    admin::helper::get_cookie_session_id,
+    admin::auth::get_cookie_session_id,
     restaurant::models::Restaurant,
     utils::{env_util::is_prod, html_util::render_html},
 };

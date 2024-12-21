@@ -6,6 +6,7 @@ mod restaurant;
 mod setup;
 mod utils;
 
+use config::models::Context;
 use warp::Filter;
 
 use admin::{
@@ -38,10 +39,10 @@ async fn main() -> Result<(), SetupError> {
             session_manager.clone(),
             restaurant.clone(),
         ))
-        .or(admin_logout_route(
+        .or(admin_logout_route(Context::create(
             session_manager.clone(),
-            restaurant.clone(),
-        ))
+            restaurant,
+        )))
         .recover(handle_rejections);
 
     let rest_port = var_as_int_or("RW_REST_PORT", 3030) as u16;
