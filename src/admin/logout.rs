@@ -1,8 +1,11 @@
 use maud::html;
 use std::sync::Arc;
-use warp::{http::HeaderValue, http::Response, Filter, Rejection, Reply};
+use warp::{
+    http::{HeaderValue, Response},
+    Filter, Rejection, Reply,
+};
 
-use super::auth::get_cookie_session_id;
+use super::auth::SESSION_ID;
 use crate::{
     admin::sessions::EnableSession,
     config::{context::with_context, models::Context},
@@ -15,7 +18,7 @@ pub fn admin_logout_route(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::get()
         .and(warp::path!("admin" / "logout"))
-        .and(warp::header::optional::<String>("Cookie"))
+        .and(warp::cookie::optional(SESSION_ID))
         .and(with_context(context))
         .and_then(move |cookie: Option<String>, context| async move {
             handle_admin_logout(cookie, context).await
@@ -29,7 +32,7 @@ async fn handle_admin_logout(
 ) -> Result<impl Reply, Rejection> {
     // Extract the session ID from the cookie (e.g., "session_id=...")
     let mut destroyed = false;
-    let content = if let Some(session_id) = get_cookie_session_id(cookie) {
+    let content = if let Some(session_id) = cookie {
         // Attempt to destroy the session
         let session_manager = context.get();
         session_manager.destroy_session(&session_id).await;

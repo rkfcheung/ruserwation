@@ -9,7 +9,7 @@ use warp::{
 };
 
 use crate::{
-    admin::auth::get_cookie_session_id,
+    admin::auth::SESSION_ID,
     config::{context::with_context, models::Context},
     utils::{env_util::is_prod, html_util::render_html},
 };
@@ -49,7 +49,7 @@ pub fn admin_login_form_route(
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::get()
         .and(warp::path!("admin" / "login"))
-        .and(warp::header::optional::<String>("Cookie"))
+        .and(warp::cookie::optional(SESSION_ID))
         .and(with_context(context.clone()))
         .and_then(move |cookie: Option<String>, context| async move {
             render_admin_login(cookie, context).await
@@ -151,7 +151,7 @@ async fn render_admin_login(
     let restaurant = context.restaurant();
 
     // Retrieve session ID from the cookie
-    if let Some(session_id) = get_cookie_session_id(cookie) {
+    if let Some(session_id) = cookie {
         let session_manager = context.get();
         match session_manager.get_session(&session_id).await {
             Ok(session) => {
