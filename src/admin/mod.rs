@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod errors;
 pub mod helper;
 pub mod login;

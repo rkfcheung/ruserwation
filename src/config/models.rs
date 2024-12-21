@@ -19,6 +19,12 @@ where
     session_manager: Arc<SessionManager<R>>,
 }
 
+#[derive(Clone)]
+pub struct Context<T> {
+    context: Arc<T>,
+    restaurant: Arc<Restaurant>,
+}
+
 #[derive(Default)]
 pub struct SqliteAppStateBuilder {
     restaurant: Option<Arc<Restaurant>>,
@@ -39,6 +45,23 @@ where
 
     pub fn session_manager(&self) -> Arc<impl EnableSession + VerifyUser + Send + Sync> {
         self.session_manager.clone()
+    }
+}
+
+impl<T> Context<T> {
+    pub fn create(context: Arc<T>, restaurant: Arc<Restaurant>) -> Arc<Self> {
+        Arc::new(Self {
+            context,
+            restaurant,
+        })
+    }
+
+    pub fn get(&self) -> Arc<T> {
+        self.context.clone()
+    }
+
+    pub fn restaurant(&self) -> Arc<Restaurant> {
+        self.restaurant.clone()
     }
 }
 
