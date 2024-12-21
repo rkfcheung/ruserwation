@@ -49,6 +49,10 @@ mod tests {
             assert!(cookie_value.contains("expires=Thu, 01 Jan 1970"));
         }
         session_manager.verify_result("destroy_session", 1);
+        assert_eq!(
+            session_manager.sessiond_id_captor.first(),
+            Some("valid_session_id".to_string())
+        );
     }
 
     #[tokio::test]
@@ -80,5 +84,6 @@ mod tests {
         let set_cookie_header = response.headers().get("Set-Cookie");
         assert!(set_cookie_header.is_none());
         session_manager.verify_result("destroy_session", 0);
+        assert!(session_manager.sessiond_id_captor.last().is_none());
     }
 }

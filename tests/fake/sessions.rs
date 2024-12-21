@@ -1,4 +1,4 @@
-use mocks::CalledCount;
+use mocks::{ArgumentCaptor, CalledCount};
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};
 use test_utils::{mock_call_count, MockVerify};
@@ -10,6 +10,7 @@ pub struct FakeSessionManager {
     pub(crate) session_result: Option<Result<String, SessionError>>,
     pub(crate) sessions: Mutex<HashSet<String>>,
     pub(crate) called_count: CalledCount,
+    pub(crate) sessiond_id_captor: ArgumentCaptor<String>,
 }
 
 impl VerifyUser for FakeSessionManager {
@@ -29,6 +30,7 @@ impl EnableSession for FakeSessionManager {
 
     #[mock_call_count]
     async fn destroy_session(&self, session_id: &str) {
+        self.sessiond_id_captor.capture(session_id.to_string());
         let mut sessions = self.sessions.lock().unwrap();
         sessions.remove(session_id);
     }
@@ -45,6 +47,19 @@ impl EnableSession for FakeSessionManager {
 }
 
 impl FakeSessionManager {
+    pub(crate) fn new(
+        verify_result: bool,
+        session_result: Option<Result<String, SessionError>>,
+    ) -> Self {
+        Self {
+            verify_result,
+            session_result,
+            sessions: Mutex::default(),
+            called_count: CalledCount::default(),
+            sessiond_id_captor: ArgumentCaptor::default(),
+        }
+    }
+
     pub(crate) fn ok() -> Self {
         let session_id = "valid_session_id";
         let mut sessions = HashSet::new();
@@ -55,6 +70,7 @@ impl FakeSessionManager {
             session_result: Some(Ok(session_id.to_string())),
             sessions: Mutex::new(sessions),
             called_count: CalledCount::default(),
+            sessiond_id_captor: ArgumentCaptor::default(),
         }
     }
 

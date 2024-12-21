@@ -5,8 +5,27 @@ pub trait MockVerify {
 }
 
 #[derive(Default)]
+pub struct ArgumentCaptor<T: Clone> {
+    captured: RefCell<Vec<T>>,
+}
+
+#[derive(Default)]
 pub struct CalledCount {
     counter: RefCell<HashMap<String, usize>>,
+}
+
+impl<T: Clone> ArgumentCaptor<T> {
+    pub fn capture(&self, value: T) {
+        self.captured.borrow_mut().push(value);
+    }
+
+    pub fn first(&self) -> Option<T> {
+        self.captured.borrow().first().cloned()
+    }
+
+    pub fn last(&self) -> Option<T> {
+        self.captured.borrow().last().cloned()
+    }
 }
 
 impl CalledCount {
@@ -20,6 +39,10 @@ impl CalledCount {
         *self.counter.borrow().get(method).unwrap_or(&0)
     }
 }
+
+unsafe impl<T: Clone> Send for ArgumentCaptor<T> {}
+
+unsafe impl<T: Clone> Sync for ArgumentCaptor<T> {}
 
 unsafe impl Send for CalledCount {}
 
