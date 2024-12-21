@@ -24,10 +24,4 @@ warp = "0.3.7"
 warp-sessions = "1.0.19"
 
 [dev-dependencies]
-proc-macro2 = "1.0.92"
-quote = "1.0.37"
-syn = "2.0.90"
 tokio-test = "0.4.4"
-
-[lib]
-proc-macro = true
