@@ -1,27 +1,33 @@
 [package]
 name = "ruserwation"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 argon2 = "0.5.3"
-chrono = "0.4.38"
+chrono = "0.4.39"
 dotenv = "0.15.0"
-env_logger = "0.11.5"
+env_logger = "0.11.6"
 log = "0.4.22"
 maud = { version = "0.26.0", features = ["warp"] }
 rand = "0.8.5"
 regex = "1.11.1"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+serde = { version = "1.0.216", features = ["derive"] }
+serde_json = "1.0.133"
 sqlx = { version = "0.8.2", features = ["chrono", "runtime-tokio-native-tls", "sqlite"] }
 thiserror = "2.0.8"
-tokio = { version = "1.40.0", features = ["full"] }
-uuid = { version = "1.10.0", features = ["v4"] }
+tokio = { version = "1.42.0", features = ["full"] }
+uuid = { version = "1.11.0", features = ["v4"] }
 warp = "0.3.7"
 warp-sessions = "1.0.19"
 
 [dev-dependencies]
+proc-macro2 = "1.0.92"
+quote = "1.0.37"
+syn = "2.0.90"
 tokio-test = "0.4.4"
+
+[lib]
+proc-macro = true
