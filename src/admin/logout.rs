@@ -2,9 +2,11 @@ use maud::html;
 use std::sync::Arc;
 use warp::{http::HeaderValue, http::Response, Filter, Rejection, Reply};
 
-use super::{auth::get_cookie_session_id, auth::with_context};
+use super::auth::get_cookie_session_id;
 use crate::{
-    admin::sessions::EnableSession, config::models::Context, utils::html_util::render_html,
+    admin::sessions::EnableSession,
+    config::{context::with_context, models::Context},
+    utils::html_util::render_html,
 };
 
 /// Defines the route for admin logout.

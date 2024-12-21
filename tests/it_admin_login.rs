@@ -3,6 +3,7 @@ mod common;
 #[cfg(test)]
 mod integration_tests {
     use ruserwation::admin::login::admin_login_route;
+    use ruserwation::config::models::Context;
     use ruserwation::response::handle_rejections;
     use serde_json::{json as to_json, Value};
     use warp::http::StatusCode;
@@ -17,7 +18,8 @@ mod integration_tests {
         let app_state = init_test_app_state().await;
 
         // Build the login route
-        let filter = admin_login_route(app_state.session_manager());
+        let context = Context::create(app_state.session_manager(), app_state.restaurant());
+        let filter = admin_login_route(context);
 
         // Perform a POST request to the /admin/login endpoint with valid credentials
         let response = request()
@@ -48,7 +50,8 @@ mod integration_tests {
         let app_state = init_test_app_state().await;
 
         // Build the login route
-        let filter = admin_login_route(app_state.session_manager());
+        let context = Context::create(app_state.session_manager(), app_state.restaurant());
+        let filter = admin_login_route(context);
 
         // Perform a POST request to the /admin/login endpoint with invalid credentials
         let response = request()
@@ -78,7 +81,8 @@ mod integration_tests {
         let app_state = init_test_app_state().await;
 
         // Build the login route
-        let filter = admin_login_route(app_state.session_manager()).recover(handle_rejections);
+        let context = Context::create(app_state.session_manager(), app_state.restaurant());
+        let filter = admin_login_route(context).recover(handle_rejections);
 
         // Perform a POST request with missing fields
         let response = request()

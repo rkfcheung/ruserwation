@@ -29,20 +29,15 @@ async fn main() -> Result<(), SetupError> {
     let app_state = init().await?;
     let session_manager = app_state.session_manager();
     let restaurant = app_state.restaurant();
+    let admin_context = Context::create(session_manager.clone(), restaurant.clone());
 
     let static_route = warp::path("static").and(warp::fs::dir("./static"));
     let routes = warp::get()
         .and(static_route)
-        .or(index_route(restaurant.clone()))
-        .or(admin_login_route(session_manager.clone()))
-        .or(admin_login_form_route(
-            session_manager.clone(),
-            restaurant.clone(),
-        ))
-        .or(admin_logout_route(Context::create(
-            session_manager.clone(),
-            restaurant,
-        )))
+        .or(index_route(restaurant))
+        .or(admin_login_route(admin_context.clone()))
+        .or(admin_login_form_route(admin_context.clone()))
+        .or(admin_logout_route(admin_context))
         .recover(handle_rejections);
 
     let rest_port = var_as_int_or("RW_REST_PORT", 3030) as u16;

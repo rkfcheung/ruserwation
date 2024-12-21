@@ -16,10 +16,3 @@ pub fn get_cookie_session_id(cookie: Option<String>) -> Option<String> {
             })
     })
 }
-
-// Helper function to pass `Context` into routes.
-pub fn with_context<T: Send + Sync>(
-    context: Arc<Context<T>>,
-) -> impl Filter<Extract = (Arc<Context<T>>,), Error = Infallible> + Clone {
-    warp::any().map(move || context.clone())
-}

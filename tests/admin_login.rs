@@ -4,6 +4,7 @@ mod fake;
 mod tests {
     use ruserwation::admin::errors::SessionError;
     use ruserwation::admin::login::{admin_login_form_route, admin_login_route};
+    use ruserwation::config::models::Context;
     use serde_json::json as to_json;
     use std::sync::Arc;
     use warp::http::StatusCode;
@@ -15,7 +16,8 @@ mod tests {
     #[tokio::test]
     async fn test_successful_login() {
         let session_manager = FakeSessionManager::ok();
-        let filter = admin_login_route(session_manager.into());
+        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let filter = admin_login_route(context);
 
         let resp = request()
             .method("POST")
@@ -40,7 +42,8 @@ mod tests {
     #[tokio::test]
     async fn test_invalid_credentials() {
         let session_manager = FakeSessionManager::default();
-        let filter = admin_login_route(session_manager.into());
+        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let filter = admin_login_route(context);
 
         let resp = request()
             .method("POST")
@@ -67,7 +70,8 @@ mod tests {
             true,
             Some(Err(SessionError::SessionCreationFailed("mock".to_string()))),
         );
-        let filter = admin_login_route(session_manager.into());
+        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let filter = admin_login_route(context);
 
         let resp = request()
             .method("POST")
@@ -91,7 +95,8 @@ mod tests {
     #[tokio::test]
     async fn test_malformed_json_body() {
         let session_manager = FakeSessionManager::ok();
-        let filter = admin_login_route(session_manager.into());
+        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let filter = admin_login_route(context);
 
         let resp = request()
             .method("POST")
@@ -106,7 +111,8 @@ mod tests {
     #[tokio::test]
     async fn test_missing_fields() {
         let session_manager = FakeSessionManager::ok();
-        let filter = admin_login_route(session_manager.into());
+        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let filter = admin_login_route(context);
 
         let resp = request()
             .method("POST")
@@ -127,7 +133,8 @@ mod tests {
         let restaurant = Arc::new(fake_restaurant());
 
         // Create the filter
-        let filter = admin_login_form_route(session_manager.clone(), restaurant.clone());
+        let context = Context::create(session_manager, restaurant);
+        let filter = admin_login_form_route(context);
 
         // Test case 1: No session cookie provided
         let res = request()
@@ -175,7 +182,8 @@ mod tests {
         let mock_session_manager = Arc::new(FakeSessionManager::ok());
 
         // Create the warp filter
-        let filter = admin_login_route(mock_session_manager);
+        let context = Context::create(mock_session_manager, Arc::new(fake_restaurant()));
+        let filter = admin_login_route(context);
 
         // Prepare the form data
         let form_data = "username=test_user&password=test_pass";

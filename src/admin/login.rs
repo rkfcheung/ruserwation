@@ -1,6 +1,6 @@
 use maud::html;
 use serde_json::json as to_json;
-use std::{convert::Infallible, sync::Arc};
+use std::sync::Arc;
 use warp::{
     filters::body,
     http::{header, StatusCode},
@@ -10,7 +10,7 @@ use warp::{
 
 use crate::{
     admin::auth::get_cookie_session_id,
-    restaurant::models::Restaurant,
+    config::{context::with_context, models::Context},
     utils::{env_util::is_prod, html_util::render_html},
 };
 
@@ -22,13 +22,13 @@ use super::{
 
 // Define the route for login
 pub fn admin_login_route(
-    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
+    context: Arc<Context<impl EnableSession + VerifyUser + Send + Sync>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     let json_body = warp::post()
         .and(warp::path!("admin" / "login"))
         .and(warp::header::exact("Content-Type", "application/json"))
         .and(warp::body::json())
-        .and(with_session_manager(session_manager.clone()))
+        .and(with_context(context.clone()))
         .and_then(handle_admin_login);
 
     let form_body = warp::post()
@@ -38,32 +38,31 @@ pub fn admin_login_route(
             "application/x-www-form-urlencoded",
         ))
         .and(body::form::<LoginRequest>()) // Parse form body
-        .and(with_session_manager(session_manager))
+        .and(with_context(context))
         .and_then(handle_admin_login);
 
     json_body.or(form_body)
 }
 
 pub fn admin_login_form_route(
-    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
-    restaurant: Arc<Restaurant>,
+    context: Arc<Context<impl EnableSession + VerifyUser + Send + Sync>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::get()
         .and(warp::path!("admin" / "login"))
         .and(warp::header::optional::<String>("Cookie"))
-        .and(with_session_manager(session_manager.clone()))
-        .and_then(move |cookie: Option<String>, session_manager| {
-            let restaurant = restaurant.clone();
-            async move { render_admin_login(cookie, session_manager, restaurant.clone()).await }
+        .and(with_context(context.clone()))
+        .and_then(move |cookie: Option<String>, context| async move {
+            render_admin_login(cookie, context).await
         })
 }
 
 // The handler for the admin login
 async fn handle_admin_login(
     body: LoginRequest,
-    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
+    context: Arc<Context<impl EnableSession + VerifyUser + Send + Sync>>,
 ) -> Result<impl Reply, Rejection> {
     // If credentials match, return a success response
+    let session_manager = context.get();
     if session_manager.verify(&body.username, &body.password).await {
         match session_manager.create_session(&body.username).await {
             Ok(session_id) => {
@@ -147,11 +146,13 @@ fn logged_in_content(username: &str) -> maud::Markup {
 
 async fn render_admin_login(
     cookie: Option<String>,
-    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
-    restaurant: Arc<Restaurant>,
+    context: Arc<Context<impl EnableSession + VerifyUser + Send + Sync>>,
 ) -> Result<impl Reply, Rejection> {
+    let restaurant = context.restaurant();
+
     // Retrieve session ID from the cookie
     if let Some(session_id) = get_cookie_session_id(cookie) {
+        let session_manager = context.get();
         match session_manager.get_session(&session_id).await {
             Ok(session) => {
                 let username = session
@@ -173,12 +174,4 @@ async fn render_admin_login(
     Ok(warp::reply::html(
         render_html(&restaurant, login_form_content()).into_string(),
     ))
-}
-
-// Helper function to attach admin_repo with correct lifetime
-fn with_session_manager(
-    session_manager: Arc<impl EnableSession + VerifyUser + Send + Sync>,
-) -> impl Filter<Extract = (Arc<impl EnableSession + VerifyUser + Send + Sync>,), Error = Infallible>
-       + Clone {
-    warp::any().map(move || session_manager.clone())
 }
