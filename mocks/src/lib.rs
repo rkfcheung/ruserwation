@@ -112,7 +112,7 @@ impl InvocationTracker {
     }
 
     // Returns the first captured argument for the given method
-    pub fn first<T: Clone + 'static>(&self, method: &str) -> Option<ArgumentValue> {
+    pub fn first(&self, method: &str) -> Option<ArgumentValue> {
         self.captors
             .borrow()
             .get(method)
@@ -120,7 +120,7 @@ impl InvocationTracker {
     }
 
     // Returns the last captured argument for the given method
-    pub fn last<T: Clone + 'static>(&self, method: &str) -> Option<ArgumentValue> {
+    pub fn last(&self, method: &str) -> Option<ArgumentValue> {
         self.captors
             .borrow()
             .get(method)
