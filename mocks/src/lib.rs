@@ -17,11 +17,6 @@ pub struct ArgumentValue {
     value: Box<dyn MockAny>,
 }
 
-#[derive(Default)]
-pub struct CalledCount {
-    invoked_count: RefCell<HashMap<String, usize>>,
-}
-
 #[derive(Default, Clone)]
 pub struct MockDefault;
 
@@ -76,22 +71,6 @@ impl Default for ArgumentValue {
 unsafe impl Send for ArgumentValue {}
 
 unsafe impl Sync for ArgumentValue {}
-
-impl CalledCount {
-    pub fn increment(&self, method: &str) {
-        let mut invoked = self.invoked_count.borrow_mut();
-        let value = invoked.entry(method.to_string()).or_insert(0);
-        *value += 1;
-    }
-
-    pub fn get(&self, method: &str) -> usize {
-        *self.invoked_count.borrow().get(method).unwrap_or(&0)
-    }
-}
-
-unsafe impl Send for CalledCount {}
-
-unsafe impl Sync for CalledCount {}
 
 impl InvocationTracker {
     pub fn increment(&self, method: &str) {
