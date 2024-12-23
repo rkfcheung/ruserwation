@@ -20,10 +20,10 @@ In Rust, I trust!
 
 | Module      | Status                         |
 | ----------- | ------------------------------ |
-| Admin       | Pending :waxing_crescent_moon: |
+| Admin       | Pending :first_quarter_moon:   |
 | Customer    | Backlog :new_moon:             |
 | Database    | Done :full_moon:               |
-| Reservation | Backlog :new_moon:             |
+| Reservation | Pending :waxing_crescent_moon: |
 | Restaurant  | Backlog :new_moon:             |
 
 ## Deployment to AWS EC2 - Ubuntu
