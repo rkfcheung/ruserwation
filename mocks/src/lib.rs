@@ -1,13 +1,4 @@
-use std::{any::Any, cell::RefCell, collections::HashMap};
-
-// Trait to enable dynamic downcasting and boxing for mock objects
-pub trait MockAny: Any {
-    // Returns a reference to the value as a trait object
-    fn as_any(&self) -> &dyn Any;
-
-    // Returns a boxed clone of the value as a trait object
-    fn as_box(&self) -> Box<dyn MockAny>;
-}
+use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
 
 // Trait to verify that a method was invoked a specific number of times
 pub trait MockVerify {
@@ -23,13 +14,14 @@ pub struct ArgumentCaptor<T: Clone> {
 }
 
 // Represents a single captured argument value, allowing dynamic typing
+#[derive(Clone)]
 pub struct ArgumentValue {
-    // Stores the value as a boxed trait object implementing `MockAny`
-    value: Box<dyn MockAny>,
+    // Stores the value as a boxed trait object implementing `Any`
+    value: Rc<dyn Any>,
 }
 
 // Represents a default value for mock objects when cloning
-#[derive(Default, Clone)]
+#[derive(Clone, Default)]
 pub struct MockDefault;
 
 // Tracks method invocations and captures their arguments for verification
@@ -74,22 +66,13 @@ impl ArgumentValue {
     // Creates a new `ArgumentValue` by boxing the given value
     pub fn new<T: Any + Clone>(value: T) -> Self {
         Self {
-            value: Box::new(value),
+            value: Rc::new(value),
         }
     }
 
     // Attempts to downcast the stored value to the given type
     pub fn get<T: Any + Clone>(&self) -> Option<&T> {
-        self.value.as_ref().as_any().downcast_ref::<T>()
-    }
-}
-
-impl Clone for ArgumentValue {
-    // Creates a deep clone of the `ArgumentValue`
-    fn clone(&self) -> Self {
-        Self {
-            value: self.value.as_box(),
-        }
+        self.value.downcast_ref::<T>()
     }
 }
 
@@ -97,7 +80,7 @@ impl Default for ArgumentValue {
     // Provides a default implementation for `ArgumentValue` using `MockDefault`
     fn default() -> Self {
         Self {
-            value: MockDefault.as_box(),
+            value: Rc::new(MockDefault),
         }
     }
 }
@@ -159,15 +142,3 @@ unsafe impl Send for InvocationTracker {}
 
 // Allows `InvocationTracker` to be shared between threads
 unsafe impl Sync for InvocationTracker {}
-
-impl<T: Any + Clone> MockAny for T {
-    // Creates a boxed clone of the current value
-    fn as_box(&self) -> Box<dyn MockAny> {
-        Box::new(self.clone())
-    }
-
-    // Returns a reference to the current value as a trait object
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-}
