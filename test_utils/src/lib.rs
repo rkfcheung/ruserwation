@@ -31,7 +31,7 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let fn_body = &input.block;
     let fn_vis = &input.vis;
 
-    // Generate expanded function
+    // Generate the expanded function
     let expanded = quote::quote! {
         #(#fn_attrs)*
         #fn_vis #fn_sig {
