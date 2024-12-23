@@ -97,7 +97,7 @@ impl Default for ArgumentValue {
     // Provides a default implementation for `ArgumentValue` using `MockDefault`
     fn default() -> Self {
         Self {
-            value: MockDefault::default().as_box(),
+            value: MockDefault.as_box(),
         }
     }
 }
@@ -124,9 +124,7 @@ impl InvocationTracker {
     // Captures the arguments for the given method
     pub fn capture<T: Clone + 'static>(&self, method: &str, arguments: T) {
         let mut captors = self.captors.borrow_mut();
-        let captor = captors
-            .entry(method.to_string())
-            .or_insert(ArgumentCaptor::default());
+        let captor = captors.entry(method.to_string()).or_default();
         captor.capture(ArgumentValue::new(arguments));
     }
 
