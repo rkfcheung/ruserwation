@@ -4,68 +4,92 @@ use std::{
     collections::HashMap,
 };
 
+// Trait to enable dynamic downcasting and boxing for mock objects
 pub trait MockAny: Any {
+    // Returns a reference to the value as a trait object
     fn as_any(&self) -> &dyn Any;
+
+    // Returns a boxed clone of the value as a trait object
     fn as_box(&self) -> Box<dyn MockAny>;
 }
 
+// Trait to verify that a method was invoked a specific number of times
 pub trait MockVerify {
+    // Verifies if a method was invoked the specified number of times
     fn verify_invoked(&self, method: &str, times: usize);
 }
 
+// A generic struct to capture arguments passed to mocked methods
 #[derive(Default)]
 pub struct ArgumentCaptor<T: Clone> {
+    // Stores captured arguments in a vector inside a RefCell for interior mutability
     captured: RefCell<Vec<T>>,
 }
 
+// Represents a single captured argument value, allowing dynamic typing
 pub struct ArgumentValue {
+    // Stores the value as a boxed trait object implementing `MockAny`
     value: Box<dyn MockAny>,
 }
 
+// Represents a default value for mock objects when cloning
 #[derive(Default, Clone)]
 pub struct MockDefault;
 
+// Tracks method invocations and captures their arguments for verification
 #[derive(Default)]
 pub struct InvocationTracker {
+    // Tracks the number of times each method was invoked
     invoked_count: RefCell<HashMap<String, usize>>,
+
+    // Tracks arguments captured for each method
     captors: RefCell<HashMap<String, ArgumentCaptor<ArgumentValue>>>,
 }
 
 impl<T: Clone> ArgumentCaptor<T> {
+    // Captures a value by adding it to the list of captured arguments
     pub fn capture(&self, value: T) {
         self.captured.borrow_mut().push(value);
     }
 
+    // Returns the first captured argument, if any
     pub fn first(&self) -> Option<T> {
         self.captured.borrow().first().cloned()
     }
 
+    // Returns the last captured argument, if any
     pub fn last(&self) -> Option<T> {
         self.captured.borrow().last().cloned()
     }
 
+    // Returns a reference to all captured arguments without cloning
     pub fn values(&self) -> Ref<Vec<T>> {
         self.captured.borrow()
     }
 }
 
+// Allows `ArgumentCaptor` to be sent between threads
 unsafe impl<T: Clone> Send for ArgumentCaptor<T> {}
 
+// Allows `ArgumentCaptor` to be shared between threads
 unsafe impl<T: Clone> Sync for ArgumentCaptor<T> {}
 
 impl ArgumentValue {
+    // Creates a new `ArgumentValue` by boxing the given value
     pub fn new<T: Any + Clone>(value: T) -> Self {
         Self {
             value: Box::new(value),
         }
     }
 
+    // Attempts to downcast the stored value to the given type
     pub fn get<T: Any + Clone>(&self) -> Option<&T> {
         self.value.as_ref().as_any().downcast_ref::<T>()
     }
 }
 
 impl Clone for ArgumentValue {
+    // Creates a deep clone of the `ArgumentValue`
     fn clone(&self) -> Self {
         Self {
             value: self.value.as_box(),
@@ -74,6 +98,7 @@ impl Clone for ArgumentValue {
 }
 
 impl Default for ArgumentValue {
+    // Provides a default implementation for `ArgumentValue` using `MockDefault`
     fn default() -> Self {
         Self {
             value: MockDefault::default().as_box(),
@@ -81,21 +106,26 @@ impl Default for ArgumentValue {
     }
 }
 
+// Allows `ArgumentValue` to be sent between threads
 unsafe impl Send for ArgumentValue {}
 
+// Allows `ArgumentValue` to be shared between threads
 unsafe impl Sync for ArgumentValue {}
 
 impl InvocationTracker {
+    // Increments the invocation count for the given method
     pub fn increment(&self, method: &str) {
         let mut invoked_count = self.invoked_count.borrow_mut();
         let value = invoked_count.entry(method.to_string()).or_insert(0);
         *value += 1;
     }
 
+    // Gets the invocation count for the given method
     pub fn get(&self, method: &str) -> usize {
         *self.invoked_count.borrow().get(method).unwrap_or(&0)
     }
 
+    // Captures the arguments for the given method
     pub fn capture<T: Clone + 'static>(&self, method: &str, arguments: T) {
         let mut captors = self.captors.borrow_mut();
         let captor = captors
@@ -104,6 +134,7 @@ impl InvocationTracker {
         captor.capture(ArgumentValue::new(arguments));
     }
 
+    // Returns the first captured argument for the given method
     pub fn first<T: Clone + 'static>(&self, method: &str) -> Option<ArgumentValue> {
         self.captors
             .borrow()
@@ -111,6 +142,7 @@ impl InvocationTracker {
             .and_then(|captor| captor.first())
     }
 
+    // Returns the last captured argument for the given method
     pub fn last<T: Clone + 'static>(&self, method: &str) -> Option<ArgumentValue> {
         self.captors
             .borrow()
@@ -119,15 +151,19 @@ impl InvocationTracker {
     }
 }
 
+// Allows `InvocationTracker` to be sent between threads
 unsafe impl Send for InvocationTracker {}
 
+// Allows `InvocationTracker` to be shared between threads
 unsafe impl Sync for InvocationTracker {}
 
 impl<T: Any + Clone> MockAny for T {
+    // Creates a boxed clone of the current value
     fn as_box(&self) -> Box<dyn MockAny> {
         Box::new(self.clone())
     }
 
+    // Returns a reference to the current value as a trait object
     fn as_any(&self) -> &dyn Any {
         self
     }
