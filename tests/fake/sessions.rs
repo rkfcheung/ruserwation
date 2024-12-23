@@ -1,4 +1,4 @@
-use mocks::{ArgumentCaptor, CalledCount};
+use mocks::{ArgumentCaptor, InvocationTracker};
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};
 use test_utils::{mock_call_count, MockVerify};
@@ -9,7 +9,7 @@ pub struct FakeSessionManager {
     pub(crate) verify_result: bool,
     pub(crate) session_result: Option<Result<String, SessionError>>,
     pub(crate) sessions: Mutex<HashSet<String>>,
-    pub(crate) called_count: CalledCount,
+    pub(crate) invocation: InvocationTracker,
     pub(crate) sessiond_id_captor: ArgumentCaptor<String>,
 }
 
@@ -55,7 +55,7 @@ impl FakeSessionManager {
             verify_result,
             session_result,
             sessions: Mutex::default(),
-            called_count: CalledCount::default(),
+            invocation: InvocationTracker::default(),
             sessiond_id_captor: ArgumentCaptor::default(),
         }
     }
@@ -69,7 +69,7 @@ impl FakeSessionManager {
             verify_result: true,
             session_result: Some(Ok(session_id.to_string())),
             sessions: Mutex::new(sessions),
-            called_count: CalledCount::default(),
+            invocation: InvocationTracker::default(),
             sessiond_id_captor: ArgumentCaptor::default(),
         }
     }

@@ -11,7 +11,7 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
     let expanded = quote::quote! {
         impl #name {
             pub fn verify_result(&self, method: &str, times: usize) {
-                let actual = self.called_count.get(method);
+                let actual = self.invocation.get(method);
                 assert_eq!(actual, times, "Expected method '{}' to be called {} times, but it was called {} times,", method, times, actual);
             }
         }
@@ -36,7 +36,7 @@ pub fn mock_call_count(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #(#fn_attrs)*
         #fn_vis #fn_sig {
             // Increment call count for this function
-            self.called_count.increment(stringify!(#fn_name));
+            self.invocation.increment(stringify!(#fn_name));
 
             // Original function body
             #fn_body
