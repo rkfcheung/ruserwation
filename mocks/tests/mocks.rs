@@ -53,6 +53,7 @@ mod tests {
 
         assert_eq!(captor.first(), Some(10)); // First captured argument
         assert_eq!(captor.last(), Some(30)); // Last captured argument
+        assert_eq!(captor.values().clone(), vec![10, 20, 30]);
     }
 
     #[test]

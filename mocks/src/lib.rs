@@ -1,4 +1,8 @@
-use std::{any::Any, cell::RefCell, collections::HashMap};
+use std::{
+    any::Any,
+    cell::{Ref, RefCell},
+    collections::HashMap,
+};
 
 pub trait MockAny: Any {
     fn as_any(&self) -> &dyn Any;
@@ -38,6 +42,10 @@ impl<T: Clone> ArgumentCaptor<T> {
 
     pub fn last(&self) -> Option<T> {
         self.captured.borrow().last().cloned()
+    }
+
+    pub fn values(&self) -> Ref<Vec<T>> {
+        self.captured.borrow()
     }
 }
 
@@ -111,6 +119,10 @@ impl InvocationTracker {
     }
 }
 
+unsafe impl Send for InvocationTracker {}
+
+unsafe impl Sync for InvocationTracker {}
+
 impl<T: Any + Clone> MockAny for T {
     fn as_box(&self) -> Box<dyn MockAny> {
         Box::new(self.clone())
@@ -120,7 +132,3 @@ impl<T: Any + Clone> MockAny for T {
         self
     }
 }
-
-unsafe impl Send for InvocationTracker {}
-
-unsafe impl Sync for InvocationTracker {}
