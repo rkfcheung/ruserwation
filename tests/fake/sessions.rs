@@ -1,4 +1,4 @@
-use mocks::{ArgumentCaptor, InvocationTracker};
+use mocks::InvocationTracker;
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};
 use test_utils::{mock_invoked, MockVerify};
@@ -10,7 +10,6 @@ pub struct FakeSessionManager {
     pub(crate) session_result: Option<Result<String, SessionError>>,
     pub(crate) sessions: Mutex<HashSet<String>>,
     pub(crate) invocation: InvocationTracker,
-    pub(crate) sessiond_id_captor: ArgumentCaptor<String>,
 }
 
 impl VerifyUser for FakeSessionManager {
@@ -57,7 +56,6 @@ impl FakeSessionManager {
             session_result,
             sessions: Mutex::default(),
             invocation: InvocationTracker::default(),
-            sessiond_id_captor: ArgumentCaptor::default(),
         }
     }
 
@@ -71,7 +69,6 @@ impl FakeSessionManager {
             session_result: Some(Ok(session_id.to_string())),
             sessions: Mutex::new(sessions),
             invocation: InvocationTracker::default(),
-            sessiond_id_captor: ArgumentCaptor::default(),
         }
     }
 
