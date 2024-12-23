@@ -1,8 +1,4 @@
-use std::{
-    any::Any,
-    cell::{Ref, RefCell},
-    collections::HashMap,
-};
+use std::{any::Any, cell::RefCell, collections::HashMap};
 
 // Trait to enable dynamic downcasting and boxing for mock objects
 pub trait MockAny: Any {
@@ -62,9 +58,9 @@ impl<T: Clone> ArgumentCaptor<T> {
         self.captured.borrow().last().cloned()
     }
 
-    // Returns a reference to all captured arguments without cloning
-    pub fn values(&self) -> Ref<Vec<T>> {
-        self.captured.borrow()
+    // Returns all captured arguments
+    pub fn values(&self) -> Vec<T> {
+        self.captured.borrow().clone()
     }
 }
 
@@ -148,6 +144,15 @@ impl InvocationTracker {
             .borrow()
             .get(method)
             .and_then(|captor| captor.last())
+    }
+
+    // Returns all the captured arguments for the given method
+    pub fn values(&self, method: &str) -> Vec<ArgumentValue> {
+        self.captors
+            .borrow()
+            .get(method)
+            .map(|captor| captor.values())
+            .unwrap_or_default()
     }
 }
 
