@@ -6,7 +6,7 @@ pub trait MockAny: Any {
 }
 
 pub trait MockVerify {
-    fn verify_result(&self, method: &str, times: usize);
+    fn verify_invoked(&self, method: &str, times: usize);
 }
 
 #[derive(Default)]

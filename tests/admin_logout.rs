@@ -50,7 +50,7 @@ mod tests {
             // Assert that the cookie header contains the expiration date in the past
             assert!(cookie_value.contains("expires=Thu, 01 Jan 1970"));
         }
-        session_manager.verify_result("destroy_session", 1);
+        session_manager.verify_invoked("destroy_session", 1);
         let sessiond_id_captured = session_manager
             .invocation
             .first::<String>("destroy_session")
@@ -90,7 +90,7 @@ mod tests {
         // Check that no Set-Cookie header is set (since no session existed)
         let set_cookie_header = response.headers().get("Set-Cookie");
         assert!(set_cookie_header.is_none());
-        session_manager.verify_result("destroy_session", 0);
+        session_manager.verify_invoked("destroy_session", 0);
         let sessiond_id_captured = session_manager.invocation.last::<String>("destroy_session");
         assert!(sessiond_id_captured.is_none());
     }
