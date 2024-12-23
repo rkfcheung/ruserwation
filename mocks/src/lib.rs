@@ -1,4 +1,8 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::{any::Any, cell::RefCell, collections::HashMap};
+
+pub trait MockAny: Any {
+    fn to_box(&self) -> Box<dyn MockAny>;
+}
 
 pub trait MockVerify {
     fn verify_result(&self, method: &str, times: usize);
@@ -9,9 +13,22 @@ pub struct ArgumentCaptor<T: Clone> {
     captured: RefCell<Vec<T>>,
 }
 
+pub struct ArgumentValue {
+    value: Box<dyn MockAny>,
+}
+
 #[derive(Default)]
 pub struct CalledCount {
-    counter: RefCell<HashMap<String, usize>>,
+    invoked_count: RefCell<HashMap<String, usize>>,
+}
+
+#[derive(Default, Clone)]
+pub struct MockDefault;
+
+#[derive(Default)]
+pub struct InvocationTracker {
+    invoked_count: RefCell<HashMap<String, usize>>,
+    captors: RefCell<HashMap<String, ArgumentCaptor<ArgumentValue>>>,
 }
 
 impl<T: Clone> ArgumentCaptor<T> {
@@ -28,22 +45,94 @@ impl<T: Clone> ArgumentCaptor<T> {
     }
 }
 
-impl CalledCount {
-    pub fn increment(&self, method: &str) {
-        let mut count_map = self.counter.borrow_mut();
-        let value = count_map.entry(method.to_string()).or_insert(0);
-        *value += 1;
-    }
-
-    pub fn get(&self, method: &str) -> usize {
-        *self.counter.borrow().get(method).unwrap_or(&0)
-    }
-}
-
 unsafe impl<T: Clone> Send for ArgumentCaptor<T> {}
 
 unsafe impl<T: Clone> Sync for ArgumentCaptor<T> {}
 
+impl ArgumentValue {
+    pub fn new<T: Any + Clone>(value: T) -> Self {
+        Self {
+            value: Box::new(value),
+        }
+    }
+}
+
+impl Clone for ArgumentValue {
+    fn clone(&self) -> Self {
+        Self {
+            value: self.value.to_box(),
+        }
+    }
+}
+
+impl Default for ArgumentValue {
+    fn default() -> Self {
+        Self {
+            value: MockDefault::default().to_box(),
+        }
+    }
+}
+
+unsafe impl Send for ArgumentValue {}
+
+unsafe impl Sync for ArgumentValue {}
+
+impl CalledCount {
+    pub fn increment(&self, method: &str) {
+        let mut invoked = self.invoked_count.borrow_mut();
+        let value = invoked.entry(method.to_string()).or_insert(0);
+        *value += 1;
+    }
+
+    pub fn get(&self, method: &str) -> usize {
+        *self.invoked_count.borrow().get(method).unwrap_or(&0)
+    }
+}
+
 unsafe impl Send for CalledCount {}
 
 unsafe impl Sync for CalledCount {}
+
+impl InvocationTracker {
+    pub fn increment(&self, method: &str) {
+        let mut invoked_count = self.invoked_count.borrow_mut();
+        let value = invoked_count.entry(method.to_string()).or_insert(0);
+        *value += 1;
+    }
+
+    pub fn get(&self, method: &str) -> usize {
+        *self.invoked_count.borrow().get(method).unwrap_or(&0)
+    }
+
+    pub fn capture<T: Clone + 'static>(&self, method: &str, arguments: T) {
+        let mut captors = self.captors.borrow_mut();
+        let captor = captors
+            .entry(method.to_string())
+            .or_insert(ArgumentCaptor::default());
+        captor.capture(ArgumentValue::new(arguments));
+    }
+
+    pub fn first<T: Clone + 'static>(&self, method: &str) -> Option<ArgumentValue> {
+        self.captors
+            .borrow()
+            .get(method)
+            .and_then(|captor| captor.first())
+    }
+
+    pub fn last<T: Clone + 'static>(&self, method: &str) -> Option<ArgumentValue> {
+        self.captors
+            .borrow()
+            .get(method)
+            .and_then(|captor| captor.last())
+    }
+}
+
+impl<T: Any + Clone> MockAny for T {
+    fn to_box(&self) -> Box<dyn MockAny> {
+        Box::new(self.clone())
+    }
+}
+
+unsafe impl Send for InvocationTracker {}
+
+unsafe impl Sync for InvocationTracker {}
