@@ -20,10 +20,6 @@ pub struct ArgumentValue {
     value: Rc<dyn Any>,
 }
 
-// Represents a default value for mock objects when cloning
-#[derive(Clone, Default)]
-pub struct MockDefault;
-
 // Tracks method invocations and captures their arguments for verification
 #[derive(Default)]
 pub struct InvocationTracker {
@@ -33,6 +29,10 @@ pub struct InvocationTracker {
     // Tracks arguments captured for each method
     captors: RefCell<HashMap<String, ArgumentCaptor<ArgumentValue>>>,
 }
+
+// Represents a default value for mock objects when cloning
+#[derive(Clone, Default)]
+pub struct MockDefault;
 
 impl<T: Clone> ArgumentCaptor<T> {
     // Captures a value by adding it to the list of captured arguments
