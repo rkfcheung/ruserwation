@@ -1,7 +1,7 @@
 use mocks::{ArgumentCaptor, InvocationTracker};
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};
-use test_utils::{mock_call_count, MockVerify};
+use test_utils::{mock_invoked, MockVerify};
 use warp_sessions::Session;
 
 #[derive(Default, MockVerify)]
@@ -28,7 +28,7 @@ impl EnableSession for FakeSessionManager {
         self.session_result.clone().unwrap()
     }
 
-    #[mock_call_count]
+    #[mock_invoked]
     async fn destroy_session(&self, session_id: &str) {
         self.sessiond_id_captor.capture(session_id.to_string());
         let mut sessions = self.sessions.lock().unwrap();

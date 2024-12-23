@@ -21,13 +21,13 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_attribute]
-pub fn mock_call_count(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     // Extract function details
     let fn_attrs = &input.attrs;
     let fn_sig = &input.sig;
-    let fn_name = &input.sig.ident;
+    let fn_name = &fn_sig.ident;
     let fn_body = &input.block;
     let fn_vis = &input.vis;
 
