@@ -30,7 +30,8 @@ impl EnableSession for FakeSessionManager {
 
     #[mock_invoked]
     async fn destroy_session(&self, session_id: &str) {
-        self.sessiond_id_captor.capture(session_id.to_string());
+        self.invocation
+            .capture("destroy_session", session_id.to_string());
         let mut sessions = self.sessions.lock().unwrap();
         sessions.remove(session_id);
     }

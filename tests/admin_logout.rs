@@ -51,9 +51,13 @@ mod tests {
             assert!(cookie_value.contains("expires=Thu, 01 Jan 1970"));
         }
         session_manager.verify_result("destroy_session", 1);
+        let sessiond_id_captured = session_manager
+            .invocation
+            .first::<String>("destroy_session")
+            .unwrap();
         assert_eq!(
-            session_manager.sessiond_id_captor.first(),
-            Some("valid_session_id".to_string())
+            sessiond_id_captured.get::<String>().unwrap(),
+            "valid_session_id"
         );
     }
 
@@ -87,6 +91,7 @@ mod tests {
         let set_cookie_header = response.headers().get("Set-Cookie");
         assert!(set_cookie_header.is_none());
         session_manager.verify_result("destroy_session", 0);
-        assert!(session_manager.sessiond_id_captor.last().is_none());
+        let sessiond_id_captured = session_manager.invocation.last::<String>("destroy_session");
+        assert!(sessiond_id_captured.is_none());
     }
 }

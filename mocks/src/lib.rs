@@ -1,7 +1,8 @@
 use std::{any::Any, cell::RefCell, collections::HashMap};
 
 pub trait MockAny: Any {
-    fn to_box(&self) -> Box<dyn MockAny>;
+    fn as_any(&self) -> &dyn Any;
+    fn as_box(&self) -> Box<dyn MockAny>;
 }
 
 pub trait MockVerify {
@@ -50,12 +51,16 @@ impl ArgumentValue {
             value: Box::new(value),
         }
     }
+
+    pub fn get<T: Any + Clone>(&self) -> Option<&T> {
+        self.value.as_ref().as_any().downcast_ref::<T>()
+    }
 }
 
 impl Clone for ArgumentValue {
     fn clone(&self) -> Self {
         Self {
-            value: self.value.to_box(),
+            value: self.value.as_box(),
         }
     }
 }
@@ -63,7 +68,7 @@ impl Clone for ArgumentValue {
 impl Default for ArgumentValue {
     fn default() -> Self {
         Self {
-            value: MockDefault::default().to_box(),
+            value: MockDefault::default().as_box(),
         }
     }
 }
@@ -107,8 +112,12 @@ impl InvocationTracker {
 }
 
 impl<T: Any + Clone> MockAny for T {
-    fn to_box(&self) -> Box<dyn MockAny> {
+    fn as_box(&self) -> Box<dyn MockAny> {
         Box::new(self.clone())
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
