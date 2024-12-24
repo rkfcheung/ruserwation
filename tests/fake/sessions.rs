@@ -5,14 +5,14 @@ use std::{collections::HashSet, sync::Mutex};
 use warp_sessions::Session;
 
 #[derive(Default, MockVerify)]
-pub struct FakeSessionManager {
+pub struct MockSessionManager {
     pub(crate) verify_result: bool,
     pub(crate) session_result: Option<Result<String, SessionError>>,
     pub(crate) sessions: Mutex<HashSet<String>>,
     pub(crate) invocation: InvocationTracker,
 }
 
-impl VerifyUser for FakeSessionManager {
+impl VerifyUser for MockSessionManager {
     async fn contains(&self, _username: &str) -> bool {
         self.verify_result
     }
@@ -22,7 +22,7 @@ impl VerifyUser for FakeSessionManager {
     }
 }
 
-impl EnableSession for FakeSessionManager {
+impl EnableSession for MockSessionManager {
     async fn create_session(&self, _username: &str) -> Result<String, SessionError> {
         self.session_result.clone().unwrap()
     }
@@ -46,7 +46,7 @@ impl EnableSession for FakeSessionManager {
     }
 }
 
-impl FakeSessionManager {
+impl MockSessionManager {
     pub(crate) fn new(
         verify_result: bool,
         session_result: Option<Result<String, SessionError>>,

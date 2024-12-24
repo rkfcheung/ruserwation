@@ -10,12 +10,12 @@ mod tests {
     use warp::test::request;
 
     use crate::fake::fake_restaurant;
-    use crate::fake::sessions::FakeSessionManager;
+    use crate::fake::sessions::MockSessionManager;
 
     #[tokio::test]
     async fn test_admin_logout_success() {
         // Mock session manager
-        let mock_session_manager = FakeSessionManager::ok();
+        let mock_session_manager = MockSessionManager::ok();
         let session_manager = Arc::new(mock_session_manager);
 
         // Create a dummy restaurant
@@ -65,7 +65,7 @@ mod tests {
     #[tokio::test]
     async fn test_admin_logout_no_session() {
         // Mock session manager
-        let mock_session_manager = FakeSessionManager::ok();
+        let mock_session_manager = MockSessionManager::ok();
         let session_manager = Arc::new(mock_session_manager);
 
         // Create a dummy restaurant
