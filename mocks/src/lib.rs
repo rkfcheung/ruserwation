@@ -11,6 +11,10 @@ enum MockCheck {
 pub trait MockVerify {
     // Verifies if a method was invoked the specified number of times
     fn verify_invoked(&self, method: &str, times: usize);
+
+    fn verify_once(&self, method: &str) {
+        self.verify_invoked(method, 1);
+    }
 }
 
 // A generic struct to capture arguments passed to mocked methods

@@ -8,5 +8,8 @@ proc-macro2 = "1.0.92"
 quote = "1.0.37"
 syn = { version = "2.0.90", features = [ "full" ] }
 
+[dev-dependencies]
+mocks = { path = "../mocks" }
+
 [lib]
 proc-macro = true

@@ -9,10 +9,10 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
     let name = input.ident;
 
     let expanded = quote::quote! {
-        impl #name {
-            pub fn verify_invoked(&self, method: &str, times: usize) {
-                let actual = self.invocation.get(method);
-                assert_eq!(actual, times, "Expected method '{}' to be called {} times, but it was called {} times,", method, times, actual);
+        impl mocks::MockVerify for #name {
+            fn verify_invoked(&self, method: &str, times: usize) {
+                let answer = self.invocation.verify_exactly(method, times);
+                assert!(answer.passed, "{}", answer.reason);
             }
         }
     };

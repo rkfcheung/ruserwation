@@ -2,6 +2,7 @@ mod fake;
 
 #[cfg(test)]
 mod tests {
+    use mocks::MockVerify;
     use ruserwation::admin::logout::admin_logout_route;
     use ruserwation::config::models::Context;
     use std::sync::Arc;
@@ -50,7 +51,7 @@ mod tests {
             // Assert that the cookie header contains the expiration date in the past
             assert!(cookie_value.contains("expires=Thu, 01 Jan 1970"));
         }
-        session_manager.verify_invoked("destroy_session", 1);
+        session_manager.verify_once("destroy_session");
         let sessiond_id_captured = session_manager
             .invocation
             .first::<String>("destroy_session")
