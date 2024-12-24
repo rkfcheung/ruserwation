@@ -115,7 +115,15 @@ unsafe impl<T: Clone> Send for ArgumentCaptor<T> {}
 unsafe impl<T: Clone> Sync for ArgumentCaptor<T> {}
 
 impl ArgumentValue {
-    /// Creates a new `ArgumentValue` by wrapping the value in an `Rc`.
+    /// Creates a new `ArgumentValue` by wrapping the provided value in an `Rc`.
+    ///
+    /// # Arguments
+    /// - `value`: The value to wrap, which must implement `Any` and `Clone`.
+    ///
+    /// # Example
+    /// ```
+    /// let value = mocks::ArgumentValue::new(42);
+    /// ```
     pub fn new<T: Any + Clone>(value: T) -> Self {
         Self {
             value: Rc::new(value),
@@ -123,11 +131,29 @@ impl ArgumentValue {
     }
 
     /// Attempts to downcast the stored value to the given type `T`.
-    pub fn get<T: Any + Clone>(&self) -> Option<&T> {
+    ///
+    /// Returns `None` if the stored value's type does not match `T`.
+    ///
+    /// # Example
+    /// ```
+    /// let value = mocks::ArgumentValue::new(42);
+    /// assert_eq!(*value.get::<i32>().unwrap(), 42);
+    /// ```
+    pub fn get<T: Any>(&self) -> Option<&T> {
         self.value.downcast_ref::<T>()
     }
 
-    pub fn unwrap<T: Any + Clone>(&self) -> &T {
+    /// Attempts to downcast the stored value to the given type `T`, and panics if the types don't match.
+    ///
+    /// # Panics
+    /// Panics if the stored value's type does not match `T`.
+    ///
+    /// # Example
+    /// ```
+    /// let value = mocks::ArgumentValue::new(42);
+    /// assert_eq!(*value.unwrap::<i32>(), 42);
+    /// ```
+    pub fn unwrap<T: Any>(&self) -> &T {
         let result = self.get();
         assert!(
             result.is_some(),
@@ -139,7 +165,7 @@ impl ArgumentValue {
 }
 
 impl Default for ArgumentValue {
-    /// Provides a default implementation for `ArgumentValue` using `MockDefault`.
+    /// Provides a default `ArgumentValue` wrapping a placeholder `MockDefault`.
     fn default() -> Self {
         Self {
             value: Rc::new(MockDefault),
@@ -150,6 +176,7 @@ impl Default for ArgumentValue {
 impl Deref for ArgumentValue {
     type Target = dyn Any;
 
+    /// Dereferences the wrapped value as `dyn Any`.
     fn deref(&self) -> &Self::Target {
         self.value.as_ref()
     }
