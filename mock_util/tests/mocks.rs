@@ -52,8 +52,8 @@ mod tests {
         // Invoke the method again
         manager.destroy_session("session2");
 
-        // Verify the invocation count using `verify_invoked`
-        manager.verify_invoked("destroy_session", 2);
+        // Verify the invocation count using `verify_exactly`
+        manager.verify_exactly("destroy_session", 2);
     }
 
     #[test]

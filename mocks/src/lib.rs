@@ -1,7 +1,7 @@
 use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
-enum MockCheck {
+pub enum MockCheck {
     Lte, // Less than or equal to
     Eq,  // Equal to
     Gte, // Greater than or equal to
@@ -10,10 +10,10 @@ enum MockCheck {
 // Trait to verify that a method was invoked a specific number of times
 pub trait MockVerify {
     // Verifies if a method was invoked the specified number of times
-    fn verify_invoked(&self, method: &str, times: usize);
+    fn verify_exactly(&self, method: &str, times: usize);
 
     fn verify_once(&self, method: &str) {
-        self.verify_invoked(method, 1);
+        self.verify_exactly(method, 1);
     }
 }
 

@@ -10,7 +10,7 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
 
     let expanded = quote::quote! {
         impl mocks::MockVerify for #name {
-            fn verify_invoked(&self, method: &str, times: usize) {
+            fn verify_exactly(&self, method: &str, times: usize) {
                 let answer = self.invocation.verify_exactly(method, times);
                 assert!(answer.passed, "{}", answer.reason);
             }

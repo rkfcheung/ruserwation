@@ -91,7 +91,7 @@ mod tests {
         // Check that no Set-Cookie header is set (since no session existed)
         let set_cookie_header = response.headers().get("Set-Cookie");
         assert!(set_cookie_header.is_none());
-        session_manager.verify_invoked("destroy_session", 0);
+        session_manager.verify_exactly("destroy_session", 0);
         let sessiond_id_captured = session_manager.invocation.last::<String>("destroy_session");
         assert!(sessiond_id_captured.is_none());
     }
