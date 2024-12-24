@@ -88,7 +88,68 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
     expanded.into()
 }
 
-// This is the procedural macro function that will be used to capture the method arguments.
+/// Marks a function as "mockable" by capturing its arguments and tracking invocations.
+///
+/// This procedural macro automatically wraps a function to capture its arguments and increment
+/// the invocation count for tracking and verification purposes.
+///
+/// It is particularly useful for mocking and verifying interactions with functions in unit tests.
+///
+/// Example:
+/// ```rust
+/// use mock_util::mock_captured_arguments;
+/// use std::sync::Arc;
+///
+/// // Mock structure for testing
+/// struct MyMock {
+///     invocation: mocks::InvocationTracker,
+/// }
+///
+/// impl MyMock {
+///     #[mock_captured_arguments]
+///     fn add(&self, a: i32, b: i32) -> i32 {
+///         a + b // Original function body
+///     }
+///
+///     #[mock_captured_arguments]
+///     fn greet(&self, message: &str) {
+///         println!("Greeting: {}", message);
+///     }
+///
+///     #[mock_captured_arguments]
+///     fn hi(&self) {
+///         println!("Hi!");
+///     }
+/// }
+///
+/// // Example usage in a test
+/// fn main() {
+///     // Create a mock instance
+///     let mock = MyMock {
+///         invocation: mocks::InvocationTracker::default(),
+///     };
+///
+///     // Call the `add` function and verify the captured arguments
+///     let result = mock.add(10, 20);
+///     assert_eq!(result, 30); // Verify the return value
+///     let captured_add_args = mock.invocation.values("add");
+///     assert_eq!(captured_add_args.len(), 1); // Ensure the function was invoked once
+///     let args = captured_add_args[0].get::<(i32, i32)>().unwrap();
+///     assert_eq!(*args, (10, 20)); // Verify the captured arguments
+///
+///     // Call the `greet` function and verify the captured arguments
+///     mock.greet("Hello, world!");
+///     let captured_greet_args = mock.invocation.values("greet");
+///     assert_eq!(captured_greet_args.len(), 1);
+///     let message = captured_greet_args[0].get::<String>().unwrap();
+///     assert_eq!(message, "Hello, world!");
+///
+///     // Call the `hi` function (no arguments, so nothing should be captured)
+///     mock.hi();
+///     let captured_hi_args = mock.invocation.values("hi");
+///     assert_eq!(captured_hi_args.len(), 0); // No arguments to capture
+/// }
+/// ```
 #[proc_macro_attribute]
 pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
