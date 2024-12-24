@@ -1,4 +1,4 @@
-mod fake;
+mod mock;
 
 #[cfg(test)]
 mod tests {
@@ -9,8 +9,8 @@ mod tests {
     use warp::http::StatusCode;
     use warp::test::request;
 
-    use crate::fake::mock_restaurant;
-    use crate::fake::sessions::MockSessionManager;
+    use crate::mock::mock_restaurant;
+    use crate::mock::sessions::MockSessionManager;
 
     #[tokio::test]
     async fn test_admin_logout_success() {
