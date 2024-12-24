@@ -1,4 +1,4 @@
-use std::{any::Any, cell::RefCell, collections::HashMap, rc::Rc};
+use std::{any::Any, cell::RefCell, collections::HashMap, ops::Deref, rc::Rc};
 
 /// Enum to represent the type of verification check.
 #[derive(Debug)]
@@ -124,13 +124,17 @@ impl ArgumentValue {
 
     /// Attempts to downcast the stored value to the given type `T`.
     pub fn get<T: Any + Clone>(&self) -> Option<&T> {
-        let result = self.value.downcast_ref::<T>();
+        self.value.downcast_ref::<T>()
+    }
+
+    pub fn unwrap<T: Any + Clone>(&self) -> &T {
+        let result = self.get();
         assert!(
             result.is_some(),
             "Failed to downcast `ArgumentValue` to '{}'. Ensure the types match.",
             std::any::type_name::<T>()
         );
-        result
+        result.unwrap()
     }
 }
 
@@ -140,6 +144,14 @@ impl Default for ArgumentValue {
         Self {
             value: Rc::new(MockDefault),
         }
+    }
+}
+
+impl Deref for ArgumentValue {
+    type Target = dyn Any;
+
+    fn deref(&self) -> &Self::Target {
+        self.value.as_ref()
     }
 }
 

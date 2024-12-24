@@ -130,8 +130,11 @@ mod tests {
         expected = "Failed to downcast `ArgumentValue` to 'alloc::string::String'. Ensure the types match."
     )]
     fn test_argument_value_invalid_downcast() {
-        let value = ArgumentValue::new(42); // Stores an `i32`
-        value.get::<String>(); // Attempting to get `String` should panic
+        let value = ArgumentValue::new(42 as usize); // Stores an `usize`
+        assert_eq!(*value.downcast_ref::<usize>().unwrap(), 42);
+        assert_eq!(value.get::<usize>().unwrap(), &42);
+        assert_eq!(value.unwrap::<usize>(), &42);
+        value.unwrap::<String>(); // Attempting to get `String` should panic
     }
 
     #[test]
@@ -204,5 +207,6 @@ mod tests {
 
         // Ensure the default value is of type `MockDefault`
         assert!(default_value.get::<MockDefault>().is_some());
+        assert!(default_value.get::<String>().is_none());
     }
 }
