@@ -1,7 +1,7 @@
+use mock_util::{mock_invoked, MockVerify};
 use mocks::InvocationTracker;
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};
-use test_utils::{mock_invoked, MockVerify};
 use warp_sessions::Session;
 
 #[derive(Default, MockVerify)]

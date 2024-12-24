@@ -1,10 +1,10 @@
 use mocks::{ArgumentValue, InvocationTracker, MockVerify};
 
-extern crate test_utils;
-use test_utils::mock_invoked;
+extern crate mock_util;
+use mock_util::mock_invoked;
 
 // Mock Struct to Test
-#[derive(Default, test_utils::MockVerify)]
+#[derive(Default, mock_util::MockVerify)]
 struct MockSessionManager {
     invocation: InvocationTracker,
 }
