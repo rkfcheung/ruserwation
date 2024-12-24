@@ -96,19 +96,19 @@ mod tests {
         tracker.increment("method2");
 
         // Verify exact count
-        assert!(tracker.verify_exactly("method1", 2).passed);
-        assert!(!tracker.verify_exactly("method1", 1).passed);
+        assert!(tracker.verify_invoked("method1", MockCheck::Eq, 2).passed);
+        assert!(!tracker.verify_invoked("method1", MockCheck::Eq, 1).passed);
 
         // Verify at least
-        assert!(tracker.verify_at_least("method1", 1).passed);
-        assert!(!tracker.verify_at_least("method1", 3).passed);
+        assert!(tracker.verify_invoked("method1", MockCheck::Gte, 1).passed);
+        assert!(!tracker.verify_invoked("method1", MockCheck::Gte, 3).passed);
 
         // Verify at most
-        assert!(tracker.verify_at_most("method1", 2).passed);
-        assert!(!tracker.verify_at_most("method1", 1).passed);
+        assert!(tracker.verify_invoked("method1", MockCheck::Lte, 2).passed);
+        assert!(!tracker.verify_invoked("method1", MockCheck::Lte, 1).passed);
 
         // Verify a method never called
-        let answer = tracker.verify_exactly("method3", 0);
+        let answer = tracker.verify_invoked("method3", MockCheck::Eq, 0);
         assert!(answer.passed);
         assert_eq!(
             answer.reason,

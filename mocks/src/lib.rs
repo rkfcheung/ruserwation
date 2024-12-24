@@ -9,11 +9,35 @@ pub enum MockCheck {
 
 // Trait to verify that a method was invoked a specific number of times
 pub trait MockVerify {
-    // Verifies if a method was invoked the specified number of times
-    fn verify_exactly(&self, method: &str, times: usize);
+    fn verify_invoked(&self, method: &str, check: MockCheck, times: usize);
 
-    fn verify_once(&self, method: &str) {
+    // Verifies if a method was invoked the specified number of times
+    fn verify_exactly(&self, method: &str, times: usize) {
+        self.verify_invoked(method, MockCheck::Eq, times);
+    }
+
+    fn verify_at_least(&self, method: &str, times: usize) {
+        self.verify_invoked(method, MockCheck::Gte, times);
+    }
+
+    fn verify_at_most(&self, method: &str, times: usize) {
+        self.verify_invoked(method, MockCheck::Lte, times);
+    }
+
+    fn verify_exactly_once(&self, method: &str) {
         self.verify_exactly(method, 1);
+    }
+
+    fn verify_at_least_once(&self, method: &str) {
+        self.verify_at_least(method, 1);
+    }
+
+    fn verify_at_most_once(&self, method: &str) {
+        self.verify_at_most(method, 1);
+    }
+
+    fn verify_never(&self, method: &str) {
+        self.verify_exactly(method, 0);
     }
 }
 
@@ -127,28 +151,28 @@ impl InvocationTracker {
         *self.invoked_count.borrow().get(method).unwrap_or(&0)
     }
 
-    pub fn verify_exactly(&self, method: &str, times: usize) -> MockAnswer {
-        self.verify_invoked(method, MockCheck::Eq, times)
-    }
+    pub fn verify_invoked(&self, method: &str, check: MockCheck, times: usize) -> MockAnswer {
+        let actual = self.get(method);
 
-    pub fn verify_at_least(&self, method: &str, times: usize) -> MockAnswer {
-        self.verify_invoked(method, MockCheck::Gte, times)
-    }
+        // Perform the comparison based on the provided check
+        let passed = match check {
+            MockCheck::Lte => actual <= times,
+            MockCheck::Eq => actual == times,
+            MockCheck::Gte => actual >= times,
+        };
 
-    pub fn verify_at_most(&self, method: &str, times: usize) -> MockAnswer {
-        self.verify_invoked(method, MockCheck::Lte, times)
-    }
+        // Construct the failure reason
+        let reason = if passed {
+            format!("Verification passed: method '{method}' was called {actual} times as expected.")
+        } else {
+            format!(
+                "Expected method '{method}' to be called {:?} {times} times, but it was called {actual} times.",
+                check
+            )
+        };
 
-    pub fn verify_exactly_once(&self, method: &str) -> MockAnswer {
-        self.verify_exactly(method, 1)
-    }
-
-    pub fn verify_at_least_once(&self, method: &str) -> MockAnswer {
-        self.verify_at_least(method, 1)
-    }
-
-    pub fn verify_at_most_once(&self, method: &str) -> MockAnswer {
-        self.verify_at_most(method, 1)
+        // Return the verification result
+        MockAnswer { passed, reason }
     }
 
     // Captures the arguments for the given method
@@ -181,30 +205,6 @@ impl InvocationTracker {
             .get(method)
             .map(|captor| captor.values())
             .unwrap_or_default()
-    }
-
-    fn verify_invoked(&self, method: &str, check: MockCheck, times: usize) -> MockAnswer {
-        let actual = self.get(method);
-
-        // Perform the comparison based on the provided check
-        let passed = match check {
-            MockCheck::Lte => actual <= times,
-            MockCheck::Eq => actual == times,
-            MockCheck::Gte => actual >= times,
-        };
-
-        // Construct the failure reason
-        let reason = if passed {
-            format!("Verification passed: method '{method}' was called {actual} times as expected.")
-        } else {
-            format!(
-                "Expected method '{method}' to be called {:?} {times} times, but it was called {actual} times.",
-                check
-            )
-        };
-
-        // Return the verification result
-        MockAnswer { passed, reason }
     }
 }
 
