@@ -2,7 +2,9 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, ItemFn};
+use syn::{
+    parse_macro_input, punctuated::Punctuated, token::Comma, DeriveInput, FnArg, ItemFn, Type,
+};
 
 /// Derives the `MockVerify` trait for a given struct.
 ///
@@ -37,7 +39,7 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
     };
 
     // Convert the generated code back into a token stream
-    TokenStream::from(expanded)
+    expanded.into()
 }
 
 /// Marks a function as "mockable" by tracking its invocations.
@@ -163,15 +165,42 @@ pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenSt
     let fn_vis = &input.vis; // Visibility (e.g., pub)
 
     // Process arguments
+    let capture_args = process_arguments(fn_args);
+
+    // Generate the capture statement
+    let capture_statement = if capture_args.is_empty() {
+        quote! {}
+    } else {
+        quote! {
+            self.invocation.capture(stringify!(#fn_name), (#(#capture_args),*));
+        }
+    };
+
+    // Generate the expanded function
+    let expanded = quote! {
+        #(#fn_attrs)*
+        #fn_vis #fn_sig {
+            #capture_statement
+
+            #fn_body
+        }
+    };
+
+    // Convert the generated code back into a token stream
+    expanded.into()
+}
+
+// Processes function arguments and generates a list of tokens for capturing them.
+fn process_arguments(fn_args: &Punctuated<FnArg, Comma>) -> Vec<proc_macro2::TokenStream> {
     let mut capture_args = vec![];
     for arg in fn_args {
-        if let syn::FnArg::Typed(pat_type) = arg {
+        if let FnArg::Typed(pat_type) = arg {
             // Extract argument name
             let arg_name = &*pat_type.pat;
 
             // Check if argument type is &str
-            if let syn::Type::Reference(ref_type) = &*pat_type.ty {
-                if let syn::Type::Path(type_path) = &*ref_type.elem {
+            if let Type::Reference(ref_type) = &*pat_type.ty {
+                if let Type::Path(type_path) = &*ref_type.elem {
                     if type_path.path.is_ident("str") {
                         // Convert `&str` to `.to_string()`
                         capture_args.push(quote! {
@@ -189,25 +218,5 @@ pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenSt
         }
     }
 
-    // Generate the capture statement
-    let capture_statement = if !capture_args.is_empty() {
-        quote! {
-            self.invocation.capture(stringify!(#fn_name), (#(#capture_args),*));
-        }
-    } else {
-        quote! {}
-    };
-
-    // Generate the expanded function
-    let expanded = quote! {
-        #(#fn_attrs)*
-        #fn_vis #fn_sig {
-            #capture_statement
-
-            #fn_body
-        }
-    };
-
-    // Convert the generated code back into a token stream
-    expanded.into()
+    capture_args
 }
