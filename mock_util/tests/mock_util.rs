@@ -1,10 +1,10 @@
 use mocks::{ArgumentValue, InvocationTracker, MockVerify};
 
 extern crate mock_util;
-use mock_util::mock_invoked;
+use mock_util::*;
 
 // Mock Struct to Test
-#[derive(Default, mock_util::MockVerify)]
+#[derive(Default, MockVerify)]
 struct MockSessionManager {
     invocation: InvocationTracker,
 }
@@ -46,7 +46,7 @@ mod tests {
         // Invoke the method
         manager.destroy_session("session1");
 
-        // Verify the invocation count using `verify_once`
+        // Verify the invocation count using `verify_exactly_once`
         manager.verify_exactly_once("destroy_session");
 
         // Invoke the method again
