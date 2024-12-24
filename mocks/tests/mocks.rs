@@ -44,7 +44,7 @@ mod tests {
     }
 
     #[test]
-    fn test_argument_captor_first_last() {
+    fn test_argument_captor_first_last_values() {
         let captor = ArgumentCaptor::default();
 
         captor.capture(10);
@@ -84,5 +84,35 @@ mod tests {
 
         handle.join().unwrap();
         assert_eq!(tracker.get("method_in_thread"), 1);
+    }
+
+    #[test]
+    fn test_verify_invoked() {
+        let tracker = InvocationTracker::default();
+
+        // Simulate calls to methods
+        tracker.increment("method1");
+        tracker.increment("method1");
+        tracker.increment("method2");
+
+        // Verify exact count
+        assert!(tracker.verify_exactly("method1", 2).passed);
+        assert!(!tracker.verify_exactly("method1", 1).passed);
+
+        // Verify at least
+        assert!(tracker.verify_at_least("method1", 1).passed);
+        assert!(!tracker.verify_at_least("method1", 3).passed);
+
+        // Verify at most
+        assert!(tracker.verify_at_most("method1", 2).passed);
+        assert!(!tracker.verify_at_most("method1", 1).passed);
+
+        // Verify a method never called
+        let answer = tracker.verify_exactly("method3", 0);
+        assert!(answer.passed);
+        assert_eq!(
+            answer.reason,
+            "Verification passed: method 'method3' was called 0 times as expected."
+        );
     }
 }
