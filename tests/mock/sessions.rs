@@ -1,4 +1,4 @@
-use mock_util::{mock_invoked, MockVerify};
+use mock_util::{mock_captured_arguments, mock_invoked, MockVerify};
 use mocks::InvocationTracker;
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};
@@ -27,10 +27,9 @@ impl EnableSession for MockSessionManager {
         self.session_result.clone().unwrap()
     }
 
+    #[mock_captured_arguments]
     #[mock_invoked]
     async fn destroy_session(&self, session_id: &str) {
-        self.invocation
-            .capture("destroy_session", session_id.to_string());
         let mut sessions = self.sessions.lock().unwrap();
         sessions.remove(session_id);
     }
