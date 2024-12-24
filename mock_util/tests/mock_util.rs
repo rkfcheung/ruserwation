@@ -27,6 +27,14 @@ impl MockSessionManager {
 mod tests {
     use super::*;
 
+    // Helper function to map captured arguments to Strings
+    fn map_to_strings(values: Vec<ArgumentValue>) -> Vec<String> {
+        values
+            .into_iter()
+            .filter_map(|value| value.get::<String>().cloned())
+            .collect()
+    }
+
     #[test]
     fn test_mock_invoked_increment() {
         let manager = MockSessionManager::default();
@@ -36,7 +44,11 @@ mod tests {
         manager.destroy_session("session2");
 
         // Verify the invocation count
-        assert_eq!(manager.invocation.get("destroy_session"), 2);
+        assert_eq!(
+            manager.invocation.get("destroy_session"),
+            2,
+            "Expected destroy_session to be invoked twice"
+        );
     }
 
     #[test]
@@ -68,9 +80,11 @@ mod tests {
         let captured_args = manager.invocation.values("destroy_session");
 
         // Verify captured arguments
+        let captured_strings = map_to_strings(captured_args);
         assert_eq!(
-            map_to_strings(captured_args),
-            vec!["session1".to_string(), "session2".to_string()]
+            captured_strings,
+            vec!["session1".to_string(), "session2".to_string()],
+            "Expected captured arguments to match the session ids"
         );
     }
 
@@ -83,8 +97,16 @@ mod tests {
         manager.add_session("session2");
 
         // Verify invocation counts
-        assert_eq!(manager.invocation.get("destroy_session"), 1);
-        assert_eq!(manager.invocation.get("add_session"), 1);
+        assert_eq!(
+            manager.invocation.get("destroy_session"),
+            1,
+            "Expected destroy_session to be called once"
+        );
+        assert_eq!(
+            manager.invocation.get("add_session"),
+            1,
+            "Expected add_session to be called once"
+        );
 
         // Verify captured arguments
         let destroy_arg = manager.invocation.first("destroy_session").unwrap();
@@ -92,14 +114,82 @@ mod tests {
         let add_arg = manager.invocation.last("add_session").unwrap();
         let add_arg = add_arg.get::<String>().unwrap();
 
-        assert_eq!(destroy_arg, "session1");
-        assert_eq!(add_arg, "session2");
+        assert_eq!(
+            destroy_arg, "session1",
+            "Expected first destroy_session argument to be 'session1'"
+        );
+        assert_eq!(
+            add_arg, "session2",
+            "Expected add_session argument to be 'session2'"
+        );
     }
 
-    fn map_to_strings(values: Vec<ArgumentValue>) -> Vec<String> {
-        values
-            .into_iter()
-            .filter_map(|value| value.get::<String>().cloned())
-            .collect()
+    #[test]
+    fn test_zero_invocations() {
+        let manager = MockSessionManager::default();
+
+        // Verify no invocations
+        assert_eq!(
+            manager.invocation.get("destroy_session"),
+            0,
+            "Expected no calls to destroy_session"
+        );
+
+        manager.verify_exactly("destroy_session", 0);
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Expected method 'destroy_session' to be called Eq 2 times, but it was called 1 times."
+    )]
+    fn test_invalid_invocation_count() {
+        let manager = MockSessionManager::default();
+
+        // Test an invalid invocation count for a method
+        manager.destroy_session("session1");
+
+        // Verify the method was invoked exactly once
+        assert_eq!(
+            manager.invocation.get("destroy_session"),
+            1,
+            "Expected destroy_session to be invoked once"
+        );
+
+        // This should panic as we verify it was invoked twice
+        manager.verify_exactly("destroy_session", 2);
+    }
+
+    #[test]
+    fn test_edge_case_empty_session_id() {
+        let manager = MockSessionManager::default();
+
+        // Invoke with empty session_id
+        manager.destroy_session("");
+
+        // Verify invocation and captured argument
+        assert_eq!(manager.invocation.get("destroy_session"), 1);
+        let captured_args = manager.invocation.values("destroy_session");
+        let captured_strings = map_to_strings(captured_args);
+        assert_eq!(captured_strings, vec!["".to_string()]);
+    }
+
+    #[test]
+    fn test_multiple_invocations_same_method() {
+        let manager = MockSessionManager::default();
+
+        // Multiple invocations with the same method
+        manager.add_session("session1");
+        manager.add_session("session2");
+
+        // Verify invocation counts
+        assert_eq!(manager.invocation.get("add_session"), 2);
+
+        // Verify captured arguments
+        let captured_args = manager.invocation.values("add_session");
+        let captured_strings = map_to_strings(captured_args);
+        assert_eq!(
+            captured_strings,
+            vec!["session1".to_string(), "session2".to_string()]
+        );
     }
 }
