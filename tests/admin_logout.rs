@@ -9,7 +9,7 @@ mod tests {
     use warp::http::StatusCode;
     use warp::test::request;
 
-    use crate::fake::fake_restaurant;
+    use crate::fake::mock_restaurant;
     use crate::fake::sessions::MockSessionManager;
 
     #[tokio::test]
@@ -19,7 +19,7 @@ mod tests {
         let session_manager = Arc::new(mock_session_manager);
 
         // Create a dummy restaurant
-        let restaurant = Arc::new(fake_restaurant());
+        let restaurant = Arc::new(mock_restaurant());
 
         // Create the route
         let context = Context::create(session_manager.clone(), restaurant);
@@ -69,7 +69,7 @@ mod tests {
         let session_manager = Arc::new(mock_session_manager);
 
         // Create a dummy restaurant
-        let restaurant = Arc::new(fake_restaurant());
+        let restaurant = Arc::new(mock_restaurant());
 
         // Create the route
         let context = Context::create(session_manager.clone(), restaurant);

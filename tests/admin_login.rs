@@ -10,13 +10,13 @@ mod tests {
     use warp::http::StatusCode;
     use warp::test::request;
 
-    use crate::fake::fake_restaurant;
+    use crate::fake::mock_restaurant;
     use crate::fake::sessions::MockSessionManager;
 
     #[tokio::test]
     async fn test_successful_login() {
         let session_manager = MockSessionManager::ok();
-        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let context = Context::create(session_manager.into(), Arc::new(mock_restaurant()));
         let filter = admin_login_route(context);
 
         let resp = request()
@@ -42,7 +42,7 @@ mod tests {
     #[tokio::test]
     async fn test_invalid_credentials() {
         let session_manager = MockSessionManager::default();
-        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let context = Context::create(session_manager.into(), Arc::new(mock_restaurant()));
         let filter = admin_login_route(context);
 
         let resp = request()
@@ -70,7 +70,7 @@ mod tests {
             true,
             Some(Err(SessionError::SessionCreationFailed("mock".to_string()))),
         );
-        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let context = Context::create(session_manager.into(), Arc::new(mock_restaurant()));
         let filter = admin_login_route(context);
 
         let resp = request()
@@ -95,7 +95,7 @@ mod tests {
     #[tokio::test]
     async fn test_malformed_json_body() {
         let session_manager = MockSessionManager::ok();
-        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let context = Context::create(session_manager.into(), Arc::new(mock_restaurant()));
         let filter = admin_login_route(context);
 
         let resp = request()
@@ -111,7 +111,7 @@ mod tests {
     #[tokio::test]
     async fn test_missing_fields() {
         let session_manager = MockSessionManager::ok();
-        let context = Context::create(session_manager.into(), Arc::new(fake_restaurant()));
+        let context = Context::create(session_manager.into(), Arc::new(mock_restaurant()));
         let filter = admin_login_route(context);
 
         let resp = request()
@@ -130,7 +130,7 @@ mod tests {
         let session_manager = Arc::new(MockSessionManager::ok());
 
         // Mock the restaurant
-        let restaurant = Arc::new(fake_restaurant());
+        let restaurant = Arc::new(mock_restaurant());
 
         // Create the filter
         let context = Context::create(session_manager, restaurant);
@@ -182,7 +182,7 @@ mod tests {
         let mock_session_manager = Arc::new(MockSessionManager::ok());
 
         // Create the warp filter
-        let context = Context::create(mock_session_manager, Arc::new(fake_restaurant()));
+        let context = Context::create(mock_session_manager, Arc::new(mock_restaurant()));
         let filter = admin_login_route(context);
 
         // Prepare the form data

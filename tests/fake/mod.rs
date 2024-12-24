@@ -2,7 +2,7 @@ use ruserwation::restaurant::models::Restaurant;
 
 pub(crate) mod sessions;
 
-pub(crate) fn fake_restaurant() -> Restaurant {
+pub(crate) fn mock_restaurant() -> Restaurant {
     Restaurant {
         id: 1,
         name: "Test Restaurant".to_string(),
