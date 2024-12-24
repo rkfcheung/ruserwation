@@ -47,7 +47,7 @@ mod tests {
         manager.destroy_session("session1");
 
         // Verify the invocation count using `verify_once`
-        manager.verify_once("destroy_session");
+        manager.verify_exactly_once("destroy_session");
 
         // Invoke the method again
         manager.destroy_session("session2");
@@ -87,12 +87,9 @@ mod tests {
         assert_eq!(manager.invocation.get("add_session"), 1);
 
         // Verify captured arguments
-        let destroy_arg = manager
-            .invocation
-            .first::<String>("destroy_session")
-            .unwrap();
+        let destroy_arg = manager.invocation.first("destroy_session").unwrap();
         let destroy_arg = destroy_arg.get::<String>().unwrap();
-        let add_arg = manager.invocation.last::<String>("add_session").unwrap();
+        let add_arg = manager.invocation.last("add_session").unwrap();
         let add_arg = add_arg.get::<String>().unwrap();
 
         assert_eq!(destroy_arg, "session1");

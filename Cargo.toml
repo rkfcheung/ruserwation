@@ -27,3 +27,9 @@ warp-sessions = "1.0.19"
 tokio-test = "0.4.4"
 mocks = { path = "mocks" }
 mock_util = { path = "mock_util" }
+
+[workspace]
+members = [
+    "mocks", 
+    "mock_util",
+]
