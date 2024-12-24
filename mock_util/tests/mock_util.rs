@@ -21,6 +21,21 @@ impl MockSessionManager {
         self.invocation
             .capture("add_session", session_id.to_string());
     }
+
+    #[mock_captured_arguments]
+    fn add(&self, a: i32, b: i32) -> i32 {
+        a + b
+    }
+
+    #[mock_captured_arguments]
+    fn greet(&self, message: &str) {
+        println!("{}", message);
+    }
+
+    #[mock_captured_arguments]
+    fn hi(&self) {
+        println!("Hi!");
+    }
 }
 
 #[cfg(test)]
@@ -191,5 +206,26 @@ mod tests {
             captured_strings,
             vec!["session1".to_string(), "session2".to_string()]
         );
+    }
+
+    #[test]
+    fn test_argument_captured_arguments() {
+        let mock = MockSessionManager::default();
+
+        // Test add function
+        mock.add(1, 2);
+        assert_eq!(mock.invocation.values("add").len(), 1);
+        let captured_values = mock.invocation.first("add").unwrap();
+        assert_eq!(*captured_values.get::<(i32, i32)>().unwrap(), (1, 2));
+
+        // Test greet function
+        mock.greet("hello");
+        assert_eq!(mock.invocation.values("greet").len(), 1);
+        let captured_values = mock.invocation.first("greet").unwrap();
+        assert_eq!(captured_values.get::<String>().unwrap(), "hello");
+
+        // Test hi function
+        mock.hi();
+        assert_eq!(mock.invocation.values("hi").len(), 0); // Should ignore `hi` because it has no arguments
     }
 }

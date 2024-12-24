@@ -1,6 +1,7 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
+use quote::quote;
 use syn::{parse_macro_input, DeriveInput, ItemFn};
 
 /// Derives the `MockVerify` trait for a given struct.
@@ -24,7 +25,7 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
     let name = input.ident;
 
     // Generate the implementation of the `MockVerify` trait
-    let expanded = quote::quote! {
+    let expanded = quote! {
         impl mocks::MockVerify for #name {
             /// Verifies the number of times a method was invoked.
             fn verify_invoked(&self, method: &str, check: mocks::MockCheck, times: usize) {
@@ -72,7 +73,7 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let fn_vis = &input.vis; // Function visibility (e.g., `pub`)
 
     // Generate the expanded function with invocation tracking
-    let expanded = quote::quote! {
+    let expanded = quote! {
         #(#fn_attrs)*
         #fn_vis #fn_sig {
             // Track invocation count for this function
@@ -84,5 +85,68 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     // Convert the generated code back into a token stream
-    TokenStream::from(expanded)
+    expanded.into()
+}
+
+// This is the procedural macro function that will be used to capture the method arguments.
+#[proc_macro_attribute]
+pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemFn);
+
+    // Extract function components
+    let fn_attrs = &input.attrs; // Function attributes
+    let fn_sig = &input.sig; // Function signature
+    let fn_name = &fn_sig.ident; // Function name
+    let fn_args = &fn_sig.inputs; // Function arguments
+    let fn_body = &input.block; // Function body
+    let fn_vis = &input.vis; // Visibility (e.g., pub)
+
+    // Process arguments
+    let mut capture_args = vec![];
+    for arg in fn_args {
+        if let syn::FnArg::Typed(pat_type) = arg {
+            // Extract argument name
+            let arg_name = &*pat_type.pat;
+
+            // Check if argument type is &str
+            if let syn::Type::Reference(ref_type) = &*pat_type.ty {
+                if let syn::Type::Path(type_path) = &*ref_type.elem {
+                    if type_path.path.is_ident("str") {
+                        // Convert `&str` to `.to_string()`
+                        capture_args.push(quote! {
+                            #arg_name.to_string()
+                        });
+                        continue;
+                    }
+                }
+            }
+
+            // For all other types, pass the argument as-is
+            capture_args.push(quote! {
+                #arg_name
+            });
+        }
+    }
+
+    // Generate the capture statement
+    let capture_statement = if !capture_args.is_empty() {
+        quote! {
+            self.invocation.capture(stringify!(#fn_name), (#(#capture_args),*));
+        }
+    } else {
+        quote! {}
+    };
+
+    // Generate the expanded function
+    let expanded = quote! {
+        #(#fn_attrs)*
+        #fn_vis #fn_sig {
+            #capture_statement
+
+            #fn_body
+        }
+    };
+
+    // Convert the generated code back into a token stream
+    expanded.into()
 }
