@@ -65,33 +65,7 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse the input tokens into a Rust syntax tree
-    let input = parse_macro_input!(item as ItemFn);
-
-    // Extract function details
-    let fn_attrs = &input.attrs; // Function attributes (e.g., #[inline])
-    let fn_sig = &input.sig; // Function signature
-    let fn_name = &fn_sig.ident; // Function name
-    let fn_body = &input.block; // Function body
-    let fn_vis = &input.vis; // Function visibility (e.g., `pub`)
-
-    // Generate the increment statement
-    let increment_statement = prepare_increment_statement(fn_name);
-
-    // Generate the expanded function with invocation tracking
-    let expanded = quote! {
-        #(#fn_attrs)*
-        #fn_vis #fn_sig {
-            // Track invocation count for this function
-            #increment_statement
-
-            // Execute the original function body
-            #fn_body
-        }
-    };
-
-    // Convert the generated code back into a token stream
-    expanded.into()
+    generate_mock_statements("Increment", item)
 }
 
 /// Marks a function as "mockable" by capturing its arguments and tracking invocations.
@@ -158,31 +132,7 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(item as ItemFn);
-
-    // Extract function components
-    let fn_attrs = &input.attrs; // Function attributes
-    let fn_sig = &input.sig; // Function signature
-    let fn_name = &fn_sig.ident; // Function name
-    let fn_args = &fn_sig.inputs; // Function arguments
-    let fn_body = &input.block; // Function body
-    let fn_vis = &input.vis; // Visibility (e.g., pub)
-
-    // Generate the capture statement
-    let capture_statement = prepare_capture_statement(fn_name, fn_args);
-
-    // Generate the expanded function
-    let expanded = quote! {
-        #(#fn_attrs)*
-        #fn_vis #fn_sig {
-            #capture_statement
-
-            #fn_body
-        }
-    };
-
-    // Convert the generated code back into a token stream
-    expanded.into()
+    generate_mock_statements("Capture", item)
 }
 
 fn generate_mock_statements(attr: &str, item: TokenStream) -> TokenStream {
