@@ -121,7 +121,7 @@ impl ArgumentValue {
     /// - `value`: The value to wrap, which must implement `Any` and `Clone`.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let value = mocks::ArgumentValue::new(42);
     /// ```
     pub fn new<T: Any + Clone>(value: T) -> Self {
@@ -135,7 +135,7 @@ impl ArgumentValue {
     /// Returns `None` if the stored value's type does not match `T`.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let value = mocks::ArgumentValue::new(42);
     /// assert_eq!(*value.get::<i32>().unwrap(), 42);
     /// ```
@@ -149,7 +149,7 @@ impl ArgumentValue {
     /// Panics if the stored value's type does not match `T`.
     ///
     /// # Example
-    /// ```
+    /// ```rust
     /// let value = mocks::ArgumentValue::new(42);
     /// assert_eq!(*value.unwrap::<i32>(), 42);
     /// ```
