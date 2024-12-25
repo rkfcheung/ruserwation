@@ -43,31 +43,6 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
     expanded.into()
 }
 
-/// Marks a function as "mockable" by tracking its invocations.
-///
-/// This procedural macro wraps a function to automatically increment
-/// the invocation count for tracking and verification purposes.
-///
-/// Example:
-/// ```rust
-/// use mock_derive::mock_invoked;
-///
-/// struct MyMock {
-///     invocation: mocks::InvocationTracker,
-/// }
-///
-/// impl MyMock {
-///     #[mock_invoked]
-///     fn my_function(&self, arg: i32) {
-///         // Original body of the function
-///     }
-/// }
-/// ```
-#[proc_macro_attribute]
-pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    generate_mock_statements("Increment", item)
-}
-
 /// Marks a function as "mockable" by capturing its arguments and tracking invocations.
 ///
 /// This procedural macro automatically wraps a function to capture its arguments and increment
@@ -132,12 +107,42 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    generate_mock_statements("Capture", item)
+    impl_mock_track("Capture", item)
 }
 
-fn generate_mock_statements(attr: &str, item: TokenStream) -> TokenStream {
-    let increment = attr.contains("Increment");
+/// Marks a function as "mockable" by tracking its invocations.
+///
+/// This procedural macro wraps a function to automatically increment
+/// the invocation count for tracking and verification purposes.
+///
+/// Example:
+/// ```rust
+/// use mock_derive::mock_invoked;
+///
+/// struct MyMock {
+///     invocation: mocks::InvocationTracker,
+/// }
+///
+/// impl MyMock {
+///     #[mock_invoked]
+///     fn my_function(&self, arg: i32) {
+///         // Original body of the function
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    impl_mock_track("Increment", item)
+}
+
+#[proc_macro_attribute]
+pub fn mock_track(attr: TokenStream, item: TokenStream) -> TokenStream {
+    impl_mock_track(attr.to_string().trim(), item)
+}
+
+fn impl_mock_track(attr: &str, item: TokenStream) -> TokenStream {
     let capture = attr.contains("Capture");
+    let increment = attr.contains("Increment") || !capture;
     let input = parse_macro_input!(item as ItemFn);
 
     // Extract function components
@@ -148,16 +153,16 @@ fn generate_mock_statements(attr: &str, item: TokenStream) -> TokenStream {
     let fn_body = &input.block; // Function body
     let fn_vis = &input.vis; // Visibility (e.g., pub)
 
-    // Generate the increment statement
-    let increment_statement = if increment {
-        prepare_increment_statement(fn_name)
+    // Generate the capture statement
+    let capture_statement = if capture {
+        prepare_capture_statement(fn_name, fn_args)
     } else {
         quote! {}
     };
 
-    // Generate the capture statement
-    let capture_statement = if capture {
-        prepare_capture_statement(fn_name, fn_args)
+    // Generate the increment statement
+    let increment_statement = if increment {
+        prepare_increment_statement(fn_name)
     } else {
         quote! {}
     };
