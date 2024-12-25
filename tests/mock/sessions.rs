@@ -1,4 +1,4 @@
-use mock_util::{mock_captured_arguments, mock_invoked, MockVerify};
+use mock_derive::{mock_captured_arguments, mock_invoked, MockVerify};
 use mocks::InvocationTracker;
 use ruserwation::admin::{errors::SessionError, repo::VerifyUser, sessions::EnableSession};
 use std::{collections::HashSet, sync::Mutex};

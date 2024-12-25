@@ -13,7 +13,7 @@ use syn::{
 ///
 /// Example:
 /// ```rust
-/// use mock_util::MockVerify;
+/// use mock_derive::MockVerify;
 ///
 /// #[derive(MockVerify)]
 /// struct MyMock {
@@ -49,7 +49,7 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
 ///
 /// Example:
 /// ```rust
-/// use mock_util::mock_invoked;
+/// use mock_derive::mock_invoked;
 ///
 /// struct MyMock {
 ///     invocation: mocks::InvocationTracker,
@@ -99,7 +99,7 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// Example:
 /// ```rust
-/// use mock_util::mock_captured_arguments;
+/// use mock_derive::mock_captured_arguments;
 /// use std::sync::Arc;
 ///
 /// // Mock structure for testing

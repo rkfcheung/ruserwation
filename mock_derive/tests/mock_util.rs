@@ -1,7 +1,7 @@
 use mocks::{ArgumentValue, InvocationTracker, MockVerify};
 
-extern crate mock_util;
-use mock_util::*;
+extern crate mock_derive;
+use mock_derive::*;
 
 // Mock Struct to Test
 #[derive(Default, MockVerify)]
