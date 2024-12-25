@@ -57,6 +57,11 @@ impl MyMock {
     pub fn increment_and_capture(&self, arg1: i32) {
         // No-op
     }
+
+    #[mock_track]
+    pub fn imply_increment_only(&self) {
+        // No-op
+    }
 }
 
 #[cfg(test)]
@@ -289,5 +294,20 @@ mod tests {
 
         let first_arg = mock.invocation.first("increment_and_capture").unwrap();
         assert_eq!(first_arg.unwrap::<i32>(), &10);
+    }
+
+    #[test]
+    fn test_imply_increment_only() {
+        let mock = MyMock {
+            invocation: InvocationTracker::default(),
+        };
+
+        // Call the method multiple times
+        mock.imply_increment_only();
+        mock.imply_increment_only();
+        mock.imply_increment_only();
+
+        // Verify the invocation count
+        assert_eq!(mock.invocation.get("imply_increment_only"), 3); // Invoked three times
     }
 }
