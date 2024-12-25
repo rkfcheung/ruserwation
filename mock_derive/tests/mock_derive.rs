@@ -9,6 +9,10 @@ struct MockSessionManager {
     invocation: InvocationTracker,
 }
 
+struct MyMock {
+    invocation: InvocationTracker,
+}
+
 impl MockSessionManager {
     #[mock_invoked]
     fn destroy_session(&self, session_id: &str) {
@@ -35,6 +39,23 @@ impl MockSessionManager {
     #[mock_captured_arguments]
     fn hi(&self) {
         println!("Hi!");
+    }
+}
+
+impl MyMock {
+    #[mock_track("Increment")]
+    pub fn increment_only(&self) {
+        // No-op
+    }
+
+    #[mock_track("Capture")]
+    pub fn capture_arguments(&self, arg1: i32, arg2: String) {
+        // No-op
+    }
+
+    #[mock_track("Increment, Capture")]
+    pub fn increment_and_capture(&self, arg1: i32) {
+        // No-op
     }
 }
 
@@ -227,5 +248,46 @@ mod tests {
         // Test hi function
         mock.hi();
         assert_eq!(mock.invocation.values("hi").len(), 0); // Should ignore `hi` because it has no arguments
+    }
+
+    #[test]
+    fn test_increment_only() {
+        let mock = MyMock {
+            invocation: InvocationTracker::default(),
+        };
+
+        mock.increment_only();
+        mock.increment_only();
+
+        assert_eq!(mock.invocation.get("increment_only"), 2); // Invoked twice
+    }
+
+    #[test]
+    fn test_capture_arguments() {
+        let mock = MyMock {
+            invocation: InvocationTracker::default(),
+        };
+
+        mock.capture_arguments(42, "Hello".to_string());
+
+        let first_arg = mock.invocation.first("capture_arguments").unwrap();
+        assert_eq!(
+            first_arg.unwrap::<(i32, String)>(),
+            &(42, "Hello".to_string())
+        );
+    }
+
+    #[test]
+    fn test_increment_and_capture() {
+        let mock = MyMock {
+            invocation: InvocationTracker::default(),
+        };
+
+        mock.increment_and_capture(10);
+
+        assert_eq!(mock.invocation.get("increment_and_capture"), 1); // Invoked once
+
+        let first_arg = mock.invocation.first("increment_and_capture").unwrap();
+        assert_eq!(first_arg.unwrap::<i32>(), &10);
     }
 }
