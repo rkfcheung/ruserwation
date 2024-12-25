@@ -3,7 +3,8 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    parse_macro_input, punctuated::Punctuated, token::Comma, DeriveInput, FnArg, ItemFn, Type,
+    parse_macro_input, punctuated::Punctuated, token::Comma, DeriveInput, FnArg, Ident, ItemFn,
+    Type,
 };
 
 /// Derives the `MockVerify` trait for a given struct.
@@ -164,17 +165,8 @@ pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenSt
     let fn_body = &input.block; // Function body
     let fn_vis = &input.vis; // Visibility (e.g., pub)
 
-    // Process arguments
-    let capture_args = process_arguments(fn_args);
-
     // Generate the capture statement
-    let capture_statement = if capture_args.is_empty() {
-        quote! {}
-    } else {
-        quote! {
-            self.invocation.capture(stringify!(#fn_name), (#(#capture_args),*));
-        }
-    };
+    let capture_statement = prepare_capture_statement(fn_name, fn_args);
 
     // Generate the expanded function
     let expanded = quote! {
@@ -188,6 +180,23 @@ pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenSt
 
     // Convert the generated code back into a token stream
     expanded.into()
+}
+
+fn prepare_capture_statement(
+    fn_name: &Ident,
+    fn_args: &Punctuated<FnArg, Comma>,
+) -> proc_macro2::TokenStream {
+    // Process arguments
+    let capture_args = process_arguments(fn_args);
+
+    // Generate the capture statement
+    if capture_args.is_empty() {
+        quote! {}
+    } else {
+        quote! {
+            self.invocation.capture(stringify!(#fn_name), (#(#capture_args),*));
+        }
+    }
 }
 
 // Processes function arguments and generates a list of tokens for capturing them.
