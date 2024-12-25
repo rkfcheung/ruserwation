@@ -75,12 +75,15 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let fn_body = &input.block; // Function body
     let fn_vis = &input.vis; // Function visibility (e.g., `pub`)
 
+    // Generate the increment statement
+    let increment_statement = prepare_increment_statement(fn_name);
+
     // Generate the expanded function with invocation tracking
     let expanded = quote! {
         #(#fn_attrs)*
         #fn_vis #fn_sig {
             // Track invocation count for this function
-            self.invocation.increment(stringify!(#fn_name));
+            #increment_statement
 
             // Execute the original function body
             #fn_body
@@ -182,6 +185,14 @@ pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenSt
     expanded.into()
 }
 
+// Generate the increment statement
+fn prepare_increment_statement(fn_name: &Ident) -> proc_macro2::TokenStream {
+    quote! {
+        self.invocation.increment(stringify!(#fn_name));
+    }
+}
+
+// Generate the capture statement
 fn prepare_capture_statement(
     fn_name: &Ident,
     fn_args: &Punctuated<FnArg, Comma>,
@@ -189,7 +200,6 @@ fn prepare_capture_statement(
     // Process arguments
     let capture_args = process_arguments(fn_args);
 
-    // Generate the capture statement
     if capture_args.is_empty() {
         quote! {}
     } else {
