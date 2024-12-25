@@ -135,14 +135,43 @@ pub fn mock_invoked(_attr: TokenStream, item: TokenStream) -> TokenStream {
     impl_mock_track("Increment", item)
 }
 
+/// A procedural macro that tracks method invocations by incrementing counters and optionally capturing arguments.
+///
+/// This macro can be configured with the following attributes:
+/// - `"Increment"`: Tracks the number of times the function is invoked. This is the default behavior.
+/// - `"Capture"`: Captures the arguments passed to the function for later verification. This also implies tracking invocation count.
+///
+/// Example usage:
+/// ```rust
+/// use mock_derive::mock_track;
+///
+/// struct MyMock {
+///     invocation: mocks::InvocationTracker,
+/// }
+///
+/// impl MyMock {
+///     #[mock_track("Increment")]
+///     pub fn my_increment_only_function(&self) {
+///         // Function body
+///     }
+///
+///     #[mock_track("Capture")]
+///     pub fn my_capture_function(&self, arg1: i32, arg2: String) {
+///         // Function body
+///     }
+/// }
+/// ```
+///
+/// For testing purposes, you can verify the number of invocations and captured arguments using the `InvocationTracker`.
 #[proc_macro_attribute]
 pub fn mock_track(attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Delegate the implementation logic
     impl_mock_track(attr.to_string().trim(), item)
 }
 
 fn impl_mock_track(attr: &str, item: TokenStream) -> TokenStream {
-    let capture = attr.contains("Capture");
-    let increment = attr.contains("Increment") || !capture;
+    let capture = attr.contains("Capture"); // Check if "Capture" is specified
+    let increment = attr.contains("Increment") || !capture; // Default to "Increment" if unspecified
     let input = parse_macro_input!(item as ItemFn);
 
     // Extract function components
@@ -153,14 +182,14 @@ fn impl_mock_track(attr: &str, item: TokenStream) -> TokenStream {
     let fn_body = &input.block; // Function body
     let fn_vis = &input.vis; // Visibility (e.g., pub)
 
-    // Generate the capture statement
+    // Generate the capture statement (if "Capture" is specified)
     let capture_statement = if capture {
         prepare_capture_statement(fn_name, fn_args)
     } else {
         quote! {}
     };
 
-    // Generate the increment statement
+    // Generate the increment statement (if "Increment" is specified)
     let increment_statement = if increment {
         prepare_increment_statement(fn_name)
     } else {
@@ -185,7 +214,7 @@ fn impl_mock_track(attr: &str, item: TokenStream) -> TokenStream {
     expanded.into()
 }
 
-// Generate the capture statement
+// Generates code to capture function arguments.
 fn prepare_capture_statement(
     fn_name: &Ident,
     fn_args: &Punctuated<FnArg, Comma>,
@@ -202,7 +231,7 @@ fn prepare_capture_statement(
     }
 }
 
-// Generate the increment statement
+// Generates code to increment the invocation counter.
 fn prepare_increment_statement(fn_name: &Ident) -> proc_macro2::TokenStream {
     quote! {
         self.invocation.increment(stringify!(#fn_name));
