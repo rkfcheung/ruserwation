@@ -33,12 +33,14 @@ impl MockSessionManager {
 
     #[mock_captured_arguments]
     fn greet(&self, message: &str) {
-        println!("{}", message);
+        // No-op
+        // println!("{}", message);
     }
 
     #[mock_captured_arguments]
     fn hi(&self) {
-        println!("Hi!");
+        // No-op
+        // println!("Hi!");
     }
 }
 
