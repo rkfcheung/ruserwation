@@ -1,4 +1,5 @@
 mod admin;
+mod common;
 mod config;
 mod db;
 mod response;

@@ -1,5 +1,6 @@
 use ruserwation::{
-    admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
+    admin::{models::Admin, sqlite::SqliteAdminRepo},
+    common::Repo,
     config::models::AppState,
     db::{self, sqlite::get_conn_str},
     setup::startup::init_app_state,

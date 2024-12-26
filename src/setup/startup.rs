@@ -3,7 +3,8 @@ use sqlx::{Pool, Sqlite};
 use std::sync::Arc;
 
 use crate::{
-    admin::{models::Admin, repo::AdminRepo, sqlite::SqliteAdminRepo},
+    admin::{models::Admin, sqlite::SqliteAdminRepo},
+    common::Repo,
     config::models::{AppState, SqliteAppStateBuilder},
     db,
     restaurant::models::Restaurant,

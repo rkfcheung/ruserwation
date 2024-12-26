@@ -1,6 +1,8 @@
 use sqlx::{query, query_as, query_scalar, SqlitePool};
 use std::sync::Arc;
 
+use crate::common::Repo;
+
 use super::{
     models::Admin,
     repo::{AdminRepo, VerifyUser},
@@ -82,52 +84,21 @@ impl SqliteAdminRepo {
     }
 }
 
-impl AdminRepo for SqliteAdminRepo {
-    // Find an Admin by ID
+impl Repo<u32, Admin> for SqliteAdminRepo {
+    // Find an Admin by Id
     async fn find_by_id(&self, id: u32) -> Option<Admin> {
-        let result = query_as(
-            r#"
-            SELECT id, username, password, email, root, last_login_time
-            FROM Admin
-            WHERE id = ?;
-            "#,
-        )
-        .bind(id)
-        .fetch_optional(self.pool.as_ref())
-        .await;
+        let result = query_by_field(self.pool.as_ref(), "id", &id.to_string()).await;
 
         match result {
             Ok(admin) => admin,
             Err(e) => {
-                log::warn!("Error finding admin by ID: {:?}", e);
+                log::warn!("Error finding admin by Id: {:?}", e);
                 None
             }
         }
     }
 
-    // Find an Admin by username
-    async fn find_by_username(&self, username: &str) -> Option<Admin> {
-        let result = query_as(
-            r#"
-            SELECT id, username, password, email, root, last_login_time
-            FROM Admin
-            WHERE username = ?;
-            "#,
-        )
-        .bind(username)
-        .fetch_optional(self.pool.as_ref())
-        .await;
-
-        match result {
-            Ok(admin) => admin,
-            Err(e) => {
-                log::error!("Error finding admin by username {}: {:?}", username, e);
-                None
-            }
-        }
-    }
-
-    // Save an Admin and return its ID
+    // Save an Admin and return its Id
     async fn save(&self, admin: &mut Admin) -> u32 {
         let op_type = if self.count().await.unwrap_or_default() == 0 {
             OpType::Insert
@@ -171,10 +142,25 @@ impl AdminRepo for SqliteAdminRepo {
             },
             OpType::NoOp => {
                 log::warn!(
-                    "Admin with ID {} not found. Save operation skipped.",
+                    "Admin with Id {} not found. Save operation skipped.",
                     admin.id
                 );
                 0
+            }
+        }
+    }
+}
+
+impl AdminRepo for SqliteAdminRepo {
+    // Find an Admin by username
+    async fn find_by_username(&self, username: &str) -> Option<Admin> {
+        let result = query_by_field(self.pool.as_ref(), "username", username).await;
+
+        match result {
+            Ok(admin) => admin,
+            Err(e) => {
+                log::error!("Error finding admin by username {}: {:?}", username, e);
+                None
             }
         }
     }
@@ -196,4 +182,18 @@ impl VerifyUser for SqliteAdminRepo {
 
         false
     }
+}
+
+async fn query_by_field(
+    pool: &SqlitePool,
+    field: &str,
+    value: &str,
+) -> Result<Option<Admin>, sqlx::Error> {
+    query_as::<_, Admin>(&format!(
+        "SELECT id, username, password, email, root, last_login_time FROM Admin WHERE {} = ?",
+        field
+    ))
+    .bind(value)
+    .fetch_optional(pool)
+    .await
 }

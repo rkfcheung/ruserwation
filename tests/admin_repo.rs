@@ -9,6 +9,7 @@ mod tests {
         sessions::{EnableSession, SessionManager},
         sqlite::SqliteAdminRepo,
     };
+    use ruserwation::common::Repo;
     use std::sync::Arc;
 
     use crate::common::db_utils;
