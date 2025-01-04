@@ -12,12 +12,40 @@ pub enum ReservationStatus {
 #[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct Reservation {
     pub id: u32,
+    pub book_ref: String,
     pub restaurant_id: u32,
     pub customer_id: u32,
     pub table_size: u8,
     pub reservation_time: NaiveDateTime,
     pub notes: Option<String>,
     pub status: ReservationStatus,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
+pub struct ReservationDetail {
+    pub id: u32,
+    pub book_ref: String,
+    pub restaurant_id: u32,
+    pub customer_id: u32,
+    pub customer_email: String,
+    pub customer_name: String,
+    pub customer_phone: String,
+    pub table_size: u8,
+    pub reservation_time: NaiveDateTime,
+    pub notes: Option<String>,
+    pub status: ReservationStatus,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct ReservationQuery {
+    pub book_ref: Option<String>,
+    pub customer_email: Option<String>,
+    pub customer_name: Option<String>,
+    pub customer_phone: Option<String>,
+    pub from_time: Option<NaiveDateTime>,
+    pub to_time: Option<NaiveDateTime>,
+    pub status: Option<ReservationStatus>,
+    has_some: bool,
 }
 
 // Convert to String for DB
@@ -40,6 +68,71 @@ impl From<&str> for ReservationStatus {
             "Confirmed" => ReservationStatus::Confirmed,
             "Cancelled" => ReservationStatus::Cancelled,
             _ => ReservationStatus::Pending, // Default to Pending for unknown status
+        }
+    }
+}
+
+impl ReservationQuery {
+    pub fn book_ref(mut self, book_ref: &str) -> Self {
+        self.book_ref = Some(book_ref.to_string());
+        self.has_some = true;
+        self
+    }
+
+    pub fn customer_email(mut self, customer_email: &str) -> Self {
+        self.customer_email = Some(customer_email.to_string());
+        self.has_some = true;
+        self
+    }
+
+    pub fn customer_name(mut self, customer_name: &str) -> Self {
+        self.customer_name = Some(customer_name.to_string());
+        self.has_some = true;
+        self
+    }
+
+    pub fn customer_phone(mut self, customer_phone: &str) -> Self {
+        self.customer_phone = Some(customer_phone.to_string());
+        self.has_some = true;
+        self
+    }
+
+    pub fn from_time(mut self, from_time: NaiveDateTime) -> Self {
+        self.from_time = Some(from_time);
+        self.has_some = true;
+        self
+    }
+
+    pub fn to_time(mut self, to_time: NaiveDateTime) -> Self {
+        self.to_time = Some(to_time);
+        self.has_some = true;
+        self
+    }
+
+    pub fn status(mut self, status: ReservationStatus) -> Self {
+        self.status = Some(status);
+        self.has_some = true;
+        self
+    }
+
+    pub fn is_none(&self) -> bool {
+        return !self.has_some;
+    }
+
+    pub fn create(&self) -> String {
+        if self.is_none() {
+            "".to_string()
+        } else {
+            let mut qry = String::new();
+            qry.push_str("SELECT r.id, r.book_ref, r.restaurant_id, ");
+            qry.push_str("r.customer_id, c.name customer_email, ");
+            qry.push_str("WHERE r.restaurant_id > 0 ");
+
+            if let Some(value) = &self.book_ref {
+                qry.push_str("AND book_ref = ?");
+            }
+
+            qry
         }
     }
 }

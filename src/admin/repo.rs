@@ -1,8 +1,7 @@
 use std::future::Future;
 
-use crate::common::Repo;
-
 use super::models::Admin;
+use crate::common::Repo;
 
 pub trait AdminRepo: Repo<u32, Admin> {
     // Find an Admin by username

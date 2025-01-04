@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS Customer (
 
 CREATE TABLE IF NOT EXISTS Reservation (
     id INTEGER PRIMARY KEY,
+    book_ref TEXT NOT NULL UNIQUE CHECK (LENGTH(book_ref) <= 16),
     restaurant_id INTEGER NOT NULL,
     customer_id INTEGER NOT NULL,
     table_size INTEGER NOT NULL,
