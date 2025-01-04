@@ -7,14 +7,6 @@ CREATE TABLE IF NOT EXISTS Admin (
     last_login_time TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS Customer (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT NOT NULL CHECK (LENGTH(email) <= 256),
-    name TEXT NOT NULL CHECK (LENGTH(name) <= 256),
-    phone TEXT NOT NULL CHECK (LENGTH(phone) <= 32),
-    last_reservation_id INTEGER NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS Reservation (
     id INTEGER PRIMARY KEY,
     book_ref TEXT NOT NULL UNIQUE CHECK (LENGTH(book_ref) <= 16),

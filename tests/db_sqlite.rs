@@ -45,7 +45,7 @@ mod tests {
             .await
             .expect("Failed to migrate the databse");
 
-        let tables = ["Admin", "Customer", "Reservation", "Restaurant"];
+        let tables = ["Admin", "Reservation", "Restaurant"];
         for table in tables.iter() {
             let test_sql = &format!(
                 r#"

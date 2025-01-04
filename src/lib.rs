@@ -1,7 +1,6 @@
 pub mod admin;
 pub mod common;
 pub mod config;
-pub mod customer;
 pub mod db;
 pub mod reservation;
 pub mod response;

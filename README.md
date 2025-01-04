@@ -21,7 +21,6 @@ In Rust, I trust!
 | Module      | Status                         |
 | ----------- | ------------------------------ |
 | Admin       | Pending :first_quarter_moon:   |
-| Customer    | Backlog :new_moon:             |
 | Database    | Done :full_moon:               |
 | Reservation | Pending :waxing_crescent_moon: |
 | Restaurant  | Backlog :new_moon:             |
