@@ -14,19 +14,6 @@ pub struct Reservation {
     pub id: u32,
     pub book_ref: String,
     pub restaurant_id: u32,
-    pub customer_id: u32,
-    pub table_size: u8,
-    pub reservation_time: NaiveDateTime,
-    pub notes: Option<String>,
-    pub status: ReservationStatus,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
-pub struct ReservationDetail {
-    pub id: u32,
-    pub book_ref: String,
-    pub restaurant_id: u32,
-    pub customer_id: u32,
     pub customer_email: String,
     pub customer_name: String,
     pub customer_phone: String,
@@ -116,7 +103,7 @@ impl ReservationQuery {
     }
 
     pub fn is_none(&self) -> bool {
-        return !self.has_some;
+        !self.has_some
     }
 
     pub fn create(&self) -> String {
@@ -124,12 +111,28 @@ impl ReservationQuery {
             "".to_string()
         } else {
             let mut qry = String::new();
-            qry.push_str("SELECT r.id, r.book_ref, r.restaurant_id, ");
-            qry.push_str("r.customer_id, c.name customer_email, ");
-            qry.push_str("WHERE r.restaurant_id > 0 ");
+            qry.push_str("SELECT * FROM reservations WHERE 1 = 1 ");
 
             if let Some(value) = &self.book_ref {
-                qry.push_str("AND book_ref = ?");
+                qry.push_str(&format!("AND book_ref = '{}' ", value));
+            }
+            if let Some(value) = &self.customer_email {
+                qry.push_str(&format!("AND customer_email = '{}' ", value));
+            }
+            if let Some(value) = &self.customer_name {
+                qry.push_str(&format!("AND customer_name = '{}' ", value));
+            }
+            if let Some(value) = &self.customer_phone {
+                qry.push_str(&format!("AND customer_phone = '{}' ", value));
+            }
+            if let Some(value) = &self.from_time {
+                qry.push_str(&format!("AND reservation_time >= '{}' ", value));
+            }
+            if let Some(value) = &self.to_time {
+                qry.push_str(&format!("AND reservation_time <= '{}' ", value));
+            }
+            if let Some(value) = &self.status {
+                qry.push_str(&format!("AND status = '{}' ", value));
             }
 
             qry

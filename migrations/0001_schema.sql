@@ -19,11 +19,13 @@ CREATE TABLE IF NOT EXISTS Reservation (
     id INTEGER PRIMARY KEY,
     book_ref TEXT NOT NULL UNIQUE CHECK (LENGTH(book_ref) <= 16),
     restaurant_id INTEGER NOT NULL,
-    customer_id INTEGER NOT NULL,
-    table_size INTEGER NOT NULL,
+    customer_email TEXT NOT NULL CHECK (LENGTH(customer_email) <= 256),
+    customer_name TEXT NOT NULL CHECK (LENGTH(customer_name) <= 256),
+    customer_phone TEXT NOT NULL CHECK (LENGTH(customer_phone) <= 32),
+    table_size INTEGER NOT NULL CHECK (table_size > 0), -- Ensure valid table size
     reservation_time TIMESTAMP NOT NULL,
     notes TEXT CHECK (LENGTH(notes) <= 512),
-    status TEXT NOT NULL CHECK (LENGTH(status) <= 32)
+    status TEXT NOT NULL CHECK (status IN ('Pending', 'Confirmed', 'Cancelled')) -- Ensure valid status values
 );
 
 CREATE TABLE IF NOT EXISTS Restaurant (
