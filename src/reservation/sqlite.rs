@@ -1,12 +1,12 @@
 use sqlx::{query, query_as_with, Sqlite, SqlitePool};
 use std::sync::Arc;
 
-use crate::common::Repo;
-
 use super::{
+    helper::validate_reservation,
     models::{Reservation, ReservationQuery},
     repo::ReservationRepo,
 };
+use crate::common::Repo;
 
 pub struct SqliteReservationRepo {
     pool: Arc<SqlitePool>, // SQLite connection pool
@@ -95,6 +95,11 @@ impl Repo<u32, Reservation> for SqliteReservationRepo {
     }
 
     async fn save(&self, entity: &mut Reservation) -> u32 {
+        if let Err(e) = validate_reservation(entity) {
+            log::error!("Invalid Reservation found: {e}");
+            return 0;
+        }
+
         let result = if entity.id == 0 {
             self.insert(entity).await
         } else {
@@ -119,7 +124,11 @@ impl ReservationRepo for SqliteReservationRepo {
         let (sql, args) = match query.create() {
             Ok(result) => result,
             Err(e) => {
-                log::error!("Failed to find Reservations '{:?}': {:?}", query, e);
+                log::error!(
+                    "Failed to create ReservationQuery '{:?}' to find all: {:?}",
+                    query,
+                    e
+                );
                 return Vec::new();
             }
         };
@@ -140,10 +149,15 @@ impl ReservationRepo for SqliteReservationRepo {
         let (sql, args) = match query.create() {
             Ok(result) => result,
             Err(e) => {
-                log::error!("Failed to find Reservations '{:?}': {:?}", query, e);
+                log::error!(
+                    "Failed to find Reservations '{:?}' to find one: {:?}",
+                    query,
+                    e
+                );
                 return None;
             }
         };
+        log::debug!("Executing query '{}', args: {:?} ...", sql, args);
 
         query_as_with::<Sqlite, Reservation, _>(&sql, args)
             .fetch_one(self.pool.as_ref())

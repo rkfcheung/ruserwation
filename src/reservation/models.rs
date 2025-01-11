@@ -6,7 +6,7 @@ use sqlx::Arguments;
 use std::fmt;
 
 /// Enum for Reservation Status.
-#[derive(Clone, Debug, Deserialize, Serialize, sqlx::Type)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::Type)]
 pub enum ReservationStatus {
     Pending,
     Confirmed,
@@ -36,7 +36,7 @@ impl From<&str> for ReservationStatus {
 }
 
 /// Struct for the Reservation table.
-#[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::FromRow)]
 pub struct Reservation {
     pub id: u32,
     pub book_ref: String,
@@ -124,9 +124,9 @@ impl ReservationQuery {
             && self.status.is_none()
     }
 
-    /// Constructs a parameterized SQL query for filtering reservations.
+    /// Constructs a parameterised SQL query for filtering reservations.
     pub fn create(&self) -> Result<(String, SqliteArguments), BoxDynError> {
-        let mut query = String::from("SELECT * FROM reservations WHERE 1=1");
+        let mut query = String::from("SELECT * FROM Reservation WHERE 1=1");
         let mut args = SqliteArguments::default();
 
         if let Some(ref value) = self.id {
