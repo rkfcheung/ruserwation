@@ -32,7 +32,7 @@ impl SqliteReservationRepo {
                 notes, 
                 status,
                 updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             "#,
         )
         .bind(&reservation.book_ref) // Bind book_ref
@@ -44,6 +44,7 @@ impl SqliteReservationRepo {
         .bind(reservation.reservation_time) // Bind reservation_time
         .bind(&reservation.notes) // Bind notes (optional)
         .bind(reservation.status.to_string()) // Bind status (convert enum to string)
+        .bind(reservation.updated_at) // Bind updated_at
         .execute(self.pool.as_ref())
         .await?;
 
@@ -65,7 +66,7 @@ impl SqliteReservationRepo {
                 reservation_time = ?,
                 notes = ?,
                 status = ?,
-                updated_at = CURRENT_TIMESTAMP
+                updated_at = ?
             WHERE id = ?;
             "#,
         )
@@ -78,6 +79,7 @@ impl SqliteReservationRepo {
         .bind(reservation.reservation_time) // Bind reservation_time
         .bind(&reservation.notes) // Bind notes (optional)
         .bind(reservation.status.to_string()) // Bind status (convert enum to string)
+        .bind(reservation.updated_at) // Bind updated_at
         .bind(reservation.id) // Bind id for the WHERE clause
         .execute(self.pool.as_ref())
         .await?;
