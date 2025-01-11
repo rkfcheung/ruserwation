@@ -1,18 +1,12 @@
 use sqlx::{query, query_as, query_scalar, SqlitePool};
 use std::sync::Arc;
 
-use crate::common::Repo;
+use crate::{common::Repo, db::OpType};
 
 use super::{
     models::Admin,
     repo::{AdminRepo, VerifyUser},
 };
-
-enum OpType {
-    Insert,
-    Update,
-    NoOp,
-}
 
 pub struct SqliteAdminRepo {
     pool: Arc<SqlitePool>, // SQLite connection pool
