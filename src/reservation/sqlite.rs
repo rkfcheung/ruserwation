@@ -35,14 +35,9 @@ impl ReservationRepo for SqliteReservationRepo {
     }
 
     async fn find_by_book_ref(&self, book_ref: &str) -> Option<Reservation> {
-        if let Some(value) = self
-            .find_by_query(ReservationQuery::default().book_ref(book_ref))
+        self.find_by_query(ReservationQuery::default().book_ref(book_ref))
             .await
             .first()
-        {
-            Some(value.clone())
-        } else {
-            None
-        }
+            .cloned()
     }
 }
