@@ -1,9 +1,11 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::error::BoxDynError;
 use sqlx::sqlite::SqliteArguments;
 use sqlx::Arguments;
 use std::fmt;
+
+use super::helper::generate_random_book_ref;
 
 /// Enum for Reservation Status.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::Type)]
@@ -49,6 +51,51 @@ pub struct Reservation {
     pub notes: Option<String>,
     pub status: ReservationStatus,
     pub updated_at: NaiveDateTime,
+}
+
+impl Reservation {
+    pub fn new(
+        customer_email: &str,
+        customer_name: &str,
+        customer_phone: &str,
+        table_size: u8,
+        reservation_time: NaiveDateTime,
+        notes: Option<String>,
+    ) -> Self {
+        Self::new_with_book_ref(
+            &generate_random_book_ref(5),
+            customer_email,
+            customer_name,
+            customer_phone,
+            table_size,
+            reservation_time,
+            notes,
+        )
+    }
+
+    pub fn new_with_book_ref(
+        book_ref: &str,
+        customer_email: &str,
+        customer_name: &str,
+        customer_phone: &str,
+        table_size: u8,
+        reservation_time: NaiveDateTime,
+        notes: Option<String>,
+    ) -> Self {
+        Self {
+            id: 0,
+            book_ref: book_ref.to_string(),
+            restaurant_id: 1,
+            customer_email: customer_email.to_string(),
+            customer_name: customer_name.to_string(),
+            customer_phone: customer_phone.to_string(),
+            table_size,
+            reservation_time,
+            notes,
+            status: ReservationStatus::Pending,
+            updated_at: Utc::now().naive_utc(),
+        }
+    }
 }
 
 /// Query builder for filtering Reservations.

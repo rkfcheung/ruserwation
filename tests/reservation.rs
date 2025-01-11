@@ -169,4 +169,21 @@ mod tests {
         let result = validate_reservation(&reservation);
         assert!(result.is_ok());
     }
+
+    #[test]
+    fn test_random_book_ref() {
+        let reservation = Reservation::new(
+            "customer@example.com",
+            "John Doe",
+            "123456789",
+            4,
+            Utc::now().naive_utc(),
+            None,
+        );
+        assert_eq!(reservation.book_ref.len(), 5);
+        assert_eq!(reservation.status, ReservationStatus::Pending);
+
+        let result = validate_reservation(&reservation);
+        assert!(result.is_ok());
+    }
 }

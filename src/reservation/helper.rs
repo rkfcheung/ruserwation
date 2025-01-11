@@ -1,6 +1,15 @@
 use chrono::Utc;
+use rand::{distributions::Alphanumeric, Rng};
 
 use super::models::Reservation;
+
+pub fn generate_random_book_ref(ref_len: usize) -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(ref_len)
+        .map(char::from)
+        .collect()
+}
 
 pub fn validate_reservation(reservation: &Reservation) -> Result<(), String> {
     if reservation.book_ref.trim().is_empty() {
