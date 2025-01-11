@@ -43,7 +43,7 @@ pub fn validate_reservation(reservation: &Reservation) -> Result<(), String> {
         return Err("Table size must be between 1 and 20.".to_string());
     }
 
-    if reservation.reservation_time < Utc::now().naive_utc() {
+    if reservation.reservation_time < Utc::now().naive_utc() - chrono::Duration::minutes(3) {
         return Err("Reservation time cannot be in the past.".to_string());
     }
 
