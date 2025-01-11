@@ -20,17 +20,17 @@ impl SqliteReservationRepo {
 }
 
 impl Repo<u32, Reservation> for SqliteReservationRepo {
-    async fn find_by_id(&self, id: u32) -> Option<Reservation> {
+    async fn find_by_id(&self, _id: u32) -> Option<Reservation> {
         todo!()
     }
 
-    async fn save(&self, entity: &mut Reservation) -> u32 {
+    async fn save(&self, _entity: &mut Reservation) -> u32 {
         todo!()
     }
 }
 
 impl ReservationRepo for SqliteReservationRepo {
-    async fn find_by_query(&self, query: ReservationQuery) -> Vec<Reservation> {
+    async fn find_by_query(&self, _query: ReservationQuery) -> Vec<Reservation> {
         todo!()
     }
 

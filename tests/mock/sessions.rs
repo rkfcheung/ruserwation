@@ -46,6 +46,8 @@ impl EnableSession for MockSessionManager {
 }
 
 impl MockSessionManager {
+    #[cfg(test)]
+    #[allow(dead_code)]
     pub(crate) fn new(
         verify_result: bool,
         session_result: Option<Result<String, SessionError>>,

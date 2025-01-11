@@ -21,6 +21,8 @@ pub(crate) async fn init_test_db() -> Result<SqlitePool, sqlx::Error> {
     Ok(pool)
 }
 
+#[cfg(test)]
+#[allow(dead_code)]
 pub(crate) async fn init_test_app_state() -> Arc<AppState<SqliteAdminRepo>> {
     // Initialise test database
     let pool = init_test_db().await.unwrap();
