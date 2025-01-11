@@ -1,7 +1,10 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use sqlx::sqlite::SqliteArguments;
+use sqlx::Arguments;
 use std::fmt;
 
+/// Enum for Reservation Status.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum ReservationStatus {
     Pending,
@@ -9,6 +12,29 @@ pub enum ReservationStatus {
     Cancelled,
 }
 
+impl fmt::Display for ReservationStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let status = match self {
+            ReservationStatus::Pending => "Pending",
+            ReservationStatus::Confirmed => "Confirmed",
+            ReservationStatus::Cancelled => "Cancelled",
+        };
+        write!(f, "{}", status)
+    }
+}
+
+impl From<&str> for ReservationStatus {
+    fn from(status: &str) -> Self {
+        match status {
+            "Pending" => ReservationStatus::Pending,
+            "Confirmed" => ReservationStatus::Confirmed,
+            "Cancelled" => ReservationStatus::Cancelled,
+            _ => ReservationStatus::Pending, // Default fallback
+        }
+    }
+}
+
+/// Struct for the Reservation table.
 #[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
 pub struct Reservation {
     pub id: u32,
@@ -23,6 +49,7 @@ pub struct Reservation {
     pub status: ReservationStatus,
 }
 
+/// Query builder for filtering Reservations.
 #[derive(Clone, Debug, Default)]
 pub struct ReservationQuery {
     pub book_ref: Option<String>,
@@ -32,110 +59,96 @@ pub struct ReservationQuery {
     pub from_time: Option<NaiveDateTime>,
     pub to_time: Option<NaiveDateTime>,
     pub status: Option<ReservationStatus>,
-    has_some: bool,
-}
-
-// Convert to String for DB
-impl fmt::Display for ReservationStatus {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let status = match self {
-            ReservationStatus::Pending => "Pending",
-            ReservationStatus::Confirmed => "Confirmed",
-            ReservationStatus::Cancelled => "Cancelled",
-        };
-        write!(f, "{}", status)
-    }
-}
-
-// Convert from String when reading from DB
-impl From<&str> for ReservationStatus {
-    fn from(status: &str) -> Self {
-        match status {
-            "Pending" => ReservationStatus::Pending,
-            "Confirmed" => ReservationStatus::Confirmed,
-            "Cancelled" => ReservationStatus::Cancelled,
-            _ => ReservationStatus::Pending, // Default to Pending for unknown status
-        }
-    }
 }
 
 impl ReservationQuery {
+    /// Adds a `book_ref` filter.
     pub fn book_ref(mut self, book_ref: &str) -> Self {
         self.book_ref = Some(book_ref.to_string());
-        self.has_some = true;
         self
     }
 
-    pub fn customer_email(mut self, customer_email: &str) -> Self {
-        self.customer_email = Some(customer_email.to_string());
-        self.has_some = true;
+    /// Adds a `customer_email` filter.
+    pub fn customer_email(mut self, email: &str) -> Self {
+        self.customer_email = Some(email.to_string());
         self
     }
 
-    pub fn customer_name(mut self, customer_name: &str) -> Self {
-        self.customer_name = Some(customer_name.to_string());
-        self.has_some = true;
+    /// Adds a `customer_name` filter.
+    pub fn customer_name(mut self, name: &str) -> Self {
+        self.customer_name = Some(name.to_string());
         self
     }
 
-    pub fn customer_phone(mut self, customer_phone: &str) -> Self {
-        self.customer_phone = Some(customer_phone.to_string());
-        self.has_some = true;
+    /// Adds a `customer_phone` filter.
+    pub fn customer_phone(mut self, phone: &str) -> Self {
+        self.customer_phone = Some(phone.to_string());
         self
     }
 
-    pub fn from_time(mut self, from_time: NaiveDateTime) -> Self {
-        self.from_time = Some(from_time);
-        self.has_some = true;
+    /// Adds a `from_time` filter.
+    pub fn from_time(mut self, from: NaiveDateTime) -> Self {
+        self.from_time = Some(from);
         self
     }
 
-    pub fn to_time(mut self, to_time: NaiveDateTime) -> Self {
-        self.to_time = Some(to_time);
-        self.has_some = true;
+    /// Adds a `to_time` filter.
+    pub fn to_time(mut self, to: NaiveDateTime) -> Self {
+        self.to_time = Some(to);
         self
     }
 
+    /// Adds a `status` filter.
     pub fn status(mut self, status: ReservationStatus) -> Self {
         self.status = Some(status);
-        self.has_some = true;
         self
     }
 
+    /// Checks if the query has any filters.
     pub fn is_none(&self) -> bool {
-        !self.has_some
+        self.book_ref.is_none()
+            && self.customer_email.is_none()
+            && self.customer_name.is_none()
+            && self.customer_phone.is_none()
+            && self.from_time.is_none()
+            && self.to_time.is_none()
+            && self.status.is_none()
     }
 
-    pub fn create(&self) -> String {
-        if self.is_none() {
-            "".to_string()
-        } else {
-            let mut qry = String::new();
-            qry.push_str("SELECT * FROM reservations WHERE 1 = 1 ");
+    /// Constructs a parameterized SQL query for filtering reservations.
+    pub fn create(&self) -> Result<(String, SqliteArguments), sqlx::error::BoxDynError> {
+        let mut query = String::from("SELECT * FROM reservations WHERE 1=1");
+        let mut args = SqliteArguments::default();
 
-            if let Some(value) = &self.book_ref {
-                qry.push_str(&format!("AND book_ref = '{}' ", value));
-            }
-            if let Some(value) = &self.customer_email {
-                qry.push_str(&format!("AND customer_email = '{}' ", value));
-            }
-            if let Some(value) = &self.customer_name {
-                qry.push_str(&format!("AND customer_name = '{}' ", value));
-            }
-            if let Some(value) = &self.customer_phone {
-                qry.push_str(&format!("AND customer_phone = '{}' ", value));
-            }
-            if let Some(value) = &self.from_time {
-                qry.push_str(&format!("AND reservation_time >= '{}' ", value));
-            }
-            if let Some(value) = &self.to_time {
-                qry.push_str(&format!("AND reservation_time <= '{}' ", value));
-            }
-            if let Some(value) = &self.status {
-                qry.push_str(&format!("AND status = '{}' ", value));
-            }
-
-            qry
+        if let Some(ref value) = self.book_ref {
+            query.push_str(" AND book_ref = ?");
+            args.add(value)?;
         }
+        if let Some(ref value) = self.customer_email {
+            query.push_str(" AND customer_email = ?");
+            args.add(value)?;
+        }
+        if let Some(ref value) = self.customer_name {
+            query.push_str(" AND customer_name = ?");
+            args.add(value)?;
+        }
+        if let Some(ref value) = self.customer_phone {
+            query.push_str(" AND customer_phone = ?");
+            args.add(value)?;
+        }
+        if let Some(ref value) = self.from_time {
+            query.push_str(" AND reservation_time >= ?");
+            args.add(value)?;
+        }
+        if let Some(ref value) = self.to_time {
+            query.push_str(" AND reservation_time <= ?");
+            args.add(value)?;
+        }
+        if let Some(ref value) = self.status {
+            query.push_str(" AND status = ?");
+            args.add(value.to_string())?;
+        }
+
+        Ok((query, args))
     }
 }
