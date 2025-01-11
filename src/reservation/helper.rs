@@ -43,7 +43,7 @@ pub fn validate_reservation(reservation: &Reservation) -> Result<(), String> {
     if !reservation
         .customer_phone
         .chars()
-        .all(|c| c.is_digit(10) || c == '+')
+        .all(|c| c.is_ascii_digit() || c == '+')
     {
         return Err("Customer phone must contain only digits or '+'.".to_string());
     }

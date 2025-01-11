@@ -125,9 +125,8 @@ impl ReservationRepo for SqliteReservationRepo {
             Ok(result) => result,
             Err(e) => {
                 log::error!(
-                    "Failed to create ReservationQuery '{:?}' to find all: {:?}",
-                    query,
-                    e
+                    "Failed to create ReservationQuery '{:?}' to find all: {e}",
+                    query
                 );
                 return Vec::new();
             }
@@ -140,7 +139,7 @@ impl ReservationRepo for SqliteReservationRepo {
             Ok(reservations) => reservations,
             Err(e) => {
                 log::error!("Failed to find Reservations '{:?}': {:?}", query, e);
-                return Vec::new();
+                Vec::new()
             }
         }
     }
@@ -149,11 +148,7 @@ impl ReservationRepo for SqliteReservationRepo {
         let (sql, args) = match query.create() {
             Ok(result) => result,
             Err(e) => {
-                log::error!(
-                    "Failed to find Reservations '{:?}' to find one: {:?}",
-                    query,
-                    e
-                );
+                log::error!("Failed to find Reservations '{:?}' to find one: {e}", query);
                 return None;
             }
         };

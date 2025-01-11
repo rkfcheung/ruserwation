@@ -1,11 +1,11 @@
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::error::BoxDynError;
 use sqlx::sqlite::SqliteArguments;
 use sqlx::Arguments;
 use std::fmt;
 
 use super::helper::generate_random_book_ref;
+use crate::db::QueryError;
 
 /// Enum for Reservation Status.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::Type)]
@@ -160,54 +160,52 @@ impl ReservationQuery {
         self
     }
 
-    /// Checks if the query has any filters.
-    pub fn is_none(&self) -> bool {
-        self.book_ref.is_none()
-            && self.customer_email.is_none()
-            && self.customer_name.is_none()
-            && self.customer_phone.is_none()
-            && self.from_time.is_none()
-            && self.to_time.is_none()
-            && self.status.is_none()
-    }
-
     /// Constructs a parameterised SQL query for filtering reservations.
-    pub fn create(&self) -> Result<(String, SqliteArguments), BoxDynError> {
-        let mut query = String::from("SELECT * FROM Reservation WHERE 1=1");
+    pub fn create(&self) -> Result<(String, SqliteArguments), QueryError> {
+        let mut conditions = Vec::new();
         let mut args = SqliteArguments::default();
 
         if let Some(ref value) = self.id {
-            query.push_str(" AND id = ?");
+            conditions.push("id = ?");
             args.add(value)?;
         }
         if let Some(ref value) = self.book_ref {
-            query.push_str(" AND book_ref = ?");
+            conditions.push("book_ref = ?");
             args.add(value)?;
         }
         if let Some(ref value) = self.customer_email {
-            query.push_str(" AND customer_email = ?");
+            conditions.push("customer_email = ?");
             args.add(value)?;
         }
         if let Some(ref value) = self.customer_name {
-            query.push_str(" AND customer_name = ?");
+            conditions.push("customer_name = ?");
             args.add(value)?;
         }
         if let Some(ref value) = self.customer_phone {
-            query.push_str(" AND customer_phone = ?");
+            conditions.push("customer_phone = ?");
             args.add(value)?;
         }
         if let Some(ref value) = self.from_time {
-            query.push_str(" AND reservation_time >= ?");
+            conditions.push("reservation_time >= ?");
             args.add(value)?;
         }
         if let Some(ref value) = self.to_time {
-            query.push_str(" AND reservation_time <= ?");
+            conditions.push("reservation_time <= ?");
             args.add(value)?;
         }
         if let Some(ref value) = self.status {
-            query.push_str(" AND status = ?");
+            conditions.push("status = ?");
             args.add(value.to_string())?;
         }
+
+        if conditions.is_empty() {
+            return Err(QueryError::NoConditionsProvided);
+        }
+
+        let query = format!(
+            "SELECT * FROM Reservation WHERE {}",
+            conditions.join(" AND ")
+        );
 
         Ok((query, args))
     }
