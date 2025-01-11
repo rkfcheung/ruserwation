@@ -5,18 +5,25 @@ use super::models::{Reservation, ReservationQuery, ReservationStatus};
 use crate::common::Repo;
 
 pub trait ReservationRepo: Repo<u32, Reservation> {
-    fn find_by_query(
+    fn find_all_by_query(
         &self,
         query: ReservationQuery,
     ) -> impl Future<Output = Vec<Reservation>> + Send;
 
-    fn find_by_book_ref(&self, book_ref: &str) -> impl Future<Output = Option<Reservation>> + Send;
+    fn find_one_by_query(
+        &self,
+        query: ReservationQuery,
+    ) -> impl Future<Output = Option<Reservation>> + Send;
+
+    fn find_by_book_ref(&self, book_ref: &str) -> impl Future<Output = Option<Reservation>> + Send {
+        self.find_one_by_query(ReservationQuery::default().book_ref(book_ref))
+    }
 
     fn find_by_status(
         &self,
         status: ReservationStatus,
     ) -> impl Future<Output = Vec<Reservation>> + Send {
-        self.find_by_query(ReservationQuery::default().status(status.clone()))
+        self.find_all_by_query(ReservationQuery::default().status(status.clone()))
     }
 
     fn find_by_time(
@@ -24,7 +31,7 @@ pub trait ReservationRepo: Repo<u32, Reservation> {
         from_time: NaiveDateTime,
         to_time: NaiveDateTime,
     ) -> impl Future<Output = Vec<Reservation>> + Send {
-        self.find_by_query(
+        self.find_all_by_query(
             ReservationQuery::default()
                 .from_time(from_time)
                 .to_time(to_time),

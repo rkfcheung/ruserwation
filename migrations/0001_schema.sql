@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS Reservation (
     table_size INTEGER NOT NULL CHECK (table_size > 0), -- Ensure valid table size
     reservation_time TIMESTAMP NOT NULL,
     notes TEXT CHECK (LENGTH(notes) <= 512),
-    status TEXT NOT NULL CHECK (status IN ('Pending', 'Confirmed', 'Cancelled')) -- Ensure valid status values
+    status TEXT NOT NULL CHECK (status IN ('Pending', 'Confirmed', 'Cancelled')), -- Ensure valid status values
+    updated_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS Restaurant (

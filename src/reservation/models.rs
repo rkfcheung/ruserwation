@@ -1,11 +1,12 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use sqlx::error::BoxDynError;
 use sqlx::sqlite::SqliteArguments;
 use sqlx::Arguments;
 use std::fmt;
 
 /// Enum for Reservation Status.
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, sqlx::Type)]
 pub enum ReservationStatus {
     Pending,
     Confirmed,
@@ -47,11 +48,13 @@ pub struct Reservation {
     pub reservation_time: NaiveDateTime,
     pub notes: Option<String>,
     pub status: ReservationStatus,
+    pub updated_at: NaiveDateTime,
 }
 
 /// Query builder for filtering Reservations.
 #[derive(Clone, Debug, Default)]
 pub struct ReservationQuery {
+    pub id: Option<u32>,
     pub book_ref: Option<String>,
     pub customer_email: Option<String>,
     pub customer_name: Option<String>,
@@ -62,6 +65,12 @@ pub struct ReservationQuery {
 }
 
 impl ReservationQuery {
+    /// Adds a `id` filter.
+    pub fn id(mut self, id: u32) -> Self {
+        self.id = Some(id);
+        self
+    }
+
     /// Adds a `book_ref` filter.
     pub fn book_ref(mut self, book_ref: &str) -> Self {
         self.book_ref = Some(book_ref.to_string());
@@ -116,10 +125,14 @@ impl ReservationQuery {
     }
 
     /// Constructs a parameterized SQL query for filtering reservations.
-    pub fn create(&self) -> Result<(String, SqliteArguments), sqlx::error::BoxDynError> {
+    pub fn create(&self) -> Result<(String, SqliteArguments), BoxDynError> {
         let mut query = String::from("SELECT * FROM reservations WHERE 1=1");
         let mut args = SqliteArguments::default();
 
+        if let Some(ref value) = self.id {
+            query.push_str(" AND id = ?");
+            args.add(value)?;
+        }
         if let Some(ref value) = self.book_ref {
             query.push_str(" AND book_ref = ?");
             args.add(value)?;
