@@ -77,14 +77,17 @@ async fn init_admin(admin_repo: Arc<SqliteAdminRepo>) -> Result<(), SetupError> 
         None => {
             info!("Initialising Admin ...");
             let mut admin = Admin::init();
-            let id = admin_repo.save(&mut admin).await;
-            if id > 0 {
-                info!("Admin is created.");
-            } else {
-                let err = "Failed to create Admin";
-                error!("{}: {:?}", err, admin);
+            let result = admin_repo.save(&mut admin).await;
+            match result {
+                Ok(id) => {
+                    info!("Admin [{id}] is created.");
+                }
+                Err(e) => {
+                    let err = "Failed to create Admin";
+                    error!("{err} [{:?}]: {:?}", e, admin);
 
-                return Err(SetupError::Other(err.to_string()));
+                    return Err(SetupError::Other(err.to_string()));
+                }
             }
         }
     }

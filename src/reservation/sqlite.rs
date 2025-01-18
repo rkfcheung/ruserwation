@@ -6,7 +6,7 @@ use super::{
     models::{Reservation, ReservationQuery},
     repo::ReservationRepo,
 };
-use crate::common::Repo;
+use crate::{common::Repo, db::QueryError};
 
 pub struct SqliteReservationRepo {
     pool: Arc<SqlitePool>, // SQLite connection pool
@@ -94,10 +94,10 @@ impl Repo<u32, Reservation> for SqliteReservationRepo {
             .await
     }
 
-    async fn save(&self, entity: &mut Reservation) -> u32 {
+    async fn save(&self, entity: &mut Reservation) -> Result<u32, QueryError> {
         if let Err(e) = validate_reservation(entity) {
             log::error!("Invalid Reservation found: {e}");
-            return 0;
+            return Err(QueryError::InvalidQuery(e));
         }
 
         let result = if entity.id == 0 {
@@ -106,14 +106,14 @@ impl Repo<u32, Reservation> for SqliteReservationRepo {
             self.update(entity).await
         };
         match result {
-            Ok(id) => id,
+            Ok(id) => Ok(id),
             Err(e) => {
                 log::error!(
                     "Failed to save Reservation with Book Ref '{}': {:?}",
                     entity.book_ref,
                     e
                 );
-                0
+                Err(e.into())
             }
         }
     }

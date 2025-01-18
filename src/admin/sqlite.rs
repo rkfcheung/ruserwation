@@ -1,7 +1,10 @@
 use sqlx::{query, query_as, query_scalar, SqlitePool};
 use std::sync::Arc;
 
-use crate::{common::Repo, db::OpType};
+use crate::{
+    common::Repo,
+    db::{OpType, QueryError},
+};
 
 use super::{
     models::Admin,
@@ -93,7 +96,7 @@ impl Repo<u32, Admin> for SqliteAdminRepo {
     }
 
     // Save an Admin and return its Id
-    async fn save(&self, admin: &mut Admin) -> u32 {
+    async fn save(&self, admin: &mut Admin) -> Result<u32, QueryError> {
         let op_type = if self.count().await.unwrap_or_default() == 0 {
             OpType::Insert
         } else if admin.id == 0 {
@@ -113,33 +116,34 @@ impl Repo<u32, Admin> for SqliteAdminRepo {
 
         match op_type {
             OpType::Insert => match self.insert(admin).await {
-                Ok(id) => id,
+                Ok(id) => Ok(id),
                 Err(e) => {
                     log::error!(
                         "Failed to insert admin with username '{}': {:?}",
                         admin.username,
                         e
                     );
-                    0
+                    Err(e.into())
                 }
             },
             OpType::Update => match self.update(admin).await {
-                Ok(id) => id,
+                Ok(id) => Ok(id),
                 Err(e) => {
                     log::error!(
                         "Failed to update admin with username '{}': {:?}",
                         admin.username,
                         e
                     );
-                    0
+                    Err(e.into())
                 }
             },
             OpType::NoOp => {
-                log::warn!(
+                let warn_msg = format!(
                     "Admin with Id {} not found. Save operation skipped.",
                     admin.id
                 );
-                0
+                log::warn!("{warn_msg}");
+                Err(QueryError::NotFound(warn_msg.to_string()))
             }
         }
     }

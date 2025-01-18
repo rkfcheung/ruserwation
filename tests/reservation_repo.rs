@@ -4,6 +4,7 @@ mod common;
 mod tests {
     use chrono::Utc;
     use ruserwation::common::Repo;
+    use ruserwation::db::QueryError;
     use ruserwation::reservation::models::*;
     use ruserwation::reservation::repo::ReservationRepo;
     use ruserwation::reservation::sqlite::SqliteReservationRepo;
@@ -38,7 +39,12 @@ mod tests {
         };
 
         let result = repo.save(&mut invalid_reservation).await;
-        assert_eq!(result, 0);
+        assert_eq!(
+            result,
+            Err(QueryError::InvalidQuery(
+                "Book reference cannot be empty.".to_string()
+            ))
+        );
     }
 
     #[tokio::test]
@@ -74,8 +80,8 @@ mod tests {
         };
 
         // Save the reservations
-        repo.save(&mut reservation_1.clone()).await;
-        repo.save(&mut reservation_2.clone()).await;
+        let _ = repo.save(&mut reservation_1.clone()).await;
+        let _ = repo.save(&mut reservation_2.clone()).await;
 
         // Find all reservations for customer_name = User One
         let results = repo
@@ -114,8 +120,8 @@ mod tests {
         confirmed_reservation.book_ref = "CONFIRMED_REF".to_string();
         confirmed_reservation.status = ReservationStatus::Confirmed;
 
-        repo.save(&mut pending_reservation).await;
-        repo.save(&mut confirmed_reservation).await;
+        let _ = repo.save(&mut pending_reservation).await;
+        let _ = repo.save(&mut confirmed_reservation).await;
 
         let pending = repo.find_by_status(ReservationStatus::Pending).await;
         assert_eq!(pending.len(), 1);
@@ -148,8 +154,8 @@ mod tests {
         reservation_2.book_ref = "REF2".to_string();
         reservation_2.reservation_time = Utc::now().naive_utc() + chrono::Duration::days(1);
 
-        repo.save(&mut reservation_1).await;
-        repo.save(&mut reservation_2).await;
+        let _ = repo.save(&mut reservation_1).await;
+        let _ = repo.save(&mut reservation_2).await;
 
         let start_time = Utc::now().naive_utc() - chrono::Duration::hours(1);
         let end_time = Utc::now().naive_utc() + chrono::Duration::hours(1);
@@ -177,7 +183,7 @@ mod tests {
             updated_at: Utc::now().naive_utc(),
         };
 
-        let id = repo.save(&mut reservation).await;
+        let id = repo.save(&mut reservation).await.unwrap();
         assert!(id > 0);
 
         let saved = repo.find_by_id(id).await;
@@ -185,7 +191,7 @@ mod tests {
 
         reservation.notes = Some("Updated".to_string());
         reservation.updated_at = Utc::now().naive_utc();
-        assert_eq!(repo.save(&mut reservation).await, id);
+        assert_eq!(repo.save(&mut reservation).await.unwrap(), id);
 
         let updated = repo.find_by_book_ref(&reservation.book_ref).await;
         assert_eq!(updated.unwrap(), reservation);

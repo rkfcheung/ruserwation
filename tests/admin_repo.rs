@@ -33,7 +33,7 @@ mod tests {
             .build();
 
         // Save the Admin
-        let saved_id = repo.save(&mut admin).await;
+        let saved_id = repo.save(&mut admin).await.unwrap();
 
         // Verify that the saved ID is correct
         assert_eq!(saved_id, admin.id);
@@ -60,7 +60,7 @@ mod tests {
         found_admin.email = "admin-new@localhost".to_string();
 
         // Save the updated admin back to the repository
-        repo.save(&mut found_admin).await;
+        let _ = repo.save(&mut found_admin).await;
         let updated = repo.find_by_username("admin").await.unwrap();
         assert_eq!(updated.email, found_admin.email);
         assert!(updated.last_login_time.is_some());
@@ -91,7 +91,7 @@ mod tests {
             .password("hashed_password")
             .email("test@example.com")
             .build();
-        let id = repo.save(&mut admin).await;
+        let id = repo.save(&mut admin).await.unwrap();
 
         // Verify with correct username and password
         let result = repo.verify("testuser", "hashed_password").await; // Use the correct hashed password
