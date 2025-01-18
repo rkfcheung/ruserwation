@@ -1,7 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-    use ruserwation::{db::QueryError, reservation::models::ReservationQuery};
+    use chrono::{NaiveDate, NaiveDateTime};
+    use ruserwation::{db::QueryError, reservation::models::*};
+    use sqlx::Arguments;
 
     // Helper function to create a NaiveDateTime
     fn create_naive_datetime(
@@ -23,7 +24,7 @@ mod tests {
 
         // Call the create method and expect an error
         let result = query.create();
-        assert_eq!(result, Err(QueryError::NoConditionsProvided));
+        assert_eq!(result.err(), Some(QueryError::NoConditionsProvided));
     }
 
     #[test]

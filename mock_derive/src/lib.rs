@@ -53,7 +53,6 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
 /// Example:
 /// ```rust
 /// use mock_derive::mock_captured_arguments;
-/// use std::sync::Arc;
 ///
 /// // Mock structure for testing
 /// struct MyMock {
