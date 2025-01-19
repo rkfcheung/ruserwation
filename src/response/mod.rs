@@ -8,13 +8,13 @@ use warp::{
     Rejection, Reply,
 };
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub enum ResponseStatus {
     Success,
     Error,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct Response {
     message: String,
     status: ResponseStatus,

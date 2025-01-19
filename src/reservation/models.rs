@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteArguments;
 use sqlx::Arguments;
 use std::fmt;
+use warp::reject::Reject;
 
 use super::helper::generate_random_book_ref;
 use crate::db::QueryError;
@@ -43,7 +44,7 @@ pub struct ReservationRequest {
     ref_check: String,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct ReservationResponse {
     book_ref: String,
     #[serde(flatten)]
@@ -150,6 +151,10 @@ impl ReservationRequest {
             ref_check: ref_check.to_string(),
         }
     }
+
+    pub fn ref_check(&self) -> &str {
+        &self.ref_check
+    }
 }
 
 impl From<ReservationRequest> for Reservation {
@@ -180,6 +185,8 @@ impl ReservationResponse {
         }
     }
 }
+
+impl Reject for ReservationResponse {}
 
 impl ReservationQuery {
     /// Adds a `id` filter.
