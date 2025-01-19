@@ -15,8 +15,7 @@ pub fn generate_random_book_ref(ref_len: usize) -> String {
         .collect()
 }
 
-pub fn generate_ref_check(secret: &str) -> Result<String, String> {
-    let timestamp = Utc::now().timestamp();
+pub fn generate_ref_check(secret: &str, timestamp: i64) -> Result<String, String> {
     let payload = format!("{}:{}", secret, timestamp);
 
     let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
@@ -29,7 +28,7 @@ pub fn generate_ref_check(secret: &str) -> Result<String, String> {
     Ok(format!("{}:{}", timestamp, encoded_signature))
 }
 
-pub fn validate_ref_check(ref_check: &str, secret: &str) -> Result<(), String> {
+pub fn validate_ref_check(ref_check: &str, secret: &str, expired: i64) -> Result<(), String> {
     let parts: Vec<&str> = ref_check.split(':').collect();
     if parts.len() != 2 {
         return Err("Invalid ref_check format".to_string());
@@ -44,7 +43,7 @@ pub fn validate_ref_check(ref_check: &str, secret: &str) -> Result<(), String> {
 
     // Ensure the timestamp is within the allowed range (1 hour)
     let current_time = Utc::now().timestamp();
-    if (current_time - timestamp).abs() > 3600 {
+    if (current_time - timestamp).abs() > expired {
         return Err("ref_check expired".to_string());
     }
 
