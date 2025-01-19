@@ -279,7 +279,7 @@ mod tests {
 
         let first_arg = mock.invocation.first("capture_arguments").unwrap();
         assert_eq!(
-            first_arg.unwrap::<(i32, String)>(),
+            first_arg.get_unchecked::<(i32, String)>(),
             &(42, "Hello".to_string())
         );
     }
@@ -295,7 +295,7 @@ mod tests {
         assert_eq!(mock.invocation.get("increment_and_capture"), 1); // Invoked once
 
         let first_arg = mock.invocation.first("increment_and_capture").unwrap();
-        assert_eq!(first_arg.unwrap::<i32>(), &10);
+        assert_eq!(first_arg.get_unchecked::<i32>(), &10);
     }
 
     #[test]

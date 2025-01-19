@@ -76,33 +76,30 @@ pub fn mock_verify_derive(input: TokenStream) -> TokenStream {
 ///     }
 /// }
 ///
-/// // Example usage in a test
-/// fn main() {
-///     // Create a mock instance
-///     let mock = MyMock {
-///         invocation: mocks::InvocationTracker::default(),
-///     };
+/// // Create a mock instance
+/// let mock = MyMock {
+///     invocation: mocks::InvocationTracker::default(),
+/// };
 ///
-///     // Call the `add` function and verify the captured arguments
-///     let result = mock.add(10, 20);
-///     assert_eq!(result, 30); // Verify the return value
-///     let captured_add_args = mock.invocation.values("add");
-///     assert_eq!(captured_add_args.len(), 1); // Ensure the function was invoked once
-///     let args = captured_add_args[0].get::<(i32, i32)>().unwrap();
-///     assert_eq!(*args, (10, 20)); // Verify the captured arguments
+/// // Call the `add` function and verify the captured arguments
+/// let result = mock.add(10, 20);
+/// assert_eq!(result, 30); // Verify the return value
+/// let captured_add_args = mock.invocation.values("add");
+/// assert_eq!(captured_add_args.len(), 1); // Ensure the function was invoked once
+/// let args = captured_add_args[0].get::<(i32, i32)>().unwrap();
+/// assert_eq!(*args, (10, 20)); // Verify the captured arguments
 ///
-///     // Call the `greet` function and verify the captured arguments
-///     mock.greet("Hello, world!");
-///     let captured_greet_args = mock.invocation.values("greet");
-///     assert_eq!(captured_greet_args.len(), 1);
-///     let message = captured_greet_args[0].get::<String>().unwrap();
-///     assert_eq!(message, "Hello, world!");
+/// // Call the `greet` function and verify the captured arguments
+/// mock.greet("Hello, world!");
+/// let captured_greet_args = mock.invocation.values("greet");
+/// assert_eq!(captured_greet_args.len(), 1);
+/// let message = captured_greet_args[0].get::<String>().unwrap();
+/// assert_eq!(message, "Hello, world!");
 ///
-///     // Call the `hi` function (no arguments, so nothing should be captured)
-///     mock.hi();
-///     let captured_hi_args = mock.invocation.values("hi");
-///     assert_eq!(captured_hi_args.len(), 0); // No arguments to capture
-/// }
+/// // Call the `hi` function (no arguments, so nothing should be captured)
+/// mock.hi();
+/// let captured_hi_args = mock.invocation.values("hi");
+/// assert_eq!(captured_hi_args.len(), 0); // No arguments to capture
 /// ```
 #[proc_macro_attribute]
 pub fn mock_captured_arguments(_attr: TokenStream, item: TokenStream) -> TokenStream {
