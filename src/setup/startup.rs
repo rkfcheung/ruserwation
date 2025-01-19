@@ -3,7 +3,10 @@ use sqlx::{Pool, Sqlite};
 use std::sync::Arc;
 
 use crate::{
-    admin::{models::Admin, sqlite::SqliteAdminRepo},
+    admin::{
+        models::{Admin, ROOT_ADMIN_ID},
+        sqlite::SqliteAdminRepo,
+    },
     common::Repo,
     config::models::{AppState, SqliteAppStateBuilder},
     db,
@@ -68,7 +71,7 @@ pub fn init_app_state(pool: Arc<Pool<Sqlite>>) -> Arc<AppState<SqliteAdminRepo>>
 }
 
 async fn init_admin(admin_repo: Arc<SqliteAdminRepo>) -> Result<(), SetupError> {
-    let root_user = admin_repo.find_by_id(1).await;
+    let root_user = admin_repo.find_by_id(ROOT_ADMIN_ID).await;
     match root_user {
         Some(admin) => info!(
             "Last login for {}: {:?}",

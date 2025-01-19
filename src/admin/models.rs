@@ -9,7 +9,7 @@ use crate::{
     utils::env_util::{var_as_str, var_as_str_or},
 };
 
-const ROOT_ADMIN_ID: u32 = 1;
+pub const ROOT_ADMIN_ID: u32 = 1;
 
 /// Represents an admin user in the system.
 #[derive(Clone, Debug, Deserialize, Serialize, sqlx::FromRow)]
@@ -36,6 +36,18 @@ pub struct AdminBuilder {
     username: String,
     password: Vec<u8>,
     email: String,
+}
+
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Serialize)]
+pub struct LoginResponse {
+    #[serde(flatten)]
+    response: Response,
 }
 
 impl Admin {
@@ -118,18 +130,6 @@ impl AdminBuilder {
         self.username = validate_username(username);
         self
     }
-}
-
-#[derive(Deserialize)]
-pub struct LoginRequest {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Serialize)]
-pub struct LoginResponse {
-    #[serde(flatten)]
-    response: Response,
 }
 
 impl LoginResponse {
