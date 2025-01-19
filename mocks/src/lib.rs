@@ -151,9 +151,9 @@ impl ArgumentValue {
     /// # Example
     /// ```rust
     /// let value = mocks::ArgumentValue::new(42);
-    /// assert_eq!(*value.unwrap::<i32>(), 42);
+    /// assert_eq!(*value.get_unchecked::<i32>(), 42);
     /// ```
-    pub fn unwrap<T: Any>(&self) -> &T {
+    pub fn get_unchecked<T: Any>(&self) -> &T {
         let result = self.get();
         assert!(
             result.is_some(),
@@ -161,6 +161,26 @@ impl ArgumentValue {
             std::any::type_name::<T>()
         );
         result.unwrap()
+    }
+
+    /// Checks whether the stored value is of the given type `T`.
+    ///
+    /// Returns `true` if the stored value matches the type `T`, otherwise `false`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use mocks::ArgumentValue;
+    ///
+    /// let value = ArgumentValue::new(42);
+    /// assert!(value.is::<i32>());
+    /// assert!(!value.is::<String>());
+    ///
+    /// let string_value = ArgumentValue::new("hello".to_string());
+    /// assert!(string_value.is::<String>());
+    /// assert!(!string_value.is::<i32>());
+    /// ```
+    pub fn is<T: Any>(&self) -> bool {
+        self.value.is::<T>()
     }
 }
 

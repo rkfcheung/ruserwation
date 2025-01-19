@@ -58,10 +58,12 @@ mod tests {
 
     #[test]
     fn test_argument_value_downcast() {
-        let value = ArgumentValue::new(100);
-        assert_eq!(value.get::<i32>().unwrap(), &100);
+        let int_value = ArgumentValue::new(100);
+        assert!(int_value.is::<i32>());
+        assert_eq!(int_value.get::<i32>().unwrap(), &100);
 
         let string_value = ArgumentValue::new("test".to_string());
+        assert!(string_value.is::<String>());
         assert_eq!(string_value.get::<String>().unwrap(), "test");
     }
 
@@ -131,10 +133,12 @@ mod tests {
     )]
     fn test_argument_value_invalid_downcast() {
         let value = ArgumentValue::new(42 as usize); // Stores an `usize`
+        assert!(value.is::<usize>());
         assert_eq!(*value.downcast_ref::<usize>().unwrap(), 42);
         assert_eq!(value.get::<usize>().unwrap(), &42);
-        assert_eq!(value.unwrap::<usize>(), &42);
-        value.unwrap::<String>(); // Attempting to get `String` should panic
+        assert_eq!(value.get_unchecked::<usize>(), &42);
+        assert!(!value.is::<String>());
+        value.get_unchecked::<String>(); // Attempting to get `String` should panic
     }
 
     #[test]
