@@ -67,9 +67,9 @@ impl Admin {
 
     /// Initialises the root admin from environment variables.
     pub fn init() -> Self {
-        let email = var_as_str_or("RW_ADMIN_EMAIL", "admin@localhost".to_string());
+        let email = var_as_str_or("RW_ADMIN_EMAIL", "admin@localhost");
         let password = var_as_str("RW_ADMIN_PASSWORD");
-        let username = var_as_str_or("RW_ADMIN_USERNAME", "admin".to_string());
+        let username = var_as_str_or("RW_ADMIN_USERNAME", "admin");
 
         Self::new(ROOT_ADMIN_ID, username, password, email)
     }

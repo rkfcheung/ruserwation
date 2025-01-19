@@ -16,7 +16,7 @@ pub fn index_route(
 }
 
 fn render_index(restaurant: &Restaurant) -> Markup {
-    let poster = var_as_str_or("RW_POSTER", "poster.webp".to_string());
+    let poster = var_as_str_or("RW_POSTER", "poster.webp");
     let is_und_constr = var_as_bool_or("RW_UNDER_CONSTRUCTION", false);
     let rest_details = format!("{}, {}", restaurant.name, restaurant.location);
 

@@ -99,9 +99,9 @@ async fn init_admin(admin_repo: Arc<SqliteAdminRepo>) -> Result<(), SetupError> 
 }
 
 fn init_restaurant() -> Restaurant {
-    let rest_name = var_as_str_or("RW_REST_NAME", "<Name>".to_string());
+    let rest_name = var_as_str_or("RW_REST_NAME", "<Name>");
     let rest_max_capacity = var_as_int_or("RW_REST_MAX_CAPACITY", 64) as u32;
-    let rest_location = var_as_str_or("RW_REST_LOCATION", "<Location>".to_string());
+    let rest_location = var_as_str_or("RW_REST_LOCATION", "<Location>");
 
     let restaurant = Restaurant::new(1, &rest_name, rest_max_capacity, &rest_location);
     info!("{:?}", restaurant);
