@@ -6,6 +6,7 @@ use std::fmt;
 
 use super::helper::generate_random_book_ref;
 use crate::db::QueryError;
+use crate::response::Response;
 
 /// Enum for Reservation Status.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::Type)]
@@ -13,6 +14,53 @@ pub enum ReservationStatus {
     Pending,
     Confirmed,
     Cancelled,
+}
+
+/// Struct for the Reservation table.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::FromRow)]
+pub struct Reservation {
+    pub id: u32,
+    pub book_ref: String,
+    pub restaurant_id: u32,
+    pub customer_email: String,
+    pub customer_name: String,
+    pub customer_phone: String,
+    pub table_size: u8,
+    pub reservation_time: NaiveDateTime,
+    pub notes: Option<String>,
+    pub status: ReservationStatus,
+    pub updated_at: NaiveDateTime,
+}
+
+#[derive(Deserialize)]
+pub struct ReservationRequest {
+    customer_email: String,
+    customer_name: String,
+    customer_phone: String,
+    table_size: u8,
+    reservation_time: NaiveDateTime,
+    notes: Option<String>,
+    ref_check: String,
+}
+
+#[derive(Serialize)]
+pub struct ReservationResponse {
+    book_ref: String,
+    #[serde(flatten)]
+    response: Response,
+}
+
+/// Query builder for filtering Reservations.
+#[derive(Clone, Debug, Default)]
+pub struct ReservationQuery {
+    pub id: Option<u32>,
+    pub book_ref: Option<String>,
+    pub customer_email: Option<String>,
+    pub customer_name: Option<String>,
+    pub customer_phone: Option<String>,
+    pub from_time: Option<NaiveDateTime>,
+    pub to_time: Option<NaiveDateTime>,
+    pub status: Option<ReservationStatus>,
 }
 
 impl fmt::Display for ReservationStatus {
@@ -35,22 +83,6 @@ impl From<&str> for ReservationStatus {
             _ => ReservationStatus::Pending, // Default fallback
         }
     }
-}
-
-/// Struct for the Reservation table.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::FromRow)]
-pub struct Reservation {
-    pub id: u32,
-    pub book_ref: String,
-    pub restaurant_id: u32,
-    pub customer_email: String,
-    pub customer_name: String,
-    pub customer_phone: String,
-    pub table_size: u8,
-    pub reservation_time: NaiveDateTime,
-    pub notes: Option<String>,
-    pub status: ReservationStatus,
-    pub updated_at: NaiveDateTime,
 }
 
 impl Reservation {
@@ -98,17 +130,55 @@ impl Reservation {
     }
 }
 
-/// Query builder for filtering Reservations.
-#[derive(Clone, Debug, Default)]
-pub struct ReservationQuery {
-    pub id: Option<u32>,
-    pub book_ref: Option<String>,
-    pub customer_email: Option<String>,
-    pub customer_name: Option<String>,
-    pub customer_phone: Option<String>,
-    pub from_time: Option<NaiveDateTime>,
-    pub to_time: Option<NaiveDateTime>,
-    pub status: Option<ReservationStatus>,
+impl ReservationRequest {
+    pub fn new(
+        customer_email: &str,
+        customer_name: &str,
+        customer_phone: &str,
+        table_size: u8,
+        reservation_time: NaiveDateTime,
+        notes: Option<String>,
+        ref_check: &str,
+    ) -> Self {
+        Self {
+            customer_email: customer_email.to_string(),
+            customer_name: customer_name.to_string(),
+            customer_phone: customer_phone.to_string(),
+            table_size,
+            reservation_time,
+            notes,
+            ref_check: ref_check.to_string(),
+        }
+    }
+}
+
+impl From<ReservationRequest> for Reservation {
+    fn from(value: ReservationRequest) -> Self {
+        Reservation::new(
+            &value.customer_email,
+            &value.customer_name,
+            &value.customer_phone,
+            value.table_size,
+            value.reservation_time,
+            value.notes,
+        )
+    }
+}
+
+impl ReservationResponse {
+    pub fn ok(book_ref: &str) -> Self {
+        Self {
+            book_ref: book_ref.to_string(),
+            response: Response::ok("Booked successful"),
+        }
+    }
+
+    pub fn err(msg: &str) -> Self {
+        Self {
+            book_ref: "<Failed to Book>".to_string(),
+            response: Response::err(msg),
+        }
+    }
 }
 
 impl ReservationQuery {

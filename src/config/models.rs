@@ -7,16 +7,18 @@ use crate::{
         sessions::{EnableSession, SessionManager},
         sqlite::SqliteAdminRepo,
     },
+    reservation::sqlite::SqliteReservationRepo,
     restaurant::models::Restaurant,
 };
 
-pub struct AppState<R>
+pub struct AppState<ADMIN>
 where
-    R: AdminRepo + VerifyUser + Send + Sync,
+    ADMIN: AdminRepo + VerifyUser + Send + Sync,
 {
     restaurant: Arc<Restaurant>,
-    admin_repo: Arc<R>,
-    session_manager: Arc<SessionManager<R>>,
+    admin_repo: Arc<ADMIN>,
+    reservation_repo: Arc<SqliteReservationRepo>,
+    session_manager: Arc<SessionManager<ADMIN>>,
 }
 
 #[derive(Clone)]
@@ -37,6 +39,10 @@ where
 {
     pub fn admin_repo(&self) -> Arc<R> {
         self.admin_repo.clone()
+    }
+
+    pub fn reservation_repo(&self) -> Arc<SqliteReservationRepo> {
+        self.reservation_repo.clone()
     }
 
     pub fn restaurant(&self) -> Arc<Restaurant> {
@@ -83,11 +89,13 @@ impl SqliteAppStateBuilder {
         let restaurant = self.restaurant.expect("Restaurant is required");
         let pool = self.pool.expect("Database pool is required");
         let admin_repo = Arc::new(SqliteAdminRepo::new(pool.clone()));
+        let reservation_repo = Arc::new(SqliteReservationRepo::new(pool.clone()));
         let session_manager = Arc::new(SessionManager::new(admin_repo.clone()));
 
         AppState {
             restaurant,
             admin_repo,
+            reservation_repo,
             session_manager,
         }
     }

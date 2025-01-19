@@ -2,6 +2,7 @@ mod admin;
 mod common;
 mod config;
 mod db;
+mod reservation;
 mod response;
 mod restaurant;
 mod setup;
