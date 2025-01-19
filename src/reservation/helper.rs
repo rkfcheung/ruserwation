@@ -1,7 +1,11 @@
+use base64::{prelude::BASE64_STANDARD, Engine};
 use chrono::Utc;
+use hmac::{Hmac, Mac};
 use rand::{distributions::Alphanumeric, Rng};
 
 use super::models::Reservation;
+
+type HmacSha256 = Hmac<sha2::Sha256>;
 
 pub fn generate_random_book_ref(ref_len: usize) -> String {
     rand::thread_rng()
@@ -9,6 +13,49 @@ pub fn generate_random_book_ref(ref_len: usize) -> String {
         .take(ref_len)
         .map(char::from)
         .collect()
+}
+
+pub fn generate_ref_check(secret: &str) -> Result<String, String> {
+    let timestamp = Utc::now().timestamp();
+    let payload = format!("{}:{}", secret, timestamp);
+
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .map_err(|_| "Failed to create HMAC instance".to_string())?;
+    mac.update(payload.as_bytes());
+
+    let signature = mac.finalize().into_bytes();
+    let encoded_signature = BASE64_STANDARD.encode(signature);
+
+    Ok(format!("{}:{}", timestamp, encoded_signature))
+}
+
+pub fn validate_ref_check(ref_check: &str, secret: &str) -> Result<(), String> {
+    let parts: Vec<&str> = ref_check.split(':').collect();
+    if parts.len() != 2 {
+        return Err("Invalid ref_check format".to_string());
+    }
+
+    let timestamp: i64 = parts[0]
+        .parse()
+        .map_err(|_| "Invalid timestamp in ref_check")?;
+    let signature = BASE64_STANDARD
+        .decode(parts[1])
+        .map_err(|_| "Invalid signature in ref_check")?;
+
+    // Ensure the timestamp is within the allowed range (1 hour)
+    let current_time = Utc::now().timestamp();
+    if (current_time - timestamp).abs() > 3600 {
+        return Err("ref_check expired".to_string());
+    }
+
+    // Recreate the signature and validate
+    let payload = format!("{}:{}", secret, timestamp);
+    let mut mac = HmacSha256::new_from_slice(secret.as_bytes())
+        .map_err(|_| "Failed to create HMAC instance")?;
+    mac.update(payload.as_bytes());
+
+    mac.verify_slice(&signature)
+        .map_err(|_| "Invalid ref_check signature".to_string())
 }
 
 pub fn validate_reservation(reservation: &Reservation) -> Result<(), String> {
