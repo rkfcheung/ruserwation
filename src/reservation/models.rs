@@ -59,8 +59,8 @@ pub struct ReservationQuery {
     pub customer_email: Option<String>,
     pub customer_name: Option<String>,
     pub customer_phone: Option<String>,
-    pub from_time: Option<NaiveDateTime>,
-    pub to_time: Option<NaiveDateTime>,
+    pub start_time: Option<NaiveDateTime>,
+    pub end_time: Option<NaiveDateTime>,
     pub status: Option<ReservationStatus>,
 }
 
@@ -221,13 +221,13 @@ impl ReservationQuery {
 
     /// Adds a `from_time` filter.
     pub fn start_time(mut self, from: NaiveDateTime) -> Self {
-        self.from_time = Some(from);
+        self.start_time = Some(from);
         self
     }
 
     /// Adds a `to_time` filter.
     pub fn end_time(mut self, to: NaiveDateTime) -> Self {
-        self.to_time = Some(to);
+        self.end_time = Some(to);
         self
     }
 
@@ -262,11 +262,11 @@ impl ReservationQuery {
             conditions.push("customer_phone = ?");
             args.add(value)?;
         }
-        if let Some(ref value) = self.from_time {
+        if let Some(ref value) = self.start_time {
             conditions.push("reservation_time >= ?");
             args.add(value)?;
         }
-        if let Some(ref value) = self.to_time {
+        if let Some(ref value) = self.end_time {
             conditions.push("reservation_time <= ?");
             args.add(value)?;
         }
