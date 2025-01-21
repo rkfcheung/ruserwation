@@ -220,13 +220,13 @@ impl ReservationQuery {
     }
 
     /// Adds a `from_time` filter.
-    pub fn from_time(mut self, from: NaiveDateTime) -> Self {
+    pub fn start_time(mut self, from: NaiveDateTime) -> Self {
         self.from_time = Some(from);
         self
     }
 
     /// Adds a `to_time` filter.
-    pub fn to_time(mut self, to: NaiveDateTime) -> Self {
+    pub fn end_time(mut self, to: NaiveDateTime) -> Self {
         self.to_time = Some(to);
         self
     }

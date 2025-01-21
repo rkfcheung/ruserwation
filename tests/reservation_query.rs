@@ -63,8 +63,8 @@ mod tests {
         let to_time = create_naive_datetime(2025, 1, 11, 12, 0);
 
         let query = ReservationQuery::default()
-            .from_time(from_time)
-            .to_time(to_time);
+            .start_time(from_time)
+            .end_time(to_time);
 
         // Generate the SQL query and arguments
         let (sql, args) = query.create().expect("Expected a valid query");
@@ -100,8 +100,8 @@ mod tests {
             .customer_email("test@example.com")
             .customer_name("John Doe")
             .customer_phone("1234567890")
-            .from_time(from_time)
-            .to_time(to_time)
+            .start_time(from_time)
+            .end_time(to_time)
             .status(ReservationStatus::Confirmed);
 
         // Generate the SQL query and arguments

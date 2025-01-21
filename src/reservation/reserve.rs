@@ -3,8 +3,7 @@ use std::sync::Arc;
 use warp::{
     http::StatusCode,
     reject::Rejection,
-    reply::Reply,
-    reply::{json, with_status},
+    reply::{json, with_status, Json, Reply, WithStatus},
     Filter,
 };
 
@@ -19,7 +18,7 @@ use crate::{
     utils::env_util::{var_as_int_or, var_as_str_or},
 };
 
-pub fn reserve(
+pub fn reserve_route(
     context: Arc<Context<impl ReservationRepo + Send + Sync>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
     warp::post()
@@ -40,8 +39,10 @@ async fn handle_reserve(
 
     // Validate ref_check
     if let Err(err) = validate_ref_check(body.ref_check(), &secret, expired) {
-        log_ref_check_error(&body.ref_check(), &err);
-        return Err(reservation_error("Invalid Request or expired"));
+        log_ref_check_error(body.ref_check(), &err);
+        return Err(reservation_error(
+            "The reservation request is either invalid or has expired.",
+        ));
     }
 
     // Convert to Reservation
@@ -82,7 +83,7 @@ async fn save_reservation(
 }
 
 // Helper function for success response
-fn handle_success(id: u32, reservation: &Reservation) -> Result<impl Reply, Rejection> {
+fn handle_success(id: u32, reservation: &Reservation) -> Result<WithStatus<Json>, Rejection> {
     log::info!(
         "Reservation id={} with book_ref={} saved",
         id,
@@ -93,7 +94,10 @@ fn handle_success(id: u32, reservation: &Reservation) -> Result<impl Reply, Reje
 }
 
 // Helper function for failure response
-fn handle_failure(reservation: &Reservation, err: QueryError) -> Result<impl Reply, Rejection> {
+fn handle_failure(
+    reservation: &Reservation,
+    err: QueryError,
+) -> Result<WithStatus<Json>, Rejection> {
     log::error!(
         "Failed to save reservation book_ref={} due to: {}",
         reservation.book_ref,

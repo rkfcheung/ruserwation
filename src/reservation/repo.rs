@@ -33,8 +33,8 @@ pub trait ReservationRepo: Repo<u32, Reservation> {
     ) -> impl Future<Output = Vec<Reservation>> + Send {
         self.find_all_by_query(
             ReservationQuery::default()
-                .from_time(from_time)
-                .to_time(to_time),
+                .start_time(from_time)
+                .end_time(to_time),
         )
     }
 }

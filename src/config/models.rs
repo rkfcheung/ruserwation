@@ -33,11 +33,11 @@ pub struct SqliteAppStateBuilder {
     pool: Option<Arc<SqlitePool>>,
 }
 
-impl<R> AppState<R>
+impl<ADMIN> AppState<ADMIN>
 where
-    R: AdminRepo + VerifyUser + Send + Sync,
+    ADMIN: AdminRepo + VerifyUser + Send + Sync,
 {
-    pub fn admin_repo(&self) -> Arc<R> {
+    pub fn admin_repo(&self) -> Arc<ADMIN> {
         self.admin_repo.clone()
     }
 
