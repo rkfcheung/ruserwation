@@ -242,13 +242,21 @@ fn process_arguments(fn_args: &Punctuated<FnArg, Comma>) -> Vec<proc_macro2::Tok
             // Extract argument name
             let arg_name = &*pat_type.pat;
 
-            // Check if argument type is &str
             if let Type::Reference(ref_type) = &*pat_type.ty {
                 if let Type::Path(type_path) = &*ref_type.elem {
+                    // Check if argument type is &str
                     if type_path.path.is_ident("str") {
                         // Convert `&str` to `.to_string()`
                         capture_args.push(quote! {
                             #arg_name.to_string()
+                        });
+                        continue;
+
+                    // Check for mutability
+                    } else if ref_type.mutability.is_some() {
+                        // For `&mut T`, handle mutable references
+                        capture_args.push(quote! {
+                            #arg_name.clone()
                         });
                         continue;
                     }
