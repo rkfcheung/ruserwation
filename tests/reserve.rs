@@ -105,14 +105,38 @@ mod tests {
         assert_eq!(body["message"], "Error: Failed to save reservation");
     }
 
+    #[tokio::test]
+    async fn test_reserve_validation_failure() {
+        let context = mock_context();
+        let filter = reserve_route(context);
+
+        let request_body = prepare_request_with_name("test@example.com", "");
+
+        let response = warp::test::request()
+            .method("POST")
+            .path("/reservations/reserve")
+            .header("Content-Type", "application/json")
+            .body(request_body.to_string())
+            .reply(&filter)
+            .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body: Value = serde_json::from_slice(&response.body()).unwrap();
+        assert_eq!(body["message"], "Customer name cannot be empty.");
+    }
+
     fn prepare_request(customer_email: &str) -> Value {
+        prepare_request_with_name(customer_email, "John Doe")
+    }
+
+    fn prepare_request_with_name(customer_email: &str, customer_name: &str) -> Value {
         let reservation_time = (Utc::now() + Duration::hours(1))
             .format("%Y-%m-%dT%H:%M:%S")
             .to_string();
         json!({
             "ref_check": generate_ref_check("ChangeMe", Utc::now().naive_utc().and_utc().timestamp()).unwrap_or("invalid_check".to_string()),
             "customer_email": customer_email,
-            "customer_name": "John Doe",
+            "customer_name": customer_name,
             "customer_phone": "1234567890",
             "table_size": 4,
             "reservation_time": reservation_time,
