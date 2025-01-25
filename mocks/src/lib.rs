@@ -55,7 +55,7 @@ pub trait MockVerify {
 #[derive(Default)]
 pub struct ArgumentCaptor<T: Clone> {
     /// Stores captured arguments in a vector with interior mutability.
-    captured: RefCell<Vec<T>>,
+    captured: Vec<T>,
 }
 
 /// Represents a single captured argument value, allowing dynamic typing.
@@ -88,23 +88,23 @@ pub struct MockDefault;
 
 impl<T: Clone> ArgumentCaptor<T> {
     /// Captures a value by adding it to the list of captured arguments.
-    pub fn capture(&self, value: T) {
-        self.captured.borrow_mut().push(value);
+    pub fn capture(&mut self, value: T) {
+        let _ = &self.captured.push(value);
     }
 
     /// Returns the first captured argument, if any.
-    pub fn first(&self) -> Option<T> {
-        self.captured.borrow().first().cloned()
+    pub fn first(&self) -> Option<&T> {
+        self.captured.first()
     }
 
     /// Returns the last captured argument, if any.
-    pub fn last(&self) -> Option<T> {
-        self.captured.borrow().last().cloned()
+    pub fn last(&self) -> Option<&T> {
+        self.captured.last()
     }
 
     /// Returns all captured arguments.
-    pub fn values(&self) -> Vec<T> {
-        self.captured.borrow().clone()
+    pub fn values(&self) -> &Vec<T> {
+        &self.captured
     }
 }
 
@@ -258,7 +258,7 @@ impl InvocationTracker {
         self.captors
             .borrow()
             .get(method)
-            .and_then(|captor| captor.first())
+            .and_then(|captor| captor.first().cloned())
     }
 
     /// Returns the last captured argument for the given method.
@@ -266,7 +266,7 @@ impl InvocationTracker {
         self.captors
             .borrow()
             .get(method)
-            .and_then(|captor| captor.last())
+            .and_then(|captor| captor.last().cloned())
     }
 
     /// Returns all captured arguments for the given method.
@@ -274,7 +274,7 @@ impl InvocationTracker {
         self.captors
             .borrow()
             .get(method)
-            .map(|captor| captor.values())
+            .map(|captor| captor.values().clone())
             .unwrap_or_default()
     }
 }
