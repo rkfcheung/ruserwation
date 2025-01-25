@@ -8,11 +8,12 @@ use super::models::Reservation;
 type HmacSha256 = Hmac<sha2::Sha256>;
 
 pub fn generate_random_book_ref(ref_len: usize) -> String {
-    rand::thread_rng()
+    let book_ref: String = rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(ref_len)
         .map(char::from)
-        .collect()
+        .collect();
+    book_ref.to_uppercase()
 }
 
 pub fn generate_ref_check(secret: &str, timestamp: i64) -> Result<String, String> {

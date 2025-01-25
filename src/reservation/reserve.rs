@@ -40,9 +40,7 @@ async fn handle_reserve(
     // Validate ref_check
     if let Err(err) = validate_ref_check(body.ref_check(), &secret, expired) {
         log_ref_check_error(body.ref_check(), &err);
-        return Err(reservation_error(
-            "The reservation request is either invalid or has expired.",
-        ));
+        return reservation_error("The reservation request is either invalid or has expired.");
     }
 
     // Convert to Reservation
@@ -50,7 +48,7 @@ async fn handle_reserve(
 
     // Validate reservation details
     if let Err(err) = validate_reservation(&reservation) {
-        return Err(reservation_error(&err));
+        return reservation_error(&err);
     }
 
     // Save reservation
@@ -70,8 +68,9 @@ fn log_ref_check_error(ref_check: &str, err: &str) {
 }
 
 // Helper function for error responses
-fn reservation_error(message: &str) -> Rejection {
-    warp::reject::custom(ReservationResponse::err(message))
+fn reservation_error(message: &str) -> Result<WithStatus<Json>, Rejection> {
+    let response = json(&to_json!(ReservationResponse::err(message)));
+    Ok(with_status(response, StatusCode::BAD_REQUEST))
 }
 
 // Helper function to save the reservation

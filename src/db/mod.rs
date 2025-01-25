@@ -23,7 +23,7 @@ impl fmt::Display for QueryError {
             QueryError::InvalidQuery(err) => write!(f, "Invalid query: {}", err),
             QueryError::NoConditionsProvided => write!(f, "No conditions provided for the query."),
             QueryError::NotFound(err) => write!(f, "Not found for the query: {}", err),
-            QueryError::SqlxError(err) => write!(f, "SQLx error: {}", err),
+            QueryError::SqlxError(err) => write!(f, "Error: {}", err),
         }
     }
 }

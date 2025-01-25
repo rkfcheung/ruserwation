@@ -1,5 +1,6 @@
 use ruserwation::restaurant::models::Restaurant;
 
+pub(crate) mod repos;
 pub(crate) mod sessions;
 
 pub(crate) fn mock_restaurant() -> Restaurant {
