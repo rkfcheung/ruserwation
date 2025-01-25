@@ -12,8 +12,25 @@ mod tests {
         let first = tracker.first("method1").unwrap();
         let last = tracker.last("method1").unwrap();
 
-        assert_eq!(first.get::<i32>().unwrap(), &42); // First captured argument
-        assert_eq!(last.get::<i32>().unwrap(), &24); // Last captured argument
+        assert_eq!(first.get_unchecked::<i32>(), &42); // First captured argument
+        assert_eq!(last.get_unchecked::<i32>(), &24); // Last captured argument
+    }
+
+    #[test]
+    fn test_capture_mut_arguments() {
+        let tracker = InvocationTracker::default();
+
+        let mut arr = vec![0];
+        arr.push(1);
+        tracker.capture("fn_mut", arr.clone());
+        arr.push(2);
+        tracker.capture("fn_mut", arr.clone());
+
+        let first = tracker.first("fn_mut").unwrap();
+        let last = tracker.last("fn_mut").unwrap();
+
+        assert_eq!(first.get_unchecked::<Vec<i32>>(), &vec![0, 1]); // First captured argument
+        assert_eq!(last.get_unchecked::<Vec<i32>>(), &vec![0, 1, 2]); // Last captured argument
     }
 
     #[test]
@@ -26,6 +43,20 @@ mod tests {
     }
 
     #[test]
+    fn test_capture_str_arguments() {
+        let tracker = InvocationTracker::default();
+
+        tracker.capture("fn_str", "hello");
+        tracker.capture("fn_str", "world");
+
+        let first = tracker.first("fn_str").unwrap();
+        let last = tracker.last("fn_str").unwrap();
+
+        assert_eq!(first.get_unchecked::<&str>().to_string(), "hello"); // First captured argument
+        assert_eq!(last.get_unchecked::<&str>().to_string(), "world"); // Last captured argument
+    }
+
+    #[test]
     fn test_capture_string_arguments() {
         let tracker = InvocationTracker::default();
 
@@ -35,8 +66,22 @@ mod tests {
         let first = tracker.first("method2").unwrap();
         let last = tracker.last("method2").unwrap();
 
-        assert_eq!(first.get::<String>().unwrap(), "hello"); // First captured argument
-        assert_eq!(last.get::<String>().unwrap(), "world"); // Last captured argument
+        assert_eq!(first.get_unchecked::<String>(), "hello"); // First captured argument
+        assert_eq!(last.get_unchecked::<String>(), "world"); // Last captured argument
+    }
+
+    #[test]
+    fn test_capture_tuple_arguments() {
+        let tracker = InvocationTracker::default();
+
+        tracker.capture("fn_tuple", (1, 2));
+        tracker.capture("fn_tuple", (3, 4));
+
+        let first = tracker.first("fn_tuple").unwrap();
+        let last = tracker.last("fn_tuple").unwrap();
+
+        assert_eq!(*first.get_unchecked::<(i32, i32)>(), (1, 2)); // First captured argument
+        assert_eq!(*last.get_unchecked::<(i32, i32)>(), (3, 4)); // Last captured argument
     }
 
     #[test]
