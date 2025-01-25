@@ -32,15 +32,18 @@ impl MockSessionManager {
     }
 
     #[mock_captured_arguments]
+    fn change(&self, new_value: &mut String) {
+        // No-op
+    }
+
+    #[mock_captured_arguments]
     fn greet(&self, message: &str) {
         // No-op
-        // println!("{}", message);
     }
 
     #[mock_captured_arguments]
     fn hi(&self) {
         // No-op
-        // println!("Hi!");
     }
 }
 
@@ -245,6 +248,24 @@ mod tests {
         assert_eq!(mock.invocation.values("add").len(), 1);
         let captured_values = mock.invocation.first("add").unwrap();
         assert_eq!(*captured_values.get::<(i32, i32)>().unwrap(), (1, 2));
+
+        // Test change function
+        let mut new_value = String::from("test");
+        mock.change(&mut new_value);
+        assert_eq!(mock.invocation.values("change").len(), 1);
+        let captured_values = mock.invocation.first("change").unwrap();
+        assert_eq!(
+            *captured_values.get_unchecked::<String>(),
+            "test".to_string()
+        );
+        new_value.push_str(" mutability");
+        mock.change(&mut new_value);
+        assert_eq!(mock.invocation.values("change").len(), 2);
+        let captured_values = mock.invocation.last("change").unwrap();
+        assert_eq!(
+            *captured_values.get_unchecked::<String>(),
+            "test mutability".to_string()
+        );
 
         // Test greet function
         mock.greet("hello");
