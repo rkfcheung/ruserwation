@@ -124,7 +124,7 @@ impl ArgumentValue {
     /// ```rust
     /// let value = mocks::ArgumentValue::new(42);
     /// ```
-    pub fn new<T: Any + Clone>(value: T) -> Self {
+    pub fn new<T: Any>(value: T) -> Self {
         Self {
             value: Rc::new(value),
         }
@@ -247,7 +247,7 @@ impl InvocationTracker {
     }
 
     /// Captures the arguments for the given method.
-    pub fn capture<T: Clone + 'static>(&self, method: &str, arguments: T) {
+    pub fn capture<T: 'static>(&self, method: &str, arguments: T) {
         let mut captors = self.captors.borrow_mut();
         let captor = captors.entry(method.to_string()).or_default();
         captor.capture(ArgumentValue::new(arguments));
