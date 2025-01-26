@@ -15,6 +15,7 @@ use admin::{
     login::{admin_login_form_route, admin_login_route},
     logout::admin_logout_route,
 };
+use reservation::reserve::reserve_route;
 use response::handle_rejections;
 use restaurant::index::index_route;
 use setup::{errors::SetupError, startup::init};
@@ -32,6 +33,7 @@ async fn main() -> Result<(), SetupError> {
     let session_manager = app_state.session_manager();
     let restaurant = app_state.restaurant();
     let admin_context = Context::create(session_manager.clone(), restaurant.clone());
+    let reservation_context = Context::create(app_state.reservation_repo(), restaurant.clone());
 
     let static_route = warp::path("static").and(warp::fs::dir("./static"));
     let routes = warp::get()
@@ -40,6 +42,7 @@ async fn main() -> Result<(), SetupError> {
         .or(admin_login_route(admin_context.clone()))
         .or(admin_login_form_route(admin_context.clone()))
         .or(admin_logout_route(admin_context))
+        .or(reserve_route(reservation_context))
         .recover(handle_rejections);
 
     let rest_port = var_as_int_or("RW_REST_PORT", 3030) as u16;
