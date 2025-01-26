@@ -62,7 +62,7 @@ mod tests {
         let mut reservation = valid_reservation();
         reservation.customer_email = "invalid_email".to_string();
         let result = validate_reservation(&reservation);
-        assert_eq!(result, Err("Customer email must contain '@'.".to_string()));
+        assert_eq!(result, Err("Customer email is invalid.".to_string()));
     }
 
     #[test]

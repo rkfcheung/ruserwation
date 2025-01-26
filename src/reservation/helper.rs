@@ -72,7 +72,7 @@ pub fn validate_reservation(reservation: &Reservation) -> Result<(), String> {
     }
 
     if !reservation.customer_email.contains('@') {
-        return Err("Customer email must contain '@'.".to_string());
+        return Err("Customer email is invalid.".to_string());
     }
 
     if reservation.customer_name.trim().is_empty() {
