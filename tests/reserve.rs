@@ -220,6 +220,26 @@ mod tests {
         assert_eq!(response.status(), StatusCode::METHOD_NOT_ALLOWED);
     }
 
+    #[tokio::test]
+    async fn test_reserve_empty_body() {
+        let context = mock_context();
+        let reserve_filter = reserve_route(context);
+
+        let response = request()
+            .method("POST")
+            .path("/reservations/reserve")
+            .header("Content-Type", "application/json")
+            .body("")
+            .reply(&reserve_filter)
+            .await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(
+            response.body(),
+            "Request body deserialize error: EOF while parsing a value at line 1 column 0"
+        );
+    }
+
     fn prepare_request() -> Value {
         let reservation_time = (Utc::now() + Duration::hours(1))
             .format("%Y-%m-%dT%H:%M:%S")
