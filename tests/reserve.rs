@@ -4,26 +4,14 @@ mod mock;
 mod tests {
     use chrono::{Duration, Utc};
     use mocks::MockVerify;
-    use ruserwation::config::models::Context;
     use ruserwation::reservation::helper::generate_ref_check;
     use ruserwation::reservation::reserve::reserve_route;
     use serde_json::{json, Value};
-    use std::sync::Arc;
     use warp::http::StatusCode;
-    use warp::test::request;
 
-    use crate::mock::mock_restaurant;
-    use crate::mock::repos::MockContext;
     use crate::mock::repos::MockReservationRepo;
-
-    // Mock context and repository for testing
-    fn mock_context() -> Arc<Context<MockReservationRepo>> {
-        // Create a mock or fake implementation of ReservationRepo
-        // This is where you mock the `save` method
-        let repo = MockReservationRepo::default().into();
-        let restaurant = mock_restaurant().into();
-        Context::create(repo, restaurant)
-    }
+    use crate::mock::MockBody;
+    use crate::mock::MockRoute;
 
     // Test valid reservation
     #[tokio::test]
@@ -31,9 +19,9 @@ mod tests {
         // Create a valid reservation request
         let body = prepare_request();
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_exactly_once("save");
 
@@ -58,9 +46,9 @@ mod tests {
             "notes": "Window seat request"
         });
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
@@ -80,9 +68,9 @@ mod tests {
         let mut body = prepare_request();
         body["customer_email"] = "save_failure@example.com".into();
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_exactly_once("save");
 
@@ -97,9 +85,9 @@ mod tests {
         let mut body = prepare_request();
         body["customer_name"] = "".into();
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
@@ -117,9 +105,9 @@ mod tests {
         let mut body = prepare_request();
         body["reservation_time"] = reservation_time.into();
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
@@ -135,9 +123,9 @@ mod tests {
         let mut body = prepare_request();
         body["customer_email"] = "invalid_email".into();
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
@@ -153,9 +141,9 @@ mod tests {
         let mut body = prepare_request();
         body["table_size"] = 0.into();
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
@@ -167,34 +155,21 @@ mod tests {
 
     #[tokio::test]
     async fn test_reserve_invalid_http_method() {
-        let context = mock_context();
-        let reserve_filter = reserve_route(context.clone());
-
-        let repo = context.get();
-        let response = request()
-            .method("GET")
-            .path("/reservations/reserve")
-            .reply(&reserve_filter)
-            .await;
+        let request = simulate_request("GET", &MockBody::Text("{}")).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
         assert_eq!(response.status(), StatusCode::METHOD_NOT_ALLOWED);
+        assert_eq!(response.body(), "HTTP method not allowed");
     }
 
     #[tokio::test]
     async fn test_reserve_empty_body() {
-        let context = mock_context();
-        let reserve_filter = reserve_route(context.clone());
-
-        let repo = context.get();
-        let response = request()
-            .method("POST")
-            .path("/reservations/reserve")
-            .header("Content-Type", "application/json")
-            .body("")
-            .reply(&reserve_filter)
-            .await;
+        let request = simulate_request("POST", &MockBody::Text("")).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
@@ -210,9 +185,9 @@ mod tests {
         let mut body = prepare_request();
         body["book_ref"] = "NOT_FOUND".into();
 
-        let context = prepare_response(&body).await;
-        let repo = context.repo;
-        let response = context.response;
+        let request = post_request(&body).await;
+        let repo = request.context();
+        let response = request.response();
 
         repo.verify_never("save");
 
@@ -234,21 +209,25 @@ mod tests {
         })
     }
 
-    async fn prepare_response(body: &Value) -> MockContext<MockReservationRepo> {
-        let context = mock_context();
-        let reserve_filter = reserve_route(context.clone());
+    async fn post_request(body: &Value) -> MockRoute<MockReservationRepo> {
+        MockRoute::simulate_request(
+            MockReservationRepo::default().into(),
+            reserve_route,
+            "POST",
+            "/reservations/reserve",
+            &MockBody::Json(body),
+        )
+        .await
+    }
 
-        let response = request()
-            .method("POST")
-            .path("/reservations/reserve")
-            .header("Content-Type", "application/json")
-            .json(body)
-            .reply(&reserve_filter)
-            .await;
-
-        MockContext {
-            repo: context.get(),
-            response,
-        }
+    async fn simulate_request(method: &str, body: &MockBody<'_>) -> MockRoute<MockReservationRepo> {
+        MockRoute::simulate_request(
+            MockReservationRepo::default().into(),
+            reserve_route,
+            method,
+            "/reservations/reserve",
+            body,
+        )
+        .await
     }
 }

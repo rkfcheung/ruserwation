@@ -8,16 +8,6 @@ use ruserwation::{
         repo::ReservationRepo,
     },
 };
-use std::sync::Arc;
-use warp::http::Response;
-use warp::hyper::body::Bytes;
-
-#[cfg(test)]
-#[allow(dead_code)]
-pub(crate) struct MockContext<T> {
-    pub(crate) repo: Arc<T>,
-    pub(crate) response: Response<Bytes>,
-}
 
 #[cfg(test)]
 #[allow(dead_code)]
