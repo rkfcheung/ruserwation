@@ -155,7 +155,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_reserve_invalid_http_method() {
-        let route = simulate_request("GET", &"{}".into()).await;
+        let route = simulate_request("GET", &MockBody::None).await;
         let repo = route.context();
         let response = route.response();
 

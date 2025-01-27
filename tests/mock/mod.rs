@@ -10,9 +10,12 @@ use warp::Filter;
 pub(crate) mod repos;
 pub(crate) mod sessions;
 
+#[cfg(test)]
+#[allow(dead_code)]
 pub(crate) enum MockBody<'a> {
     Json(&'a Value),
     Text(&'a str),
+    None,
 }
 
 pub(crate) struct MockRoute<T> {
@@ -54,28 +57,51 @@ impl<T> MockRoute<T> {
         F: Filter + 'static,
         F::Extract: Reply + Send,
     {
+        Self::simulate_request_with_header(
+            context,
+            route,
+            method,
+            path,
+            "Content-Type",
+            "application/json",
+            body,
+        )
+        .await
+    }
+
+    pub(crate) async fn simulate_request_with_header<F>(
+        context: Arc<T>,
+        route: impl FnOnce(Arc<Context<T>>) -> F,
+        method: &str,
+        path: &str,
+        header_key: &str,
+        header_value: &str,
+        body: &MockBody<'_>,
+    ) -> Self
+    where
+        F: Filter + 'static,
+        F::Extract: Reply + Send,
+    {
         // Create the mock context
-        let mock_context = mock_context(context.clone());
+        let context = mock_context(context.clone());
 
         // Call the route function with the context
-        let filter = route(mock_context.clone());
+        let filter = route(context.clone());
 
         // Simulate the HTTP request
         let builder = request()
             .method(method)
             .path(path)
-            .header("Content-Type", "application/json");
+            .header(header_key, header_value);
         let response = match body {
             MockBody::Json(json) => builder.json(json),
             MockBody::Text(text) => builder.body(text),
+            MockBody::None => builder,
         }
         .reply(&filter)
         .await;
 
-        Self {
-            context: mock_context,
-            response,
-        }
+        Self { context, response }
     }
 }
 
