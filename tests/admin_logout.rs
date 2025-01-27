@@ -4,25 +4,20 @@ mod mock;
 mod tests {
     use mocks::MockVerify;
     use ruserwation::admin::logout::admin_logout_route;
-    use ruserwation::config::models::Context;
     use std::sync::Arc;
     use warp::http::StatusCode;
     use warp::test::request;
 
-    use crate::mock::mock_restaurant;
+    use crate::mock::mock_context;
     use crate::mock::sessions::MockSessionManager;
 
     #[tokio::test]
     async fn test_admin_logout_success() {
         // Mock session manager
-        let mock_session_manager = MockSessionManager::ok();
-        let session_manager = Arc::new(mock_session_manager);
-
-        // Create a dummy restaurant
-        let restaurant = Arc::new(mock_restaurant());
+        let session_manager = Arc::new(MockSessionManager::ok());
 
         // Create the route
-        let context = Context::create(session_manager.clone(), restaurant);
+        let context = mock_context(session_manager.clone());
         let route = admin_logout_route(context);
 
         // Simulate a GET request with a valid cookie
@@ -62,14 +57,10 @@ mod tests {
     #[tokio::test]
     async fn test_admin_logout_no_session() {
         // Mock session manager
-        let mock_session_manager = MockSessionManager::ok();
-        let session_manager = Arc::new(mock_session_manager);
-
-        // Create a dummy restaurant
-        let restaurant = Arc::new(mock_restaurant());
+        let session_manager = Arc::new(MockSessionManager::ok());
 
         // Create the route
-        let context = Context::create(session_manager.clone(), restaurant);
+        let context = mock_context(session_manager.clone());
         let route = admin_logout_route(context);
 
         // Simulate a GET request without a cookie
