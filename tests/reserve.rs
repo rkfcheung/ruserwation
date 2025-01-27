@@ -38,9 +38,11 @@ mod tests {
         // Create a request with an invalid ref_check
         let body = json!({
             "ref_check": "invalid_check",
-            "customer_email": "test@example.com",
-            "customer_name": "John Doe",
-            "customer_phone": "1234567890",
+            "customer": json!({
+                "email": "test@example.com",
+                "name": "John Doe",
+                "phone": "1234567890"
+            }),
             "table_size": 4,
             "reservation_time": "2025-01-19T18:30:00",
             "notes": "Window seat request"
@@ -66,7 +68,7 @@ mod tests {
     async fn test_reserve_save_failure() {
         // Mock a failing save by introducing an error in the repository
         let mut body = prepare_request();
-        body["customer_email"] = "save_failure@example.com".into();
+        body["customer"]["email"] = "save_failure@example.com".into();
 
         let route = post_request(&body).await;
         let repo = route.context();
@@ -83,7 +85,7 @@ mod tests {
     #[tokio::test]
     async fn test_reserve_validation_failure() {
         let mut body = prepare_request();
-        body["customer_name"] = "".into();
+        body["customer"]["name"] = "".into();
 
         let route = post_request(&body).await;
         let repo = route.context();
@@ -121,7 +123,7 @@ mod tests {
     async fn test_reserve_invalid_email() {
         // Create a reservation request with an invalid email
         let mut body = prepare_request();
-        body["customer_email"] = "invalid_email".into();
+        body["customer"]["email"] = "invalid_email".into();
 
         let route = post_request(&body).await;
         let repo = route.context();
@@ -200,9 +202,11 @@ mod tests {
             .to_string();
         json!({
             "ref_check": generate_ref_check("ChangeMe", Utc::now().naive_utc().and_utc().timestamp()).unwrap_or("invalid_check".to_string()),
-            "customer_email": "test@example.com",
-            "customer_name": "John Doe",
-            "customer_phone": "1234567890",
+            "customer": json!({
+                "email": "test@example.com",
+                "name": "John Doe",
+                "phone": "1234567890"
+            }),
             "table_size": 4,
             "reservation_time": reservation_time,
             "notes": "Window seat request"
@@ -210,14 +214,7 @@ mod tests {
     }
 
     async fn post_request(body: &Value) -> MockRoute<MockReservationRepo> {
-        MockRoute::simulate_request(
-            MockReservationRepo::default().into(),
-            reserve_route,
-            "POST",
-            "/reservations/reserve",
-            &body.into(),
-        )
-        .await
+        simulate_request("POST", &body.into()).await
     }
 
     async fn simulate_request(method: &str, body: &MockBody<'_>) -> MockRoute<MockReservationRepo> {

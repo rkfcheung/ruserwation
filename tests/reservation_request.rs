@@ -3,7 +3,7 @@ mod tests {
     use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime, Utc};
     use ruserwation::reservation::{
         helper::{generate_ref_check, validate_ref_check},
-        models::{Reservation, ReservationRequest},
+        models::{Customer, Reservation, ReservationRequest},
     };
 
     #[test]
@@ -19,9 +19,7 @@ mod tests {
         let ref_check = "valid_ref_check";
 
         let request = ReservationRequest::new(
-            customer_email,
-            customer_name,
-            customer_phone,
+            Customer::new(customer_email, customer_name, customer_phone),
             table_size,
             reservation_datetime,
             notes.clone(),
@@ -51,9 +49,7 @@ mod tests {
             generate_ref_check("test_ref_check", reservation_time.and_utc().timestamp()).unwrap();
 
         let request = ReservationRequest::new(
-            customer_email,
-            customer_name,
-            customer_phone,
+            Customer::new(customer_email, customer_name, customer_phone),
             table_size,
             reservation_time,
             notes,
@@ -75,9 +71,7 @@ mod tests {
         let ref_check = "test_ref_check";
 
         let request = ReservationRequest::new(
-            customer_email,
-            customer_name,
-            customer_phone,
+            Customer::new(customer_email, customer_name, customer_phone),
             table_size,
             reservation_time,
             notes,

@@ -9,6 +9,13 @@ use super::helper::generate_random_book_ref;
 use crate::db::QueryError;
 use crate::response::Response;
 
+#[derive(Deserialize)]
+pub struct Customer {
+    pub email: String,
+    pub name: String,
+    pub phone: String,
+}
+
 /// Enum for Reservation Status.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::Type)]
 pub enum ReservationStatus {
@@ -36,9 +43,7 @@ pub struct Reservation {
 #[derive(Deserialize)]
 pub struct ReservationRequest {
     book_ref: Option<String>,
-    customer_email: String,
-    customer_name: String,
-    customer_phone: String,
+    customer: Customer,
     table_size: u8,
     reservation_time: NaiveDateTime,
     notes: Option<String>,
@@ -63,6 +68,16 @@ pub struct ReservationQuery {
     pub start_time: Option<NaiveDateTime>,
     pub end_time: Option<NaiveDateTime>,
     pub status: Option<ReservationStatus>,
+}
+
+impl Customer {
+    pub fn new(email: &str, name: &str, phone: &str) -> Self {
+        Self {
+            email: email.to_string(),
+            name: name.to_string(),
+            phone: phone.to_string(),
+        }
+    }
 }
 
 impl fmt::Display for ReservationStatus {
@@ -134,9 +149,7 @@ impl Reservation {
 
 impl ReservationRequest {
     pub fn new(
-        customer_email: &str,
-        customer_name: &str,
-        customer_phone: &str,
+        customer: Customer,
         table_size: u8,
         reservation_time: NaiveDateTime,
         notes: Option<String>,
@@ -144,9 +157,7 @@ impl ReservationRequest {
     ) -> Self {
         Self::new_with_book_ref(
             Option::None,
-            customer_email,
-            customer_name,
-            customer_phone,
+            customer,
             table_size,
             reservation_time,
             notes,
@@ -156,9 +167,7 @@ impl ReservationRequest {
 
     pub fn new_with_book_ref(
         book_ref: Option<String>,
-        customer_email: &str,
-        customer_name: &str,
-        customer_phone: &str,
+        customer: Customer,
         table_size: u8,
         reservation_time: NaiveDateTime,
         notes: Option<String>,
@@ -166,9 +175,7 @@ impl ReservationRequest {
     ) -> Self {
         Self {
             book_ref,
-            customer_email: customer_email.to_string(),
-            customer_name: customer_name.to_string(),
-            customer_phone: customer_phone.to_string(),
+            customer,
             table_size,
             reservation_time,
             notes,
@@ -190,17 +197,17 @@ impl From<ReservationRequest> for Reservation {
         match value.book_ref {
             Some(book_ref) => Reservation::new_with_book_ref(
                 &book_ref,
-                &value.customer_email,
-                &value.customer_name,
-                &value.customer_phone,
+                &value.customer.email,
+                &value.customer.name,
+                &value.customer.phone,
                 value.table_size,
                 value.reservation_time,
                 value.notes,
             ),
             None => Reservation::new(
-                &value.customer_email,
-                &value.customer_name,
-                &value.customer_phone,
+                &value.customer.email,
+                &value.customer.name,
+                &value.customer.phone,
                 value.table_size,
                 value.reservation_time,
                 value.notes,
