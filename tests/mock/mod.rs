@@ -10,8 +10,6 @@ use warp::Filter;
 pub(crate) mod repos;
 pub(crate) mod sessions;
 
-#[cfg(test)]
-#[allow(dead_code)]
 pub(crate) enum MockBody<'a> {
     Json(&'a Value),
     Text(&'a str),
@@ -20,6 +18,18 @@ pub(crate) enum MockBody<'a> {
 pub(crate) struct MockRoute<T> {
     context: Arc<Context<T>>,
     response: Response<Bytes>,
+}
+
+impl<'a> From<&'a str> for MockBody<'a> {
+    fn from(value: &'a str) -> Self {
+        MockBody::Text(value)
+    }
+}
+
+impl<'a> From<&'a Value> for MockBody<'a> {
+    fn from(value: &'a Value) -> Self {
+        MockBody::Json(value)
+    }
 }
 
 #[cfg(test)]

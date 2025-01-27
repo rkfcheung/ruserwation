@@ -19,9 +19,9 @@ mod tests {
         // Create a valid reservation request
         let body = prepare_request();
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_exactly_once("save");
 
@@ -46,9 +46,9 @@ mod tests {
             "notes": "Window seat request"
         });
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -68,9 +68,9 @@ mod tests {
         let mut body = prepare_request();
         body["customer_email"] = "save_failure@example.com".into();
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_exactly_once("save");
 
@@ -85,9 +85,9 @@ mod tests {
         let mut body = prepare_request();
         body["customer_name"] = "".into();
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -105,9 +105,9 @@ mod tests {
         let mut body = prepare_request();
         body["reservation_time"] = reservation_time.into();
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -123,9 +123,9 @@ mod tests {
         let mut body = prepare_request();
         body["customer_email"] = "invalid_email".into();
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -141,9 +141,9 @@ mod tests {
         let mut body = prepare_request();
         body["table_size"] = 0.into();
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -155,9 +155,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_reserve_invalid_http_method() {
-        let request = simulate_request("GET", &MockBody::Text("{}")).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = simulate_request("GET", &"{}".into()).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -167,9 +167,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_reserve_empty_body() {
-        let request = simulate_request("POST", &MockBody::Text("")).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = simulate_request("POST", &MockBody::Text("")).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -185,9 +185,9 @@ mod tests {
         let mut body = prepare_request();
         body["book_ref"] = "NOT_FOUND".into();
 
-        let request = post_request(&body).await;
-        let repo = request.context();
-        let response = request.response();
+        let route = post_request(&body).await;
+        let repo = route.context();
+        let response = route.response();
 
         repo.verify_never("save");
 
@@ -215,7 +215,7 @@ mod tests {
             reserve_route,
             "POST",
             "/reservations/reserve",
-            &MockBody::Json(body),
+            &body.into(),
         )
         .await
     }
