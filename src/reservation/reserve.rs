@@ -59,7 +59,7 @@ async fn handle_reserve(
     if has_book_ref {
         let repo = context.get();
         let book_ref = &reservation.book_ref;
-        let result = repo.find_by_book_ref(&book_ref).await;
+        let result = repo.find_by_book_ref(book_ref).await;
         match result {
             Some(saved) => {
                 if saved.customer_email != reservation.customer_email {
@@ -70,7 +70,7 @@ async fn handle_reserve(
 
                     return handle_failure_with_status(
                         Some(book_ref.to_string()),
-                        QueryError::InvalidQuery(format!("Reservation Details Not Match")),
+                        QueryError::InvalidQuery("Reservation Details Not Match".to_string()),
                         StatusCode::BAD_REQUEST,
                     );
                 }
@@ -82,7 +82,7 @@ async fn handle_reserve(
 
                 return handle_failure_with_status(
                     Some(book_ref.to_string()),
-                    QueryError::NotFound(format!("Invalid Book Ref")),
+                    QueryError::NotFound("Invalid Book Ref".to_string()),
                     StatusCode::NOT_FOUND,
                 );
             }
