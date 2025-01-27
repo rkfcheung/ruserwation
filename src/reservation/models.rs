@@ -35,6 +35,7 @@ pub struct Reservation {
 
 #[derive(Deserialize)]
 pub struct ReservationRequest {
+    book_ref: Option<String>,
     customer_email: String,
     customer_name: String,
     customer_phone: String,
@@ -141,7 +142,30 @@ impl ReservationRequest {
         notes: Option<String>,
         ref_check: &str,
     ) -> Self {
+        Self::new_with_book_ref(
+            Option::None,
+            customer_email,
+            customer_name,
+            customer_phone,
+            table_size,
+            reservation_time,
+            notes,
+            ref_check,
+        )
+    }
+
+    pub fn new_with_book_ref(
+        book_ref: Option<String>,
+        customer_email: &str,
+        customer_name: &str,
+        customer_phone: &str,
+        table_size: u8,
+        reservation_time: NaiveDateTime,
+        notes: Option<String>,
+        ref_check: &str,
+    ) -> Self {
         Self {
+            book_ref,
             customer_email: customer_email.to_string(),
             customer_name: customer_name.to_string(),
             customer_phone: customer_phone.to_string(),
@@ -152,6 +176,10 @@ impl ReservationRequest {
         }
     }
 
+    pub fn has_book_ref(&self) -> bool {
+        self.book_ref.is_some()
+    }
+
     pub fn ref_check(&self) -> &str {
         &self.ref_check
     }
@@ -159,14 +187,25 @@ impl ReservationRequest {
 
 impl From<ReservationRequest> for Reservation {
     fn from(value: ReservationRequest) -> Self {
-        Reservation::new(
-            &value.customer_email,
-            &value.customer_name,
-            &value.customer_phone,
-            value.table_size,
-            value.reservation_time,
-            value.notes,
-        )
+        match value.book_ref {
+            Some(book_ref) => Reservation::new_with_book_ref(
+                &book_ref,
+                &value.customer_email,
+                &value.customer_name,
+                &value.customer_phone,
+                value.table_size,
+                value.reservation_time,
+                value.notes,
+            ),
+            None => Reservation::new(
+                &value.customer_email,
+                &value.customer_name,
+                &value.customer_phone,
+                value.table_size,
+                value.reservation_time,
+                value.notes,
+            ),
+        }
     }
 }
 
@@ -179,8 +218,12 @@ impl ReservationResponse {
     }
 
     pub fn err(msg: &str) -> Self {
+        Self::err_with_book_ref("<Failed to Book>", msg)
+    }
+
+    pub fn err_with_book_ref(book_ref: &str, msg: &str) -> Self {
         Self {
-            book_ref: "<Failed to Book>".to_string(),
+            book_ref: book_ref.to_string(),
             response: Response::err(msg),
         }
     }

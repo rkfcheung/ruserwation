@@ -1,4 +1,4 @@
-use mock_derive::{mock_captured_arguments, mock_invoked};
+use mock_derive::{mock_captured_arguments, mock_invoked, MockVerify};
 use mocks::InvocationTracker;
 use ruserwation::{
     common::Repo,
@@ -8,10 +8,20 @@ use ruserwation::{
         repo::ReservationRepo,
     },
 };
+use std::sync::Arc;
+use warp::http::Response;
+use warp::hyper::body::Bytes;
 
 #[cfg(test)]
 #[allow(dead_code)]
-#[derive(Default)]
+pub(crate) struct MockContext<T> {
+    pub(crate) repo: Arc<T>,
+    pub(crate) response: Response<Bytes>,
+}
+
+#[cfg(test)]
+#[allow(dead_code)]
+#[derive(Default, MockVerify)]
 pub(crate) struct MockReservationRepo {
     pub(crate) invocation: InvocationTracker,
 }
@@ -38,6 +48,6 @@ impl ReservationRepo for MockReservationRepo {
     }
 
     async fn find_one_by_query(&self, _query: ReservationQuery) -> Option<Reservation> {
-        unimplemented!()
+        Option::None
     }
 }

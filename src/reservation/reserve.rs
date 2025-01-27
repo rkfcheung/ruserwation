@@ -38,17 +38,55 @@ async fn handle_reserve(
     let expired = var_as_int_or("RW_RSV_EXPIRED", 3_600) as i64;
 
     // Validate ref_check
-    if let Err(err) = validate_ref_check(body.ref_check(), &secret, expired) {
-        log_ref_check_error(body.ref_check(), &err);
+    let ref_check = body.ref_check();
+    if let Err(err) = validate_ref_check(ref_check, &secret, expired) {
+        log::error!("Failed to process reservation ref_check={ref_check} due to: {err}");
+
         return reservation_error("The reservation request is either invalid or has expired.");
     }
 
     // Convert to Reservation
+    let has_book_ref = body.has_book_ref();
     let mut reservation: Reservation = body.into();
 
     // Validate reservation details
     if let Err(err) = validate_reservation(&reservation) {
+        log::error!("Failed to validate reservation due to: {err}");
+
         return reservation_error(&err);
+    }
+
+    if has_book_ref {
+        let repo = context.get();
+        let book_ref = &reservation.book_ref;
+        let result = repo.find_by_book_ref(&book_ref).await;
+        match result {
+            Some(saved) => {
+                if saved.customer_email != reservation.customer_email {
+                    log::error!(
+                        "Failed to match reservation book_ref={book_ref} with customer_email: saved[{}] vs requested[{}]", 
+                        saved.customer_email, reservation.customer_email 
+                    );
+
+                    return handle_failure_with_status(
+                        Some(book_ref.to_string()),
+                        QueryError::InvalidQuery(format!("Reservation Details Not Match")),
+                        StatusCode::BAD_REQUEST,
+                    );
+                }
+
+                reservation.id = saved.id;
+            }
+            None => {
+                log::error!("Failed to find reservation book_ref={book_ref}");
+
+                return handle_failure_with_status(
+                    Some(book_ref.to_string()),
+                    QueryError::NotFound(format!("Invalid Book Ref")),
+                    StatusCode::NOT_FOUND,
+                );
+            }
+        }
     }
 
     // Save reservation
@@ -58,19 +96,9 @@ async fn handle_reserve(
     }
 }
 
-// Helper function to handle ref_check errors
-fn log_ref_check_error(ref_check: &str, err: &str) {
-    log::error!(
-        "Failed to process reservation ref_check={} due to: {}",
-        ref_check,
-        err
-    );
-}
-
 // Helper function for error responses
 fn reservation_error(message: &str) -> Result<WithStatus<Json>, Rejection> {
-    let response = json(&to_json!(ReservationResponse::err(message)));
-    Ok(with_status(response, StatusCode::BAD_REQUEST))
+    handle_failure_with_status(None, message, StatusCode::BAD_REQUEST)
 }
 
 // Helper function to save the reservation
@@ -89,6 +117,7 @@ fn handle_success(id: u32, reservation: &Reservation) -> Result<WithStatus<Json>
         reservation.book_ref
     );
     let response = json(&to_json!(ReservationResponse::ok(&reservation.book_ref)));
+
     Ok(with_status(response, StatusCode::OK))
 }
 
@@ -102,6 +131,18 @@ fn handle_failure(
         reservation.book_ref,
         err
     );
-    let response = json(&to_json!(ReservationResponse::err(&err.to_string())));
-    Ok(with_status(response, StatusCode::INTERNAL_SERVER_ERROR))
+    handle_failure_with_status(None, err, StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+fn handle_failure_with_status<E: ToString>(
+    book_ref: Option<String>,
+    err: E,
+    status: StatusCode,
+) -> Result<WithStatus<Json>, Rejection> {
+    let response = json(&to_json!(match book_ref {
+        Some(book_ref) => ReservationResponse::err_with_book_ref(&book_ref, &err.to_string()),
+        None => ReservationResponse::err(&err.to_string()),
+    }));
+
+    Ok(with_status(response, status))
 }
