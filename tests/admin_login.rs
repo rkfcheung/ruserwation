@@ -5,7 +5,6 @@ mod tests {
     use ruserwation::admin::errors::SessionError;
     use ruserwation::admin::login::{admin_login_form_route, admin_login_route};
     use serde_json::json as to_json;
-    use std::sync::Arc;
     use warp::http::StatusCode;
     use warp::test::request;
 
@@ -151,9 +150,11 @@ mod tests {
         let form_data = "username=test_user&password=test_pass";
 
         // Perform the request
-        let route = simulate_request_with_header(
+        let route = MockRoute::simulate_request_with_header(
             session_manager.into(),
+            admin_login_route,
             "POST",
+            "/admin/login",
             "Content-Type",
             "application/x-www-form-urlencoded",
             &form_data.into(),
@@ -179,25 +180,6 @@ mod tests {
             admin_login_route,
             "POST",
             "/admin/login",
-            body,
-        )
-        .await
-    }
-
-    async fn simulate_request_with_header(
-        session_manager: Arc<MockSessionManager>,
-        method: &str,
-        header_key: &str,
-        header_value: &str,
-        body: &MockBody<'_>,
-    ) -> MockRoute<MockSessionManager> {
-        MockRoute::simulate_request_with_header(
-            session_manager,
-            admin_login_route,
-            method,
-            "/admin/login",
-            header_key,
-            header_value,
             body,
         )
         .await
