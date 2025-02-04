@@ -130,7 +130,7 @@ async fn handle_reserve(
 
     // Save reservation
     match save_reservation(&mut reservation, context).await {
-        Ok(id) => handle_success(id, &reservation),
+        Ok(id) => handle_success(id, &reservation, has_book_ref),
         Err(err) => handle_failure(&reservation, err),
     }
 }
@@ -156,13 +156,24 @@ async fn save_reservation(
 }
 
 // Helper function for success response
-fn handle_success(id: u32, reservation: &Reservation) -> Result<WithStatus<Json>, Rejection> {
+fn handle_success(
+    id: u32,
+    reservation: &Reservation,
+    to_update: bool,
+) -> Result<WithStatus<Json>, Rejection> {
     log::info!(
         "Reservation id={} with book_ref={} saved",
         id,
         reservation.book_ref
     );
-    let response = json(&to_json!(ReservationResponse::ok(&reservation.book_ref)));
+    let response = if to_update {
+        json(&to_json!(ReservationResponse::ok_with_msg(
+            &reservation.book_ref,
+            "Updated successfully"
+        )))
+    } else {
+        json(&to_json!(ReservationResponse::ok(&reservation.book_ref)))
+    };
 
     Ok(with_status(response, StatusCode::OK))
 }

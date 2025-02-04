@@ -29,7 +29,7 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
         let body: Value = serde_json::from_slice(&response.body()).unwrap();
         assert_eq!(body["status"], "Success");
-        assert_eq!(body["message"], "Booked successful");
+        assert_eq!(body["message"], "Booked successfully");
         assert_eq!(body["book_ref"].as_str().unwrap().len(), 5);
     }
 
@@ -240,6 +240,10 @@ mod tests {
         let response = route.response();
 
         assert_eq!(response.status(), StatusCode::OK);
+        let body: Value = serde_json::from_slice(&response.body()).unwrap();
+        assert_eq!(body["status"], "Success");
+        assert_eq!(body["book_ref"], "valid_book_ref");
+        assert_eq!(body["message"], "Updated successfully");
     }
 
     #[tokio::test]

@@ -324,9 +324,13 @@ impl ReservationQuery {
 
 impl ReservationResponse {
     pub fn ok(book_ref: &str) -> Self {
+        Self::ok_with_msg(book_ref, "Booked successfully")
+    }
+
+    pub fn ok_with_msg(book_ref: &str, msg: &str) -> Self {
         Self {
             book_ref: book_ref.to_string(),
-            response: Response::ok("Booked successful"),
+            response: Response::ok(msg),
         }
     }
 
