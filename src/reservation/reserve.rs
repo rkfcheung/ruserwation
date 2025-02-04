@@ -21,18 +21,45 @@ use crate::{
 pub fn reserve_route(
     context: Arc<Context<impl ReservationRepo + Send + Sync>>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::post()
+    let create_reservation = warp::post()
         .and(warp::path!("reservations" / "reserve"))
         .and(warp::header::exact("Content-Type", "application/json"))
         .and(warp::body::json())
         .and(with_context(context.clone()))
-        .and_then(handle_reserve)
+        .and_then(handle_reserve);
+
+    let update_reservation = warp::put()
+        .and(warp::path!("reservations" / "update" / String))
+        .and(warp::header::exact("Content-Type", "application/json"))
+        .and(warp::body::json())
+        .and(with_context(context))
+        .and_then(handle_update);
+
+    create_reservation.or(update_reservation)
+}
+
+async fn handle_update(
+    ref_check: String,
+    body: ReservationRequest,
+    context: Arc<Context<impl ReservationRepo + Send + Sync>>,
+) -> Result<impl Reply, Rejection> {
+    // Validate ref_check
+    if ref_check != body.ref_check() {
+        log::error!(
+            "Failed to process reservation ref_check={ref_check} due to: requested ref [{}] is different",
+            body.ref_check()
+        );
+
+        return reservation_error("The reservation request is invalid.");
+    }
+
+    handle_reserve(body, context).await
 }
 
 async fn handle_reserve(
     body: ReservationRequest,
     context: Arc<Context<impl ReservationRepo + Send + Sync>>,
-) -> Result<impl Reply, Rejection> {
+) -> Result<WithStatus<Json>, Rejection> {
     // Extract environment variables
     let secret = var_as_str_or("RW_RSV_SECRET", "ChangeMe");
     let expired = var_as_int_or("RW_RSV_EXPIRED", 3_600) as i64;
@@ -57,6 +84,7 @@ async fn handle_reserve(
     }
 
     if has_book_ref {
+        // Handle for updating reservation
         let repo = context.get();
         let book_ref = &reservation.book_ref;
         let result = repo.find_by_book_ref(book_ref).await;

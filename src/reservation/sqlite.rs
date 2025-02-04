@@ -66,6 +66,7 @@ impl SqliteReservationRepo {
                 reservation_time = ?,
                 notes = ?,
                 status = ?,
+                assigned_table = ?,
                 updated_at = ?
             WHERE id = ?;
             "#,
@@ -79,6 +80,7 @@ impl SqliteReservationRepo {
         .bind(reservation.reservation_time) // Bind reservation_time
         .bind(&reservation.notes) // Bind notes (optional)
         .bind(reservation.status.to_string()) // Bind status (convert enum to string)
+        .bind(&reservation.assigned_table) // Bind assigned_table (optional)
         .bind(reservation.updated_at) // Bind updated_at
         .bind(reservation.id) // Bind id for the WHERE clause
         .execute(self.pool.as_ref())
