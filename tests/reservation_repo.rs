@@ -35,6 +35,7 @@ mod tests {
             reservation_time: Utc::now().naive_utc(),
             notes: None,
             status: ReservationStatus::Pending,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         };
 
@@ -62,6 +63,7 @@ mod tests {
             reservation_time: Utc::now().naive_utc(),
             notes: Some("First".to_string()),
             status: ReservationStatus::Pending,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         };
 
@@ -76,6 +78,7 @@ mod tests {
             reservation_time: Utc::now().naive_utc(),
             notes: Some("Second".to_string()),
             status: ReservationStatus::Confirmed,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         };
 
@@ -113,6 +116,7 @@ mod tests {
             reservation_time: Utc::now().naive_utc(),
             notes: None,
             status: ReservationStatus::Pending,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         };
 
@@ -147,6 +151,7 @@ mod tests {
             reservation_time: Utc::now().naive_utc(),
             notes: None,
             status: ReservationStatus::Pending,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         };
 
@@ -180,6 +185,7 @@ mod tests {
             reservation_time: Utc::now().naive_utc(),
             notes: Some("Test note".to_string()),
             status: ReservationStatus::Pending,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         };
 

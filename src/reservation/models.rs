@@ -16,60 +16,6 @@ pub struct Customer {
     pub phone: String,
 }
 
-/// Enum for Reservation Status.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::Type)]
-pub enum ReservationStatus {
-    Pending,
-    Confirmed,
-    Cancelled,
-}
-
-/// Struct for the Reservation table.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::FromRow)]
-pub struct Reservation {
-    pub id: u32,
-    pub book_ref: String,
-    pub restaurant_id: u32,
-    pub customer_email: String,
-    pub customer_name: String,
-    pub customer_phone: String,
-    pub table_size: u8,
-    pub reservation_time: NaiveDateTime,
-    pub notes: Option<String>,
-    pub status: ReservationStatus,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Deserialize)]
-pub struct ReservationRequest {
-    book_ref: Option<String>,
-    customer: Customer,
-    table_size: u8,
-    reservation_time: NaiveDateTime,
-    notes: Option<String>,
-    ref_check: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ReservationResponse {
-    book_ref: String,
-    #[serde(flatten)]
-    response: Response,
-}
-
-/// Query builder for filtering Reservations.
-#[derive(Clone, Debug, Default)]
-pub struct ReservationQuery {
-    pub id: Option<u32>,
-    pub book_ref: Option<String>,
-    pub customer_email: Option<String>,
-    pub customer_name: Option<String>,
-    pub customer_phone: Option<String>,
-    pub start_time: Option<NaiveDateTime>,
-    pub end_time: Option<NaiveDateTime>,
-    pub status: Option<ReservationStatus>,
-}
-
 impl Customer {
     pub fn new(email: &str, name: &str, phone: &str) -> Self {
         Self {
@@ -78,6 +24,14 @@ impl Customer {
             phone: phone.to_string(),
         }
     }
+}
+
+/// Enum for Reservation Status.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::Type)]
+pub enum ReservationStatus {
+    Pending,
+    Confirmed,
+    Cancelled,
 }
 
 impl fmt::Display for ReservationStatus {
@@ -100,6 +54,23 @@ impl From<&str> for ReservationStatus {
             _ => ReservationStatus::Pending, // Default fallback
         }
     }
+}
+
+/// Struct for the Reservation table.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, sqlx::FromRow)]
+pub struct Reservation {
+    pub id: u32,
+    pub book_ref: String,
+    pub restaurant_id: u32,
+    pub customer_email: String,
+    pub customer_name: String,
+    pub customer_phone: String,
+    pub table_size: u8,
+    pub reservation_time: NaiveDateTime,
+    pub notes: Option<String>,
+    pub status: ReservationStatus,
+    pub assigned_table: Option<String>,
+    pub updated_at: NaiveDateTime,
 }
 
 impl Reservation {
@@ -142,9 +113,44 @@ impl Reservation {
             reservation_time,
             notes,
             status: ReservationStatus::Pending,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         }
     }
+}
+
+impl From<ReservationRequest> for Reservation {
+    fn from(value: ReservationRequest) -> Self {
+        match value.book_ref {
+            Some(book_ref) => Reservation::new_with_book_ref(
+                &book_ref,
+                &value.customer.email,
+                &value.customer.name,
+                &value.customer.phone,
+                value.table_size,
+                value.reservation_time,
+                value.notes,
+            ),
+            None => Reservation::new(
+                &value.customer.email,
+                &value.customer.name,
+                &value.customer.phone,
+                value.table_size,
+                value.reservation_time,
+                value.notes,
+            ),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+pub struct ReservationRequest {
+    book_ref: Option<String>,
+    customer: Customer,
+    table_size: u8,
+    reservation_time: NaiveDateTime,
+    notes: Option<String>,
+    ref_check: String,
 }
 
 impl ReservationRequest {
@@ -192,52 +198,25 @@ impl ReservationRequest {
     }
 }
 
-impl From<ReservationRequest> for Reservation {
-    fn from(value: ReservationRequest) -> Self {
-        match value.book_ref {
-            Some(book_ref) => Reservation::new_with_book_ref(
-                &book_ref,
-                &value.customer.email,
-                &value.customer.name,
-                &value.customer.phone,
-                value.table_size,
-                value.reservation_time,
-                value.notes,
-            ),
-            None => Reservation::new(
-                &value.customer.email,
-                &value.customer.name,
-                &value.customer.phone,
-                value.table_size,
-                value.reservation_time,
-                value.notes,
-            ),
-        }
-    }
+#[derive(Debug, Serialize)]
+pub struct ReservationResponse {
+    book_ref: String,
+    #[serde(flatten)]
+    response: Response,
 }
 
-impl ReservationResponse {
-    pub fn ok(book_ref: &str) -> Self {
-        Self {
-            book_ref: book_ref.to_string(),
-            response: Response::ok("Booked successful"),
-        }
-    }
-
-    pub fn err(msg: &str) -> Self {
-        Self::err_with_book_ref("<Failed to Book>", msg)
-    }
-
-    pub fn err_with_book_ref(book_ref: &str, msg: &str) -> Self {
-        Self {
-            book_ref: book_ref.to_string(),
-            response: Response::err(msg),
-        }
-    }
+/// Query builder for filtering Reservations.
+#[derive(Clone, Debug, Default)]
+pub struct ReservationQuery {
+    pub id: Option<u32>,
+    pub book_ref: Option<String>,
+    pub customer_email: Option<String>,
+    pub customer_name: Option<String>,
+    pub customer_phone: Option<String>,
+    pub start_time: Option<NaiveDateTime>,
+    pub end_time: Option<NaiveDateTime>,
+    pub status: Option<ReservationStatus>,
 }
-
-impl Reject for ReservationResponse {}
-
 impl ReservationQuery {
     /// Adds a `id` filter.
     pub fn id(mut self, id: u32) -> Self {
@@ -337,3 +316,25 @@ impl ReservationQuery {
         Ok((query, args))
     }
 }
+
+impl ReservationResponse {
+    pub fn ok(book_ref: &str) -> Self {
+        Self {
+            book_ref: book_ref.to_string(),
+            response: Response::ok("Booked successful"),
+        }
+    }
+
+    pub fn err(msg: &str) -> Self {
+        Self::err_with_book_ref("<Failed to Book>", msg)
+    }
+
+    pub fn err_with_book_ref(book_ref: &str, msg: &str) -> Self {
+        Self {
+            book_ref: book_ref.to_string(),
+            response: Response::err(msg),
+        }
+    }
+}
+
+impl Reject for ReservationResponse {}

@@ -19,6 +19,7 @@ mod tests {
             reservation_time: Utc::now().naive_utc(),
             notes: Some("This is a test note.".to_string()),
             status: ReservationStatus::Pending,
+            assigned_table: None,
             updated_at: Utc::now().naive_utc(),
         }
     }

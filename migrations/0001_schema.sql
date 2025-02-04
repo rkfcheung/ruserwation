@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS Reservation (
     reservation_time TIMESTAMP NOT NULL,
     notes TEXT CHECK (LENGTH(notes) <= 512),
     status TEXT NOT NULL CHECK (status IN ('Pending', 'Confirmed', 'Cancelled')), -- Ensure valid status values
+    assigned_table TEXT CHECK (LENGTH(assigned_table) <= 8),
     updated_at TIMESTAMP NOT NULL
 );
 
