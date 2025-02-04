@@ -109,5 +109,11 @@ pub fn validate_reservation(reservation: &Reservation) -> Result<(), String> {
         }
     }
 
+    if let Some(assigned_table) = &reservation.assigned_table {
+        if assigned_table.len() > 8 {
+            return Err("Table ref cannot exceed 8 characters.".to_string());
+        }
+    }
+
     Ok(())
 }

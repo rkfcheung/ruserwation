@@ -65,7 +65,7 @@ async fn handle_reserve(
                 if saved.customer_email != reservation.customer_email {
                     log::error!(
                         "Failed to match reservation book_ref={book_ref} with customer_email: saved[{}] vs requested[{}]", 
-                        saved.customer_email, reservation.customer_email 
+                        saved.customer_email, reservation.customer_email
                     );
 
                     return handle_failure_with_status(

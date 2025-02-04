@@ -217,6 +217,7 @@ pub struct ReservationQuery {
     pub end_time: Option<NaiveDateTime>,
     pub status: Option<ReservationStatus>,
 }
+
 impl ReservationQuery {
     /// Adds a `id` filter.
     pub fn id(mut self, id: u32) -> Self {
