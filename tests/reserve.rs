@@ -5,6 +5,7 @@ mod tests {
     use chrono::{Duration, Utc};
     use mocks::MockVerify;
     use ruserwation::reservation::helper::generate_ref_check;
+    use ruserwation::reservation::models::Reservation;
     use ruserwation::reservation::reserve::reserve_route;
     use serde_json::{json, Value};
     use warp::http::StatusCode;
@@ -196,6 +197,77 @@ mod tests {
         assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 
+    #[tokio::test]
+    async fn test_update_reservation_invalid_book_ref() {
+        let mut body = prepare_request();
+        body["book_ref"] = "valid_book_ref".into();
+
+        let route = simulate_update("invalid_book_ref", &(&body).into()).await;
+        let repo = route.context();
+        let response = route.response();
+
+        repo.verify_never("save");
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let body: Value = serde_json::from_slice(&response.body()).unwrap();
+        assert_eq!(body["status"], "Error");
+        assert_eq!(body["book_ref"], "invalid_book_ref");
+        assert_eq!(body["message"], "The reservation request is invalid.");
+    }
+
+    #[tokio::test]
+    async fn test_update_reservation_valid() {
+        let mut body = prepare_request();
+        body["book_ref"] = "valid_book_ref".into();
+        body["table_size"] = 5.into();
+
+        let route = simulate_update("valid_book_ref", &(&body).into()).await;
+        let repo = route.context();
+
+        repo.verify_exactly_once("find_by_book_ref");
+        repo.verify_exactly_once("save");
+        assert_eq!(
+            repo.invocation
+                .first("find_by_book_ref")
+                .unwrap()
+                .get_unchecked::<String>(),
+            "valid_book_ref"
+        );
+        let saved = repo.invocation.last("save").unwrap();
+        let saved = saved.get_unchecked::<Reservation>();
+        assert_eq!(saved.table_size, 5);
+
+        let response = route.response();
+
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_update_reservation_not_found() {
+        let book_ref = "non_existent_ref";
+        let mut body = prepare_request();
+        body["book_ref"] = book_ref.into();
+
+        let route = simulate_update(book_ref, &(&body).into()).await;
+        let repo = route.context();
+
+        assert_eq!(
+            repo.invocation
+                .first("find_by_book_ref")
+                .unwrap()
+                .get_unchecked::<String>(),
+            book_ref
+        );
+
+        let response = route.response();
+
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        let body: Value = serde_json::from_slice(&response.body()).unwrap();
+        assert_eq!(body["status"], "Error");
+        assert_eq!(body["book_ref"], book_ref);
+        assert_eq!(body["message"], "Not found for the query: Invalid Book Ref");
+    }
+
     fn prepare_request() -> Value {
         let reservation_time = (Utc::now() + Duration::hours(1))
             .format("%Y-%m-%dT%H:%M:%S")
@@ -223,6 +295,20 @@ mod tests {
             reserve_route,
             method,
             "/reservations/reserve",
+            body,
+        )
+        .await
+    }
+
+    async fn simulate_update(
+        book_ref: &str,
+        body: &MockBody<'_>,
+    ) -> MockRoute<MockReservationRepo> {
+        MockRoute::simulate_request(
+            MockReservationRepo::default().into(),
+            reserve_route,
+            "PUT",
+            &format!("/reservations/update/{book_ref}"),
             body,
         )
         .await

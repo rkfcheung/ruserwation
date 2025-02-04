@@ -50,14 +50,17 @@ async fn handle_update(
                 req_book_ref
             );
 
-            return reservation_error("The reservation request is invalid.");
+            return reservation_error_with_book_ref(
+                book_ref,
+                "The reservation request is invalid.",
+            );
         }
     } else {
         log::error!(
             "Failed to process reservation book_ref={book_ref} due to: missing requested ref",
         );
 
-        return reservation_error("The reservation request is invalid.");
+        return reservation_error_with_book_ref(book_ref, "The reservation request is corrupted.");
     }
 
     handle_reserve(body, context).await
@@ -135,6 +138,13 @@ async fn handle_reserve(
 // Helper function for error responses
 fn reservation_error(message: &str) -> Result<WithStatus<Json>, Rejection> {
     handle_failure_with_status(None, message, StatusCode::BAD_REQUEST)
+}
+
+fn reservation_error_with_book_ref(
+    book_ref: String,
+    message: &str,
+) -> Result<WithStatus<Json>, Rejection> {
+    handle_failure_with_status(Some(book_ref), message, StatusCode::BAD_REQUEST)
 }
 
 // Helper function to save the reservation
