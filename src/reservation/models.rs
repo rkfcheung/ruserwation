@@ -189,6 +189,10 @@ impl ReservationRequest {
         }
     }
 
+    pub fn book_ref(&self) -> &Option<String> {
+        &self.book_ref
+    }
+
     pub fn has_book_ref(&self) -> bool {
         self.book_ref.is_some()
     }

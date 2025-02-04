@@ -39,15 +39,22 @@ pub fn reserve_route(
 }
 
 async fn handle_update(
-    ref_check: String,
+    book_ref: String,
     body: ReservationRequest,
     context: Arc<Context<impl ReservationRepo + Send + Sync>>,
 ) -> Result<impl Reply, Rejection> {
-    // Validate ref_check
-    if ref_check != body.ref_check() {
+    if let Some(req_book_ref) = body.book_ref() {
+        if &book_ref != req_book_ref {
+            log::error!(
+                "Failed to process reservation book_ref={book_ref} due to: requested ref [{}] is different",
+                req_book_ref
+            );
+
+            return reservation_error("The reservation request is invalid.");
+        }
+    } else {
         log::error!(
-            "Failed to process reservation ref_check={ref_check} due to: requested ref [{}] is different",
-            body.ref_check()
+            "Failed to process reservation book_ref={book_ref} due to: missing requested ref",
         );
 
         return reservation_error("The reservation request is invalid.");
@@ -104,6 +111,7 @@ async fn handle_reserve(
                 }
 
                 reservation.id = saved.id;
+                reservation.assigned_table = saved.assigned_table;
             }
             None => {
                 log::error!("Failed to find reservation book_ref={book_ref}");
